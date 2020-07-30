@@ -38,6 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'product',
+    'project',
+    'customer',
+    'contract',
+    'experiment'
 ]
 
 MIDDLEWARE = [
@@ -61,7 +66,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'autoescape': True,
-            'environment': 'management_system.jinja2_env.environment'
+            'environment': 'management_system.jinja2_env.environment',
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                ],
         }
     },
     {
