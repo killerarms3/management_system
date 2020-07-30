@@ -25,7 +25,7 @@ SECRET_KEY = '[your secret key]'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
@@ -53,10 +53,20 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'management_system.urls'
 
 TEMPLATES = [
-    
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'autoescape': True,
+            'environment': 'management_system.jinja2_env.environment'
+        }
+    },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,7 +89,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'management_system',
-        'USER': 'root',
+        'USER': 'demo',
         'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '3306'
