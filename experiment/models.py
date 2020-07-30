@@ -9,4 +9,4 @@ class Experiment(models.Model):
     receiving_date = models.DateField(blank=True, null=True)
     complete_date = models.DateField(blank=True, null=True)
     data_transfer_date = models.DateField(blank=True, null=True)
-    transfer_organization = models.ForeignKey(Organization, on_delete='CASCADE')
+    transfer_organization = models.ForeignKey(Organization, on_delete='CASCADE', related_name='transfer_organization')
