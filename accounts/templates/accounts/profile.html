@@ -1,0 +1,20 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <h3>User name: {{ user.username }}</h3>
+        <p><strong>First Name:</strong> {{ user.first_name }}</p>
+        <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+        <p><strong>Gender:</strong> {{ user.userprofile.gender }}</p>
+        <p><strong>E-mail:</strong> {{ user.email }}</p>
+        <p><strong>Phone Number:</strong> {{ user.userprofile.phone_number }}</p>
+        <p><strong>Address:</strong> {{ user.userprofile.address }}</p>        
+        <p><strong>Organization:</strong> {{ user.profile.organization }}</p>
+        <p><strong>Title:</strong> {{ user.profile.title.name }}</p>
+        <p><strong>Date Joined:</strong> {{ user.date_joined }}</p>
+        <p><strong>Last Login:</strong> {{ user.last_login }}</p>
+    {% else %}
+        <p>Please <a href = "{% url 'login' %}">login</a> first!</p>
+    {% endif %}
+    <p><a href="{% url 'profile-update' user.id %}">Edit</a></p>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <form action="" method="POST">
+        {% csrf_token %}
+            <p>Welcome, {{ user.username }}</p>
+            <p>If you don't get the mail, please enter the new email address and send it.</p>
+            {% for field in mailForm %}
+                <p>{{ field.label_tag }} {{ field }}</p>
+            {% endfor %}
+        <input type="submit" class="" value="Resend Email" />
+    </form>
+{% endblock %}
