@@ -1,22 +1,28 @@
 from accounts.models import Organization, Profile, UserProfile, Title
+from .forms import Profile_updateFrom, RegisterForm, Email_resetFrom
+from .token import Token
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import render, get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import get_user_model
-from django.http import HttpResponseRedirect
-from django.views.generic import DetailView
 from django.contrib.auth.models import User
-from django.views.generic import ListView
-from .forms import Profile_updateFrom, RegisterForm
+from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
+from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from django.http import HttpResponseRedirect
+from django.http import HttpResponseNotFound
+from django.http import HttpResponse
+from django.views.generic import DetailView
+from django.views.generic import ListView
 from django.views import generic
 from django.urls import reverse
 from django import forms
-from django.core.mail import send_mail
-from django.http import HttpResponse
 from django.conf import settings
-from .token import Token
+from django.template import Context
+from django.template.loader import get_template, render_to_string
+
 
 token_confirm = Token(settings.SECRET_KEY)
 
@@ -26,6 +32,7 @@ def index(request):
 class OrganizationListView(generic.ListView):
     model = Organization
 
+@login_required
 def profile(request):
 	return render(request, 'accounts/profile.html')
 
@@ -34,18 +41,16 @@ def register(request):
 		form = RegisterForm(request.POST)
 		if form.is_valid():
 			username = form.cleaned_data['username']
-			email = form.cleaned_data['email']			
 			form.save()
 			user = User.objects.get(username=username)
 			user.is_active = False
 			user.save()
-			token = token_confirm.generate_validate_token(username)
-			message = '\n'.join([
-				'{0}, Welcome to this system.'.format(username), 'Please access the following url to active your account.', 
-				'/'.join(['127.0.0.1:8000', 'accounts/active', token])
-			])
-			send_mail('Test Email Title.', message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
-			return HttpResponse('Please login your email and click the url to activate your account at one hour.')			
+			active_mail(request, username)			
+			
+			context = {				
+				'user':user
+			}
+			return HttpResponseRedirect(reverse('send_again', args=[user.username]), context)
 		else:
 			return render(request, 'registration/register.html', {'form':form})
 	else:
@@ -53,16 +58,45 @@ def register(request):
 		context = {'form': form}
 		return render(request, 'registration/register.html', context)
 
+def active_mail(request, username):
+	user = User.objects.get(username=username)
+	token = token_confirm.generate_validate_token(username)
+	current_site = get_current_site(request)
+	mail_subject = 'Welcome!'
+	message = render_to_string(
+		'registration/user_authenticate_mail.html', {
+		'username': username,
+		'domain': current_site.domain,
+		'token': token
+	})
+	email_send = EmailMessage(
+		mail_subject, message, settings.DEFAULT_FROM_EMAIL, [user.email]
+	)
+	email_send.send()
+
 @login_required
 def profile_update(request, pk):
 	user = get_object_or_404(User, pk=pk)
+	if user.username != request.user.username:
+		return HttpResponseNotFound('NOT FOUND')
 	try:
-		user_profile = UserProfile.objects.get(user=user)
-		profile = Profile.objects.get(user=user)
+		user_profile = UserProfile.objects.get(user=user)	
 	except UserProfile.DoesNotExist:
-		user_profile = UserProfile.objects.create(user=user, phone_number='', address='', gender='')
+		user_profile = UserProfile.objects.create(
+			user=user, 
+			phone_number='',
+			address='',
+			gender=''
+		)
+	try:
+		profile = Profile.objects.get(user=user)
 	except Profile.DoesNotExist:
-		profile = Profile.objects.create(user=user, organization=Organization.objects.get(id=2), title=Title.objects.get(id=2))
+		profile = Profile.objects.create(
+			user=user,
+			organization=Organization.objects.get(id=2),
+			title=Title.objects.get(id=2)
+		)
+	
 	if request.method == 'POST':
 		form = Profile_updateFrom(request.POST)
 		if form.is_valid():
@@ -106,3 +140,21 @@ def active_user(request, token):
 	user.save()
 	confirm = 'Verification is success, please login again.'
 	return HttpResponseRedirect('/accounts/login', {'confirm': confirm})
+
+def email_send_again(request, username):
+	user = User.objects.get(username=username)
+	if user.is_active:
+		return HttpResponseNotFound('Your account is already active.')
+	
+	if request.method == 'POST':		
+		mailForm = Email_resetFrom(request.POST)
+		if mailForm.is_valid():
+			user.email = mailForm.cleaned_data['email']
+			user.save()
+			active_mail(request, user.username)
+			return HttpResponseRedirect(reverse('send_again', args=[user.username]),  {'mailForm':mailForm, 'user':user})
+		else:
+			return render(request, 'registration/mail_active_confirm.html', {'mailForm':mailForm, 'user':user})
+	else:
+		mailForm = Email_resetFrom()
+		return render(request, 'registration/mail_active_confirm.html', {'mailForm':mailForm, 'user':user})

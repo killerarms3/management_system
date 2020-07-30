@@ -11,7 +11,7 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name + ', ' + self.department
-    
+
 
 class Title(models.Model):
     name = models.CharField(max_length = 10)

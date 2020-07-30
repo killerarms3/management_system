@@ -15,5 +15,5 @@ urlpatterns = [
     path('register/', views.register, name = 'register'),
     path('profile/<int:pk>/update', views.profile_update, name = 'profile-update'),
     path('active/<token>', views.active_user, name = 'active_user'),
+    path('check_mail/<username>', views.email_send_again, name = 'send_again'),
 ]
-    

@@ -22,4 +22,8 @@ class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2') 
+        fields = ('username', 'email', 'password1', 'password2')
+
+class Email_resetFrom(forms.Form):
+    email = forms.EmailField(label='E-mail', widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    
