@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">編輯方案</h3>
+            <form method="POST" action="{{ url('product:change_plan', args=[plan.id]) }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th scope="col">* 產品</th>
+                            <td>
+                                <select class="multiple-select" id="product" name="product">
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" {% if product.id == plan.product.id %} selected {% endif %}>{{ plan.product.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">方案名稱</th>
+                            <td>
+                                <input class="form-control" type="text" name="name" maxlength="256" value="{{ plan.name }}" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">價格</th>
+                            <td>
+                                <input class="form-control" type="number" name="price" min="0" value="{{ plan.price }}" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">說明</th>
+                            <td>
+                                <input class="form-control" type="text" name="description" value="{{ plan.description }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">狀態</th>
+                            <td>
+                                <select class="multiple-select" id="status" name="status">
+                                    <option value="1" {% if plan.status %} selected {% endif %}>Available</option>
+                                    <option value="0" {% if not plan.status %} selected {% endif %}>Unavilable</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+    });
+</script>
+{% endblock js %}

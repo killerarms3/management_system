@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">新增方案</h3>
+            <form method="POST" action="{{ url('product:add_plan') }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th scope="col">* 產品(<a href="{{ url('product:add_product') }}">新增產品</a>)</th>
+                                <td>
+                                    <select class="multiple-select" id="product" name="product">
+                                        {% for product in products %}
+                                        <option value="{{ product.id }}">{{ product.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 方案名稱(必填)</th>
+                            <td>
+                                <input class="form-control" type="text" name="name" maxlength="256" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 價格(必填)</th>
+                            <td>
+                                <input class="form-control" type="number" name="price" min="0" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">說明</th>
+                            <td>
+                                <input class="form-control" type="text" name="description">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+    });
+</script>
+{% endblock js %}

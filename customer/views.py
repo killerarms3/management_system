@@ -41,7 +41,7 @@ def change_organization(request, id):
         # (name, department)必為unique
         # 確認更改後，是否會有重複機構
         exist_organization = Organization.objects.filter(name=request.POST['name'], department=request.POST['department'])
-        if exist_organization and str(exist_organization[0].id) != id:
+        if exist_organization and exist_organization[0].id != id:
             messages.error(request, '此機構已存在')
             return redirect(reverse('customer:view_organization'))
         organization.name = request.POST['name']
@@ -114,7 +114,7 @@ def change_customer(request, id):
         # (last_name, first_name, phone_number)必為unique
         # 確認更改後，是否會有重複客戶
         exist_customers = Customer.objects.filter(last_name=request.POST['last_name'], first_name=request.POST['first_name'], phone_number=request.POST['phone_number'])
-        if exist_customers and str(exist_customers[0].id) != id:
+        if exist_customers and exist_customers[0].id != id:
             messages.error(request, '此客戶已存在')
             return redirect(reverse('customer:view_customer'))
         customer.last_name = request.POST['last_name']
