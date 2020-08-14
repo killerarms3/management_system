@@ -25,7 +25,7 @@ SECRET_KEY = '[your secret key]'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -37,6 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
+    'product',
+    'project',
+    'customer',
+    'contract',
+    'experiment'
+    
 ]
 
 MIDDLEWARE = [
@@ -60,7 +67,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'autoescape': True,
-            'environment': 'management_system.jinja2_env.environment'
+            'environment': 'management_system.jinja2_env.environment',
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                ],
         }
     },
     {
@@ -88,9 +99,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'management_system',
-        'USER': 'demo',
-        'PASSWORD': 'password',
-        'HOST': 'db',
+        'USER': 'root',
+        'PASSWORD': 'itmysecret',
+        'HOST': 'localhost',
         'PORT': '3306'
     }
 }
@@ -140,3 +151,14 @@ CRONJOBS = [
 #     ('* * */1 * *', 'main.cron.remove_report')
 # #    ('*/1 * * * *', 'main.cron.remove_report', '>> '+join(BASE_DIR, 'cronjob.log'))
 ]
+
+LOGIN_REDIRECT_URL = '/'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'killerarms3@gmail.com'
+EMAIL_HOST_PASSWORD = 'DoNTBeaJoKE4064'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

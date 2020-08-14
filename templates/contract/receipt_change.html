@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>編輯發票: {{ receipt }}</h3>
+                <form action="" method="POST">
+                {{ csrf_input }}
+                    <table class="table table-hover">
+                        {% for fields in form %}
+                            <tr>
+                                {% if fields.label == '付款方式' %}
+                                    <th>{{ fields.label }}(<a href="{{ url('contract:add_payment_method') }}">新增</a>)</th>
+                                    <td>{{ fields }}</td>
+                                {% else %}
+                                    <th>{{ fields.label }}</th>
+                                    <td>{{ fields }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}                        
+                    </table>
+                    <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      selectAll: false,
+      showClear: true
+    });
+</script>
+{% endblock %}

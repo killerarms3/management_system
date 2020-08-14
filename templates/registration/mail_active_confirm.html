@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <form action="" method="POST">
+                    {{ csrf_input }}
+                        <p>Welcome, {{ user.username }}</p>
+                        <p>If you don't get the mail, please enter the new email address and send it.</p>
+                        {% for field in mailForm %}
+                            <p>{{ field.label }} {{ field }}</p>
+                        {% endfor %}
+                    <input type="submit" class="" value="Resend Email" />
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

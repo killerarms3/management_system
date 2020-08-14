@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">            
+            {% if object_list %}
+                <h3>發票清單(<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)</h3>
+                <table id="receipt_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>發票號碼</th>
+                            <th>合約</th>
+                            <th>開立發票日期</th>
+                            <th>發票金額</th>
+                            <th>付款日期</th>
+                            <th>付款方式</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for receipt in object_list %}
+                        <tr>
+                            <td><a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a></td>
+                            <td><a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a></td>
+                            <td><a href="{{ receipt.get_absolute_url() }}">{{ receipt}}</a></td>
+                            <td>{{ receipt.contract }}</td>
+                            <td>{{ receipt.receipt_date }}</td>
+                            <td>{{ receipt.receipt_amount }}</td>
+                            <td>{{ receipt.payment_date }}</td>
+                            <td>{{ receipt.payment_method }}</td>
+                            <td>{{ receipt.memo }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No Data!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#receipt_table thead tr').clone(true).appendTo('#receipt_table thead');
+		$('#receipt_table thead tr:eq(1) th').each(function (i) {
+            if (i!==0 && i!==1){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (receipt_table.column(i).search() !== this.value) {
+					    receipt_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var receipt_table = $('#receipt_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}

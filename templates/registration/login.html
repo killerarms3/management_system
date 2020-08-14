@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                {% if form.errors %}
+                    <p>Your username and password didn't match. Please try again.</p>
+                {% endif %}
+            
+                {% if next %}
+                    {% if user.is_authenticated %}
+                        <p>Your account doesn't have access to this page. To proceed, please login with an account that has access.</p>
+                    {% else %}
+                        <p>Please login to see this page.</p>
+                    {% endif %}
+                {% endif %}
+            
+                <form method="post" action="{{ url('login') }}">
+                    {{ csrf_input }}
+                    <table>
+                        <tr>
+                            <td>{{ form.username.label }}</td>
+                            <td>{{ form.username }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ form.password.label }}</td>
+                            <td>{{ form.password }}</td>
+                        </tr>
+                        <tr>
+                            <td><a href="{{ url('password_reset') }}">Lost password?</a></td>
+                            <td align="right"><a href="{{ url('register') }}">Register</td>
+                        </tr>
+                    </table>
+                    <input type="submit" value="login" />
+                    <input type="hidden" name="next" value="{{ next }}" />        
+                </form>
+            </div>
+        </div>
+    </div> 
+    {# Assumes you setup the password_reset view in your URLconf #}
+{% endblock %}

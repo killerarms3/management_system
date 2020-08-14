@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">編輯客戶</h3>
+            <form method="POST" action="{{ url('customer:change_customer', args=[customer.id]) }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th scope="col">* 姓(必填)</th>
+                                <td>
+                                    <input class="form-control" type="text" name="last_name" maxlength="32" value="{{ customer.last_name }}" required>
+                                </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 名(必填)</th>
+                            <td>
+                                <input class="form-control" type="text" name="first_name" maxlength="32" value="{{ customer.first_name }}" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">生日</th>
+                            <td>
+                                <input class="form-control" type="date" id="birth_date" name="birth_date" min="1820-01-01" max="2020-01-01" value="{{ customer.birth_date }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">機構(<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}','popup','width=600, height=600'); return false;">新增機構</a>)</th>
+                            <td>
+                                <select multiple="multiple" class="multiple-select" id="organization" name="organization">
+                                    {% for organization in organizations %}
+                                    <option value="{{ organization.id }}" {% if organization.id in organization_ids %} selected {% endif %}>{{ organization.name }} {{ organization.department }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">職稱</th>
+                            <td>
+                                <input class="form-control" type="text" id="title" name="title" maxlength="32" value="{{ customer.title }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Email</th>
+                            <td>
+                                <input class="form-control" type="email" id="email" name="email" maxlength="320" value="{{ customer.email }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 連絡電話(必填)</th>
+                            <td>
+                                <input class="form-control" type="text" id="phone_number" name="phone_number" maxlength="32" value="{{ customer.phone_number }}" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">地址</th>
+                            <td>
+                                <input class="form-control" type="text" id="address" name="address" maxlength="320" value="{{ customer.address }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">備註</th>
+                            <td>
+                                <textarea cols="40" rows="10"id="memo" name="memo">{{ customer.memo }}</textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      selectAll: false,
+      showClear: true
+    });
+</script>
+<script>
+    var today = new Date();
+    var day = today.getDate();
+    var month = today.getMonth()+1;
+    var year = today.getFullYear();
+    if(day<10){
+        day="0"+day;
+    }
+    if(month<10){
+        month="0"+month;
+    }
+    today=year+"-"+month+"-"+day;
+    document.getElementById("birth_date").setAttribute("max", today);
+</script>
+{% endblock js %}

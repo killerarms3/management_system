@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>Box Number: {{ destroyed.box }}(<a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}">Edit</a>)</h3>
+            <table class="table table-hover">
+                <tr>
+                    <th scope="row"><strong>銷毀註記: </strong></th>
+                    <td>
+                    {% if destroyed.is_sample_destroyed %}
+                        Destroyed
+                    {% else %}
+                        Waitind to be destroyed
+                    {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><strong>Sample Destroyed Date: </strong></th>
+                    <td>{{ destroyed.sample_destroyed_date }}</td>
+                </tr>
+                <tr>
+                    <th scope="row"><strong>Return Date: </strong></th>
+                    <td>{{ destroyed.return_date }}</td>
+                </tr>          
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

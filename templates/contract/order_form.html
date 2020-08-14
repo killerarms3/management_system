@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>新增訂單</h3>
+                <form action="" method="POST">
+                {{ csrf_input }}
+                    <table class="table table-hover">
+                        {% if specify_contract %}
+                            <tr>
+                                <th>合約</th>
+                                <td>{{ contract }}</td>
+                            </tr>
+                        {% endif %}
+                        {% for fields in form %}
+                            <tr>
+                                <th>{{ fields.label }}</th>
+                                <td>{{ fields }}</td>                                                               
+                            </tr>
+                        {% endfor %}                        
+                    </table>
+                    <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+                    {% if specify_contract %}
+                        <input id="" style="background-color: #FF3B3B; border-color: #FF3B3B;" class="btn btn-primary btn-lg btn-block" type="submit" value="關閉" onclick="window.close()">
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      selectAll: false,
+      showClear: true
+    });
+</script>
+<script>
+    var today = new Date();
+    var day = today.getDate();
+    var month = today.getMonth()+1;
+    var year = today.getFullYear();
+    if(day<10){
+        day="0"+day;
+    }
+    if(month<10){
+        month="0"+month;
+    }
+    today=year+"-"+month+"-"+day;
+</script>
+{% endblock js %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>Account Info</h3>
+                    <hr />
+                    <table>
+                        <tr>
+                            <td>Username: </td><td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <td>E-mail: </td><td>{{ user.email }}</td>
+                            
+                        </tr>
+                        <tr><td><p></p></td></tr>
+                    
+                        <tr>                            
+                            <td colspan="2"><h3>Update My Profile</h3><hr /></td>
+                        </tr>
+                        <form action="" method="POST">
+                        {{ csrf_input }}                                                    
+                        {% for field in form %}
+                            <tr>
+                                <td>{{ field.label }} </td>
+                                <td>{{ field }}</td>
+                            </tr>
+                        {% endfor %}                   
+                            <tr>
+                                <td>
+                                <input type="submit" value="Update"/>
+                                <input type="hidden" name="next" value="{{ next }}" />
+                                </td>
+                            </tr>
+                        </form>
+                    </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

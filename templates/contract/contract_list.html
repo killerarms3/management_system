@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>合約清單
+            {% if perms.contract.can_add_contract %}
+                (<a href="{{ url('contract:contract_create') }}">新增</a>)
+            {% endif %}
+            </h3>
+            {% if object_list %}
+                <table id="contract_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>ID</th>
+                            <th>客戶</th>
+                            <th>負責人</th>
+                            <th>日期</th>
+                            <th>機構</th>
+                            <th>訂單</th>
+                            <th>發票</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contract in object_list %}
+                        <tr>
+                            {% if perms.contract.can_change_contract %}
+                                <td><a href="{{ url('contract:contract_edit', args=[contract.id]) }}"><i class="fas fa-edit"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            {% if perms.contract.can_delete_contract %}
+                                <td><a href="{{ url('contract:contract_delete', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:contract_delete', args=[contract.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            <td>Contract {{ contract.id }}</td>
+                            <td>{{ contract.customer }}</td>
+                            <td>{{ contract.user }}</td>                            
+                            <td>{{ contract.contract_date }}</td>
+                            {% if contract.organization.all() %}
+                                <td>
+                                {% for organization in contract.organization.all() %}
+                                    {{ organization }}
+                                    {% if not loop.last %};{% endif %}
+                                {% endfor %}
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            {% if contract.order_set.all() %}
+                                <td>
+                                {% for order in contract.order_set.all() %}
+                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
+                                    {% if not loop.last %};{% endif %}
+                                {% endfor %}
+                                &nbsp;&nbsp;<a href="{{ url('contract:partial-order-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            {% if contract.receipt_set.all() %}
+                                <td>
+                                {% for receipt in contract.receipt_set.all() %}
+                                    <a href="{{ receipt.get_absolute_url() }}" target="popup" onclick="window.open('{{ receipt.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ receipt }}</a>
+                                    {% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                                &nbsp;&nbsp;<a href="{{ url('contract:partial-receipt-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            <td>{{ contract.memo }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No Data!</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#contract_table thead tr').clone(true).appendTo('#contract_table thead');
+		$('#contract_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (contract_table.column(i).search() !== this.value) {
+					    contract_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var contract_table = $('#contract_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}
