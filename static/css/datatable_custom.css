@@ -1,0 +1,9 @@
+td.details-control {
+    background: url('/static/img/caret-square-down-solid.svg') no-repeat center center;
+    cursor: pointer;
+    background-size: 16px;
+}
+tr.shown td.details-control {
+    background: url('/static/img/caret-square-up-solid.svg') no-repeat center center;
+    background-size: 16px;
+}
