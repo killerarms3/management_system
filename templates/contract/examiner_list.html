@@ -31,8 +31,7 @@
                         {% endif %}
                         {% if perms.contract.can_delete_examiner %}
                             <td><a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}"><i class="fas fa-trash"></i></a></td>
-                        {% endif %}
-                            
+                        {% endif %}                            
                             <td><a href="{{ examiner.box.get_absolute_url() }}">{{ examiner.box.serial_number }}</a></td>
                             <td><a href="">{{ examiner.customer }}</a></td>                            
                         </tr> 

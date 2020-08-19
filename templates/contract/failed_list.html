@@ -24,11 +24,21 @@
                     <tbody>
                         {% for failed in object_list %}
                         <tr>
+                        {% if perms.contract.can_change_failed %}
                             <td><a href="{{ url('contract:failed_edit', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a></td>
+                        {% endif %}
+                        {% if perms.contract.can_delete_failed %}
                             <td><a href="{{ url('contract:failed_delete', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_delete', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                            <td><a href="{{ failed.box.get_absolute_url() }}">{{ failed.box.serial_number }}</a></td>                            
+                        {% endif %}
+                        {% if perms.contract.can_view_failed %}
+                            <td><a href="{{ failed.box.get_absolute_url() }}">{{ failed.box.serial_number }}</a></td>
+                        {% endif %}
                             <td>{{ failed.box.order }}</td>
+                        {% if perms.product.can_view_plan %}
                             <td><a href="">{{ failed.box.plan }}</a></td>
+                        {% else %}
+                            <td>{{ failed.box.plan }}</td>
+                        {% endif %}                            
                             <td>{{ failed.failed_reason }}</td>
                             <td>{{ failed.box.tracing_number }}</td>
                         </tr> 
