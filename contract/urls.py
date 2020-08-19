@@ -59,6 +59,10 @@ urlpatterns += [
 
 urlpatterns += [
     path('failed_reason/<int:pk>', views.Failed_reasonDetailView.as_view(), name = 'failed_reason-detail'),
+    path('failed_reason/add', views.Failed_reasonCreateView.as_view(), name = 'failed_reason_create'),
+    path('failed_reason/<int:pk>/edit', views.Failed_reasonUpdateView.as_view(), name = 'failed_reason_edit'),
+    path('failed_reason/<int:pk>/delete', views.Failed_reasonDeleteView.as_view(), name = 'failed_reason_delete'),
+    path('failed_reason-list/', views.Failed_reasonListView.as_view(), name = 'failed_reason-list'),    
 ]
 
 urlpatterns += [
@@ -74,4 +78,7 @@ urlpatterns += [
 ]
 urlpatterns += [
     path('add_payment_method', views.Payment_methodCreateView.as_view(), name = 'add_payment_method'),
+    path('edit_payment_method/<int:pk>', views.Payment_methodUpdateView.as_view(), name = 'edit_payment_method'),
+    path('delete_payment_method/<int:pk>', views.Payment_methodDeleteView.as_view(), name = 'delete_payment_method'),
+    path('payment_method_list', views.Payment_methodListView.as_view(), name = 'payment_method-list'),
 ]

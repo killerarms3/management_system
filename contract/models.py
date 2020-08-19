@@ -96,5 +96,5 @@ class Destroyed(models.Model):
         return reverse("contract:destroyed-detail", args=[str(self.pk)])
 
 class Examiner(models.Model):
-    box = models.ForeignKey(Box, on_delete=models.CASCADE)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='採樣盒')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='受測者')

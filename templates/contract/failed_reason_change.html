@@ -7,18 +7,14 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>編輯銷毀採樣盒: {{ destroyed.box.serial_number }}</h3>
+                <h3>編輯失敗原因: {{ failed_reason }}</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
                     <table class="table table-hover">
                         {% for fields in form %}
                             <tr>
                                 <th>{{ fields.label }}</th>
-                                {% if fields.label == '銷毀註記' %}
-                                    <td>{{ fields }} {{ fields.help_text }}</td>
-                                {% else %}
-                                    <td>{{ fields }}</td>
-                                {% endif %}
+                                <td>{{ fields }}</td>
                             </tr>
                         {% endfor %}                        
                     </table>
@@ -29,6 +25,7 @@
     </div>
 {% endblock content %}
 
+
 {% block js %}
 <script>
     $('select').multipleSelect({
@@ -37,17 +34,4 @@
       showClear: true
     });
 </script>
-<script>
-    var today = new Date();
-    var day = today.getDate();
-    var month = today.getMonth()+1;
-    var year = today.getFullYear();
-    if(day<10){
-        day="0"+day;
-    }
-    if(month<10){
-        month="0"+month;
-    }
-    today=year+"-"+month+"-"+day;
-</script>
-{% endblock js %}
+{% endblock %}

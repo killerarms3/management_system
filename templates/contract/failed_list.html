@@ -8,14 +8,13 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>Failed Box List(<a href="{{ url('contract:failed_create') }}" target="popup" onclick="window.open('{{ url('contract:failed_create') }}', 'popup', 'width=800', height='600'); return false">Add Failed Box</a>)</h3>
+                <h3>失敗清單(<a href="{{ url('contract:failed_create') }}" target="popup" onclick="window.open('{{ url('contract:failed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)</h3>
                 <table id="failed_table" class="display" style="width:100%">
                     <thead>
                         <tr>
                             <th></th>
                             <th></th>
-                            <th>Box Number</th>
-                            <th>Serial Number</th>
+                            <th>採樣盒</th>                            
                             <th>Order</th>
                             <th>Plan</th>
                             <th>Failed Reason</th>
@@ -27,8 +26,7 @@
                         <tr>
                             <td><a href="{{ url('contract:failed_edit', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a></td>
                             <td><a href="{{ url('contract:failed_delete', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_delete', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                            <td><a href="{{ failed.box.get_absolute_url() }}">{{ failed.box }}</a></td>
-                            <td>{{ failed.box.serial_number }}</td>
+                            <td><a href="{{ failed.box.get_absolute_url() }}">{{ failed.box.serial_number }}</a></td>                            
                             <td>{{ failed.box.order }}</td>
                             <td><a href="">{{ failed.box.plan }}</a></td>
                             <td>{{ failed.failed_reason }}</td>

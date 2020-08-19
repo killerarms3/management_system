@@ -6,7 +6,7 @@ from django.views.generic import ListView
 from django.views.generic import DetailView
 from .views import register
 import re
-
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index, name='index'),

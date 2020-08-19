@@ -21,7 +21,7 @@ class Title(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null = True)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True)
     title = models.ForeignKey(Title, on_delete=models.SET_NULL, null=True)
     

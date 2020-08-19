@@ -8,29 +8,41 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>Destroyed Box List(<a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">Add Destroyed Box</a>)</h3>
+                <h3>銷毀清單(
+                    {% if perms.contract.can_add_destroyed %}
+                        <a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>
+                    {% endif %}                    
+                )</h3>
                 <table id="destroyed_table" class="display" style="width:100%">
                     <thead>
                         <tr>
                             <th></th>
                             <th></th>
-                            <th>Box Number</th>
-                            <th>Status</th>
-                            <th>Sample destroyed Date</th>
-                            <th>Return Date</th>
+                            <th>採樣盒編號</th>
+                            <th>銷毀狀態</th>
+                            <th>銷毀日期</th>
+                            <th>DNA取回公司日期</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for destroyed in object_list %}
                         <tr>
+                        {% if perms.contract.can_change_destroyed %}
                             <td><a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_edit', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a></td>
+                        {% endif %}
+                        {% if perms.contract.can_delete_destroyed %}
                             <td><a href="{{ url('contract:destroyed_delete', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_delete', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                        {% endif %}
+                        {% if perms.contract.can_view_box %}
                             <td><a href="{{ destroyed.box.get_absolute_url() }}">{{ destroyed.box }}</a></td>
+                        {% else %}
+                            <td>{{ destroyed.box.serial_number }}</td>
+                        {% endif %}                            
                             <td>
                             {% if destroyed.is_sample_destroyed %}
-                                Destroyed
+                                已銷毀
                             {% else %}
-                                Waiting to be destroyed                               
+                                等待銷毀
                             {% endif %}
                             </td>
                             <td>{{ destroyed.sample_destroyed_date }}</td>

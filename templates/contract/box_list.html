@@ -8,7 +8,7 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>採樣盒清單(<a href="{{ url('contract:box_create') }}" target="popup" onclick="window.open('{{ url('contract:box_create') }}', 'popup', 'width=1200', height='600'); return false">新增</a>)</h3>
+                <h3>採樣盒清單(<a href="{{ url('contract:box_create') }}">新增</a>)</h3>
                 <table id="box_table" class="display" style="width:100%">
                     <thead>
                         <tr>

@@ -8,22 +8,32 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>Examiner List(<a href="{{ url('contract:examiner_create') }}" target="popup" onclick="window.open('{{ url('contract:examiner_create') }}', 'popup', 'width=800', height='600'); return false">Add Examiner</a>)</h3>
+                <h3>受檢者清單(
+                    {% if perms.contract.can_add_examiner %}
+                        <a href="{{ url('contract:examiner_create') }}" target="popup" onclick="window.open('{{ url('contract:examiner_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>
+                    {% endif %}
+                    
+                )</h3>
                 <table id="examiner_table" class="display" style="width:100%">
                     <thead>
                         <tr>
                             <th></th>
                             <th></th>
-                            <th>Box Number</th>
-                            <th>Examiner</th>                            
+                            <th>採樣盒編號</th>
+                            <th>受檢者</th>                            
                         </tr>
                     </thead>
                     <tbody>
                         {% for examiner in object_list %}
                         <tr>
+                        {% if perms.contract.can_change_examiner %}
                             <td><a href="{{ url('contract:examiner_edit', args=[examiner.id]) }}"><i class="fas fa-edit"></i></a></td>
-                            <td><a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}" target="popup" onclick="window.open('{{ url('contract:examiner_delete', args=[examiner.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                            <td><a href="{{ examiner.box.get_absolute_url() }}">{{ examiner.box }}</a></td>
+                        {% endif %}
+                        {% if perms.contract.can_delete_examiner %}
+                            <td><a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}"><i class="fas fa-trash"></i></a></td>
+                        {% endif %}
+                            
+                            <td><a href="{{ examiner.box.get_absolute_url() }}">{{ examiner.box.serial_number }}</a></td>
                             <td><a href="">{{ examiner.customer }}</a></td>                            
                         </tr> 
                         {% endfor %}

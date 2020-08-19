@@ -7,20 +7,16 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>編輯銷毀採樣盒: {{ destroyed.box.serial_number }}</h3>
+                <h3>新增失敗原因</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
-                    <table class="table table-hover">
+                    <table class="table table-hover">                        
                         {% for fields in form %}
-                            <tr>
+                            <tr>                                
                                 <th>{{ fields.label }}</th>
-                                {% if fields.label == '銷毀註記' %}
-                                    <td>{{ fields }} {{ fields.help_text }}</td>
-                                {% else %}
-                                    <td>{{ fields }}</td>
-                                {% endif %}
+                                <td>{{ fields }}</td>
                             </tr>
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>

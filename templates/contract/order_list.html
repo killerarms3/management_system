@@ -10,13 +10,13 @@
             {% if object_list %}
                 <h3>訂單清單
                 {% if perms.contract.can_add_order %}
-                    (<a href="{{ url('contract:order_create') }}" target="popup" onclick="window.open('{{ url('contract:order_create') }}', 'popup', 'width=1200', height='600'); return false">新增</a>)
+                    (<a href="{{ url('contract:order_create') }}">新增</a>)
                 {% endif %}
                 </h3>
                 <table id="order_table" class="display" style="width:100%">
                     <thead>
                         <tr>
-                            <th></th>                            
+                            <th></th>
                             <th></th>
                             <th>訂單編號</th>
                             <th>合約</th>

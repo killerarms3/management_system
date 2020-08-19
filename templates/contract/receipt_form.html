@@ -20,7 +20,7 @@
                         {% for fields in form %}
                             <tr>
                                 {% if fields.label == '付款方式' %}
-                                    <th>{{ fields.label }}(<a href="{{ url('contract:add_payment_method') }}">新增</a>)</th>
+                                    <th>{{ fields.label }}(<a href="{{ url('contract:add_payment_method') }}" target="popup" onclick="window.open('{{ url('contract:add_payment_method') }}', 'popup', 'width=800', height='600'); return false">新增</a>)</th>
                                     <td>{{ fields }}</td>
                                 {% else %}
                                     <th>{{ fields.label }}</th>
