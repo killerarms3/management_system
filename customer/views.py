@@ -113,10 +113,10 @@ def change_customer(request, id):
         # 客戶資料更新
         # (last_name, first_name, phone_number)必為unique
         # 確認更改後，是否會有重複客戶
-        exist_customers = Customer.objects.filter(last_name=request.POST['last_name'], first_name=request.POST['first_name'], phone_number=request.POST['phone_number'])
-        if exist_customers and str(exist_customers[0].id) != id:
-            messages.error(request, '此客戶已存在')
-            return redirect(reverse('customer:view_customer'))
+        # exist_customers = Customer.objects.filter(last_name=request.POST['last_name'], first_name=request.POST['first_name'], phone_number=request.POST['phone_number'])
+        # if exist_customers and str(exist_customers[0].id) != id:
+        #     messages.error(request, '此客戶已存在')
+            # return redirect(reverse('customer:view_customer'))
         customer.last_name = request.POST['last_name']
         customer.first_name = request.POST['first_name']
         if request.POST['birth_date']:

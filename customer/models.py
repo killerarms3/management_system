@@ -10,7 +10,10 @@ class Customer(models.Model):
     email = models.CharField(max_length=320, blank=True, null=True)
     phone_number = models.CharField(max_length=32, blank=True, null=True)
     address = models.CharField(max_length=320, blank=True, null=True)
-    memo = models.TextField(blank=True, null=True)
+    memo = models.TextField(max_length = 1000, blank=True, null=True)
+
+    def __str__(self):
+        return self.last_name + ', ' + self.first_name
 
 class Feedback(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
@@ -22,6 +25,8 @@ class Organization(models.Model):
     name = models.CharField(max_length=256)
     department = models.CharField(max_length=256)
 
+    def __str__(self):
+        return self.name + ', ' + self.department
 
 class Customer_Organization(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
