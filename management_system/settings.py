@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'project',
     'customer',
     'contract',
-    'experiment'
+    'experiment',
+    'history',
     
 ]
 
@@ -100,7 +101,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'management_system',
         'USER': 'root',
-        'PASSWORD': 'itmysecret',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '3306'
     }
@@ -159,6 +160,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'killerarms3@gmail.com'
-EMAIL_HOST_PASSWORD = 'DoNTBeaJoKE4064'
+EMAIL_HOST_USER = 'EmailAddress'
+EMAIL_HOST_PASSWORD = 'Password'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
