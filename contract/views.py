@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity
+from history.models import History
+from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required, permission_required
@@ -14,20 +16,50 @@ from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, 
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse, HttpResponseRedirect
 
+# customize class
+# 繼承CreateView並自定義form_valid
+class CreateView_add_log(CreateView):
+    # --------- history --------
+    def form_valid(self, form):        
+        obj_id, dict = Create_log_dict(self, form, self.model)
+        log_addition(self.request.user, 'contract', self.object._meta.model_name, obj_id, '1', dict, {})
+        return super().form_valid(form)
+    # --------- history --------
+
+# 繼承UpdateView並自定義form_valid
+class UpdateView_add_log(UpdateView):
+    # --------- history --------
+    def form_valid(self, form):
+        obj_id, dict, pre_dict = Update_log_dict(self, form)
+        log_addition(self.request.user, 'contract', self.object._meta.model_name, obj_id, '2', dict, pre_dict)
+        return super().form_valid(form)
+    # --------- history --------
+
+# 繼承DeleteView並自定義form_valid
+class DeleteView_add_log(DeleteView):
+    # --------- history --------
+    # DeleteView中並沒有formValid函式，其在進行刪除功能時會在網頁回傳POST時會在post函式中回傳並呼叫delete函式，
+    # 具體的刪除功能寫在delete中，所以這裡將紀錄log的部分自定義在post裡，並呼叫父類別的post以使用Django定義的delete函式
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        pre_dict = object_to_dict(obj)
+        log_addition(request.user, 'contract', obj._meta.model_name, obj.id, '3', {}, pre_dict)
+        return super().post(request, *args, **kwargs)
+    # --------- history --------
+
 # Create your views here.
-# @login_required
-# @permission_required()
+
 class ContractListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_add_contract'
     model = Contract
 
-class ContractCreate(PermissionRequiredMixin, CreateView):
+class ContractCreate(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_contract'
     model = Contract
     form_class = ContractCreateForm
     success_url = reverse_lazy('contract:view_contract')
 
-class ContractUpdateView(PermissionRequiredMixin, UpdateView):
+class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_contract'
     model = Contract
     form_class = ContractUpdateForm
@@ -43,13 +75,29 @@ class ContractUpdateView(PermissionRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['orders'] = orders
         context['receipts'] = receipts
-        return context
+        return context    
 
 class ContractDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = 'contract.can_delete_contract'
     model = Contract
     success_url = reverse_lazy('contract:view_contract')
+    
+    # --------- history --------
+    def post(self, request, *args, **kwargs):
+        sub_table_list = ['Order', 'Receipt']
+        obj = self.get_object()
+        # 檢查這個contract是否與其子表有關係，若有，則因應CASCADE關聯會將子表一同刪除的特性，紀錄子表的刪除紀錄，以下皆同
+        for model_name in sub_table_list:
+            sub_obj = apps.get_model('contract', model_name)
+            if sub_obj.objects.filter(contract=obj): # 檢查是否存在
+                specify_sub_obj = sub_obj.objects.get(contract=obj) # 找出
+                sub_pre_dict = object_to_dict(specify_sub_obj)
+                log_addition(request.user, 'contract', model_name.lower(), specify_sub_obj.id, '3', {}, sub_pre_dict)
 
+        pre_dict = object_to_dict(obj)
+        log_addition(request.user, 'contract', 'contract', obj.id, '3', {}, pre_dict)
+        return super().post(request, *args, **kwargs)
+    # --------- history --------
 
 class OrderDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'contract.can_view_order'
@@ -70,6 +118,7 @@ class OrderListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_view_order'
     model = Order
     template_name = 'contract/order_list.html'
+
     # # 傳入Box以取得對應Order的Box
     def get_context_data(self, **kwargs):
         order_quantity = apps.get_model('contract', 'Order_quantity')
@@ -79,11 +128,11 @@ class OrderListView(PermissionRequiredMixin, generic.ListView):
         context['box'] = box
         return context
 
-class OrderUpdateView(PermissionRequiredMixin, UpdateView):
+class OrderUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_order'
     model = Order
     form_class = OrderUpdateForm
-    template_name = 'contract/order_change.html'
+    template_name = 'contract/order_change.html'    
 
     def get_context_data(self, **kwargs):
         Box = apps.get_model('contract', 'Box')        
@@ -108,38 +157,44 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
         if form.is_valid():
             
             order.order_date=form.cleaned_data['order_date']
-            order.contract=form.cleaned_data['contract']            
+            order.contract=form.cleaned_data['contract']
             order.memo=form.cleaned_data['memo']
             order.save()
             for plan in form.cleaned_data['plan']:
                 order.plan.add(plan.id)
             order.save()
-            
-            order_new = Order.objects.all().order_by('-id').first()            
 
+            # plan是ManytoMany關係，有可能有複數個，故利用迴圈逐個處理，以下皆考慮相同plan的狀況
             for plan in form.cleaned_data['plan']:
-                quantity_tag = plan.name+'_quantity'
-                tracing_number_tag = plan.name+'_tracing_number'
-                quantity = request.POST[quantity_tag]
-                tracing_number = request.POST[tracing_number_tag]
+                quantity_tag = plan.name+'_quantity' # template上quantity欄位的name
+                tracing_number_tag = plan.name+'_tracing_number' # template上tracing_number欄位的對應name
+                quantity = request.POST[quantity_tag] # 利用前面得到的name取得在template輸入的值
+                tracing_number = request.POST[tracing_number_tag] # 同上
                 new_serial_number_list = []
-                box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number')
-                max_serial_number = box_serial_number_list[0][0]
-                perfix = max_serial_number[:3]
-                max_number = int(max_serial_number[3:])
-                for i in range(int(quantity)):
-                    new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6))
+                box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number') # 取得box的serial number，並大到小排序
+                max_serial_number = box_serial_number_list[0][0] # 取得serial number的最大值
+                perfix = max_serial_number[:3] # 取得serial number中的前綴詞(代號)
+                max_number = int(max_serial_number[3:]) #將前綴詞之外的轉成正整數數值
+                for i in range(int(quantity)): # 先前取得的quantity即為本次新增的box數量
+                    new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6)) # 從現存在於database中serial number的最大值之後產生新的serial number，並將數字部分補齊六個(ex: 36補成000036)
+                # 新增
                 for list in new_serial_number_list:
                     Box.objects.create(
                     serial_number = list,
                     plan = plan,
-                    order = order_new,
+                    order = order,
                     tracing_number = tracing_number
                     )
+                    # --------- history --------
+                    box_new =  Box.objects.all().order_by('-id').first()
+                    log_addition(self.request.user, 'contract', 'box', box_new.id, '1', object_to_dict(box_new), {})
+            # --------- history --------            
+            log_addition(self.request.user, 'contract', 'order', order.id, '1', object_to_dict(order), {})
+            # --------- history --------
             return HttpResponseRedirect('/contract/order/order_list')
         return render(request, self.template_name, {'form':form})
 
-class OrderDeleteView(PermissionRequiredMixin, DeleteView):
+class OrderDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_order'
     model = Order
     success_url = reverse_lazy('contract:order-list')
@@ -169,18 +224,18 @@ class ReceiptDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'contract.can_view_receipt'
     model = Receipt
 
-class ReceiptCreateView(PermissionRequiredMixin, CreateView):
+class ReceiptCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_receipt'
-    model = Receipt    
+    model = Receipt
     form_class = ReceiptCreateForm
 
-class ReceiptUpdateView(PermissionRequiredMixin, UpdateView):
+class ReceiptUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_receipt'
     model = Receipt
     template_name = 'contract/receipt_change.html'
     form_class = ReceiptUpdateForm
 
-class ReceiptDeleteView(PermissionRequiredMixin, DeleteView):
+class ReceiptDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_receipt'
     model = Receipt
     success_url = reverse_lazy('contract:view_contract')
@@ -190,31 +245,18 @@ class BoxDetailView(PermissionRequiredMixin, generic.DetailView):
     model = Box
 
     def get_context_data(self, **kwargs):
-        faileds = apps.get_model('contract', 'Failed')
-        examiners = apps.get_model('contract', 'Examiner')
-        destroyeds = apps.get_model('contract', 'Destroyed')
-        all_box = apps.get_model('contract', 'Box')
-        box = all_box.objects.get(pk=self.kwargs.get('pk'))
+        sub_table_list = ['Failed', 'Examiner', 'Destroyed']
         context = super().get_context_data(**kwargs)
-        # 若不存在則不輸出
-        if faileds.objects.filter(box=box):
-            failed = faileds.objects.get(box=box)
-            context['failed'] = failed
-        else:
-            context['failed'] = False
-
-        if examiners.objects.filter(box=box):
-            examiner = examiners.objects.get(box=box)
-            context['examiner'] = examiner
-        else:
-            context['examiner'] = False
-
-        if destroyeds.objects.filter(box=box):
-            destroyed = destroyeds.objects.get(box=box)
-            context['destroyed'] = destroyed
-        else:
-            context['destroyed'] = False
-
+        box = self.get_object()
+        for Name in sub_table_list:
+            name = Name.lower()
+            objs = apps.get_model('contract', Name)
+            # 若不存在則不輸出
+            if objs.objects.filter(box=box):
+                obj = objs.objects.get(box=box)
+                context[name] = obj
+            else:
+                context[name] = False
         return context
 
 class BoxListView(PermissionRequiredMixin, generic.ListView):
@@ -222,13 +264,12 @@ class BoxListView(PermissionRequiredMixin, generic.ListView):
     model = Box
     # 為了輸出與Box有關的資料
     def get_context_data(self, **kwargs):
-        failed = apps.get_model('contract', 'Failed')
-        examiner = apps.get_model('contract', 'Examiner')
-        destroyed = apps.get_model('contract', 'Destroyed')
+        sub_table_list = ['Failed', 'Examiner', 'Destroyed']
         context = super().get_context_data(**kwargs)
-        context['failed'] = failed
-        context['examiner'] = examiner
-        context['destroyed'] = destroyed
+        for Name in sub_table_list:
+            name = Name.lower()
+            obj = apps.get_model('contract', Name)
+            context[name] = obj
         return context
 
 class BoxDeleteView(PermissionRequiredMixin, DeleteView):
@@ -236,33 +277,38 @@ class BoxDeleteView(PermissionRequiredMixin, DeleteView):
     model = Box
     success_url = reverse_lazy('contract:box-list')
 
+    # --------- history --------
+    def post(self, request, *args, **kwargs):
+        sub_table_list = ['Failed', 'Examiner', 'Destroyed']
+        obj = self.get_object()
+        # 檢查這個box是否與其子表有關係，若有，則因應CASCADE關聯會將子表一同刪除的特性，紀錄子表的刪除紀錄，以下皆同
+        for model_name in sub_table_list:
+            sub_obj = apps.get_model('contract', model_name)
+            if sub_obj.objects.filter(box=obj):
+                specify_sub_obj = sub_obj.objects.get(box=obj)
+                sub_pre_dict = object_to_dict(specify_sub_obj)
+                log_addition(request.user, 'contract', model_name.lower(), specify_sub_obj.id, '3', {}, sub_pre_dict)
+
+        pre_dict = object_to_dict(obj)
+        log_addition(request.user, 'contract', 'box', obj.id, '3', {}, pre_dict)
+        return super().post(request, *args, **kwargs)
+    # --------- history --------
+
 class BoxCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'contract.can_add_box'
     model = Box
     form_class = MultipleBoxCreateForm
-    success_url = reverse_lazy('contract:box-list')
-
-    # def get_context_data(self, **kwargs):       
-    #     box_serial_number_list = Box.objects.all().values_list('serial_number').order_by('-serial_number')
-    #     max_serial_number = box_serial_number_list[0][0]
-    #     perfix = max_serial_number[:3]
-    #     max_number = int(max_serial_number[3:])
-    #     context = super().get_context_data(**kwargs)
-    #     context['perfix'] = perfix
-    #     context['max_number'] = max_number
-    #     context['max_serial_number'] = max_serial_number
-    #     return context
 
     def form_valid(self, form):
         new_serial_number_list = []
         plan = form.cleaned_data['plan']
-        quantity = form.cleaned_data['quantity']
-        box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number')
+        quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
+        box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
         max_serial_number = box_serial_number_list[0][0]
         perfix = max_serial_number[:3]
         max_number = int(max_serial_number[3:])
         for i in range(quantity):
-            new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6))
+            new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6)) # 創造新增的box的serial number，數字會補齊六位
         for list in new_serial_number_list:
             Box.objects.create(
                 serial_number = list,
@@ -270,6 +316,10 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
                 order = form.cleaned_data['order'],
                 tracing_number = form.cleaned_data['tracing_number'],
             )
+            # --------- history --------
+            box_new =  Box.objects.all().order_by('-id').first()
+            log_addition(self.request.user, 'contract', 'box', box_new.id, '1', object_to_dict(box_new), {})
+            # --------- history --------
         return HttpResponseRedirect('/contract/box/box_list')
 
 class BoxbyOrderListView(BoxListView):
@@ -285,20 +335,20 @@ class FailedListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_view_failed'
     model = Failed
 
-class FailedCreateView(PermissionRequiredMixin, CreateView):
+class FailedCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_failed'
-    model = Failed    
+    model = Failed
     form_class = FailedCreateForm
     success_url = reverse_lazy('contract:failed-list')
 
-class FailedUpdateView(PermissionRequiredMixin, UpdateView):
+class FailedUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_failed'
     model = Failed
     fields = ('failed_reason',)
     template_name = 'contract/failed_change.html'
     success_url = reverse_lazy('contract:failed-list')
 
-class FailedDeleteView(PermissionRequiredMixin, DeleteView):
+class FailedDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_failed'
     model = Failed
     success_url = reverse_lazy('contract:failed-list')
@@ -311,18 +361,18 @@ class DestroyedDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'contract.can_view_deatroyed'
     model = Destroyed
 
-class DestroyedCreateView(PermissionRequiredMixin, CreateView):
+class DestroyedCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_destroyed'
     model = Destroyed
     form_class = DestroyedCreateForm
 
-class DestroyedUpdateView(PermissionRequiredMixin, UpdateView):
+class DestroyedUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_destroyed'
     model = Destroyed
     form_class = DestroyedUpdateForm
     template_name = 'contract/destroyed_change.html'
 
-class DestroyedDeleteView(PermissionRequiredMixin, DeleteView):
+class DestroyedDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_destroyed'
     model = Destroyed
     success_url = reverse_lazy('contract:destroyed-list')
@@ -335,40 +385,41 @@ class Failed_reasonListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_view_failed_reason'
     model = Failed_reason
 
-class Failed_reasonCreateView(PermissionRequiredMixin, CreateView):
+class Failed_reasonCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_failed_reason'
     model = Failed_reason
     fields = '__all__'
 
-class Failed_reasonUpdateView(PermissionRequiredMixin, UpdateView):
+class Failed_reasonUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_failed_reason'
     model = Failed_reason
     fields = '__all__'
     template_name = 'contract/failed_reason_change.html'
     success_url = reverse_lazy('contract:failed_reason-list')
 
-class Failed_reasonDeleteView(PermissionRequiredMixin, DeleteView):
+class Failed_reasonDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_failed_reason'
     model = Failed_reason
+    success_url = reverse_lazy('contract:failed_reason-list')
 
 class ExaminerListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_view_examiner'
     model = Examiner
 
-class ExaminerUpdateView(PermissionRequiredMixin, UpdateView):
+class ExaminerUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_examiner'
     model = Examiner
     template_name = 'contract/examiner_change.html'
     success_url = reverse_lazy('contract:examiner-list')
-    fields = {'customer',}
+    fields = ['customer']
 
-class ExaminerCreateView(PermissionRequiredMixin, CreateView):
+class ExaminerCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_examiner'
     model = Examiner
     form_class = ExaminerCreateForm
-    success_url = reverse_lazy('contract:examiner-list')
+    success_url = reverse_lazy('contract:examiner-list')    
 
-class ExaminerDeleteView(PermissionRequiredMixin, DeleteView):
+class ExaminerDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_examiner'
     model = Examiner
     success_url = reverse_lazy('contract:examiner-list')
@@ -376,48 +427,58 @@ class ExaminerDeleteView(PermissionRequiredMixin, DeleteView):
 @permission_required('contract.can_change_box')
 @csrf_protect
 def BoxUpdateView(request, pk):
-    Box = apps.get_model('contract', 'Box')
-    Failed = apps.get_model('contract', 'Failed')
-    Destroyed = apps.get_model('contract', 'Destroyed')    
-    Examiner = apps.get_model('contract', 'Examiner')    
+    Box = apps.get_model('contract', 'Box')    
     box = Box.objects.get(pk=pk)
     # 標記Box是否擁有這些關係
-    failed_exist = False
-    destroyed_exist = False
-    examiner_exist = False
-    # 若是Box有這些關係則標記為True
-    if Failed.objects.filter(box=box): # filter 存在與否會回傳boolean, get 會回傳DoesNotExist
-        failed = Failed.objects.get(box=box)
-        failed_exist = True
-    if Destroyed.objects.filter(box=box):
-        destroyed = Destroyed.objects.get(box=box)
-        destroyed_exist = True
-    if Examiner.objects.filter(box=box):
-        examiner = Examiner.objects.get(box=box)
-        examiner_exist = True
+    exist_tag = {'failed':False, 'destroyed':False, 'examiner':False}
+    sub_table_list = ['Failed', 'Examiner', 'Destroyed']
+    sub_table = {}
+    for Name in sub_table_list:
+        Obj = apps.get_model('contract', Name)
+        name = Name.lower()
+        # 若是Box有這些關係則標記為True
+        if Obj.objects.filter(box=box):
+            obj = Obj.objects.get(box=box)
+            exist_tag[name] = True
+            sub_table[name] = obj
     
     if request.method == 'POST':
         form = BoxUpdateForm(request.POST)
         if form.is_valid():
+            pre_dict = object_to_dict(box) # history
             box.serial_number = form.cleaned_data['serial_number']
             box.plan = form.cleaned_data['plan']
             box.order = form.cleaned_data['order']
             box.tracing_number = form.cleaned_data['tracing_number']
             box.save()
+            dict = object_to_dict(box) # history
+            log_addition(request.user, 'contract', 'box', box.id, '2', dict, pre_dict) # history
 
-            if failed_exist:
+            if exist_tag['failed']:
+                failed = sub_table['failed']
+                pre_dict = object_to_dict(failed) # history
                 failed.failed_reason = form.cleaned_data['failed_reason']
                 failed.save()
+                dict = object_to_dict(failed) # history
+                log_addition(request.user, 'contract', 'failed', failed.id, '2', dict, pre_dict) # history
 
-            if destroyed_exist:
+            if exist_tag['destroyed']:
+                destroyed = sub_table['destroyed']
+                pre_dict = object_to_dict(destroyed) # history
                 destroyed.is_sample_destroyed = form.cleaned_data['is_sample_destroyed']
                 destroyed.sample_destroyed_date = form.cleaned_data['sample_destroyed_date']
                 destroyed.return_date = form.cleaned_data['return_date']
                 destroyed.save()
+                dict = object_to_dict(destroyed) # history
+                log_addition(request.user, 'contract', 'destroyed', destroyed.id, '2', dict, pre_dict) # history
 
-            if examiner_exist:
+            if exist_tag['examiner']:
+                examiner = sub_table['examiner']
+                pre_dict = object_to_dict(examiner) # history
                 examiner.customer = form.cleaned_data['examiner']
                 examiner.save()
+                dict = object_to_dict(examiner) # history
+                log_addition(request.user, 'contract', 'examiner', examiner.id, '2', dict, pre_dict) # history
 
             return HttpResponseRedirect('/contract/box/box_list')
     else:
@@ -427,22 +488,22 @@ def BoxUpdateView(request, pk):
             'plan':box.plan,
             'tracing_number':box.tracing_number,
         }
-        if failed_exist:
-            default_data['failed_reason'] = failed.failed_reason
-        if destroyed_exist:
-            default_data['is_sample_destroyed'] = destroyed.is_sample_destroyed
-            default_data['sample_destroyed_date'] = destroyed.sample_destroyed_date
-            default_data['return_date'] = destroyed.return_date
-        if examiner_exist:
-            default_data['examiner'] = examiner.customer
+        if exist_tag['failed']:
+            default_data['failed_reason'] = sub_table['failed'].failed_reason
+        if exist_tag['destroyed']:
+            default_data['is_sample_destroyed'] = sub_table['destroyed'].is_sample_destroyed
+            default_data['sample_destroyed_date'] = sub_table['destroyed'].sample_destroyed_date
+            default_data['return_date'] = sub_table['destroyed'].return_date
+        if exist_tag['examiner']:
+            default_data['examiner'] = sub_table['examiner'].customer
         form = BoxUpdateForm(default_data)
 
     context = {
         'form': form,
         'box':box,
-        'failed_exist': failed_exist,
-        'destroyed_exist': destroyed_exist,
-        'examiner_exist': examiner_exist,
+        'failed_exist': exist_tag['failed'],
+        'destroyed_exist': exist_tag['destroyed'],
+        'examiner_exist': exist_tag['examiner'],
     }
     return render(request, 'contract/box_change.html', context)
 
@@ -457,10 +518,14 @@ def AddSpecifyBoxtoFailed(request, pk):
     specify_box = True
     if request.method == 'POST':
         form = SpecifyFailedCreateForm(request.POST)
-        if form.is_valid():            
+        if form.is_valid():
             failed.box = box
             failed.failed_reason = form.cleaned_data['failed_reason']
             failed.save()
+            # --------- history --------
+            dict = object_to_dict(failed) # history
+            log_addition(request.user, 'contract', 'failed', failed.id, '1', dict, {}) # history
+            # --------- history --------
             return redirect(reverse('contract:failed-list'))
     else:        
         form = SpecifyFailedCreateForm()
@@ -485,6 +550,10 @@ def AddSpecifyBoxtoDestroyed(request, pk):
             destroyed.sample_destroyed_date = form.cleaned_data['sample_destroyed_date']
             destroyed.return_date = form.cleaned_data['return_date']
             destroyed.save()
+            # --------- history --------
+            dict = object_to_dict(destroyed) # history
+            log_addition(request.user, 'contract', 'destroyed', destroyed.id, '1', dict, {}) # history
+            # --------- history --------
             return redirect(reverse('contract:destroyed-list'))
     else:        
         form = SpecifyDestroyedCreateForm()
@@ -499,20 +568,26 @@ def AddSpecifyBoxtoExaminer(request, pk):
     Box = apps.get_model('contract', 'Box')
     Examiner = apps.get_model('contract', 'Examiner')
     box = Box.objects.get(pk=pk)
-    examiner = Examiner()
+    examiner = Examiner()    
     specify_box = True
     if request.method == 'POST':
         form = SpecifyExaminerCreateForm(request.POST)
-        if form.is_valid():            
+        if form.is_valid():
+            
             examiner.box = box
             examiner.customer = form.cleaned_data['customer']
             examiner.save()
+            # --------- history --------
+            dict = object_to_dict(examiner) # history
+            log_addition(request.user, 'contract', 'examiner', examiner.id, '1', dict, {}) # history
+            # --------- history --------
             return redirect(reverse('contract:examiner-list'))
     else:        
         form = SpecifyExaminerCreateForm()
         
     context = {'box':box,'form':form, 'specify_box':specify_box}
     return render(request, 'contract/examiner_form.html', context)
+
 # 新增機構
 @permission_required('customer.can_add_organization')
 @csrf_protect
@@ -530,6 +605,10 @@ def add_organization(request):
         organization.department = request.POST['department']
         organization.save()
         messages.info(request, '已成功新增機構')
+        # --------- history --------            
+        dict = object_to_dict(organization) # history
+        log_addition(request.user, 'customer', 'organization', organization.id, '1', dict, {}) # history
+        # --------- history --------            
         return redirect(reverse('contract:contract_create'))
     return render(request, 'contract/add_organization.html', locals())
 
@@ -553,6 +632,10 @@ def AddSpecifyContracttoReceipt(request, pk):
             receipt.payment_method = form.cleaned_data['payment_method']
             receipt.memo = form.cleaned_data['memo']
             receipt.save()
+            # --------- history --------            
+            dict = object_to_dict(receipt) # history
+            log_addition(request.user, 'contract', 'receipt', receipt.id, '1', dict, {}) # history
+            # --------- history --------            
             #連續新增
             return redirect(reverse('contract:add_specify_receipt', args=[contract.id]))
     else:        
@@ -581,6 +664,10 @@ def AddSpecifyContracttoOrder(request, pk):
             for plan in form.cleaned_data['plan']:
                 order.plan.add(plan.id)
             order.save()
+            # --------- history --------
+            dict = object_to_dict(order) # history
+            log_addition(request.user, 'contract', 'order', order.id, '1', dict, {}) # history
+            # --------- history --------
             # 連續新增
             return redirect(reverse('contract:add_specify_order', args=[contract.id]))
     else:        
@@ -616,6 +703,12 @@ def AddSpecifyOrdertoBox(request, pk):
                     order = order,
                     tracing_number = form.cleaned_data['tracing_number'],
                 )
+                # --------- history --------
+                box =  Box.objects.all().order_by('-id').first()
+                dict = object_to_dict(box)
+                log_addition(request.user, 'contract', 'box', box.id, '1', dict, {}) # history
+                # --------- history --------
+
             # 回到本頁面以進行連續新增
             return redirect(reverse('contract:add_specify_box', args=[order.id]))
     else:        
@@ -624,20 +717,20 @@ def AddSpecifyOrdertoBox(request, pk):
     context = {'order':order,'form':form, 'specify_order':specify_order}
     return render(request, 'contract/box_form.html', context)
 
-class Payment_methodCreateView(PermissionRequiredMixin, CreateView):
+class Payment_methodCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.can_add_payment_method'
     model = Payment_method
     fields = '__all__'
     success_url = reverse_lazy('contract:add_payment_method')
 
-class Payment_methodUpdateView(PermissionRequiredMixin, UpdateView):
+class Payment_methodUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.can_change_payment_method'
     model = Payment_method
     template_name = 'contract/payment_method_change.html'
     fields = '__all__'
     success_url = reverse_lazy('contract:payment_method-list')
 
-class Payment_methodDeleteView(PermissionRequiredMixin, DeleteView):
+class Payment_methodDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.can_delete_payment_method'
     model = Payment_method
     fields = '__all__'

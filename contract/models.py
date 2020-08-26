@@ -30,7 +30,7 @@ class Payment_method(models.Model):
 class Order(models.Model):
     order_date = models.DateField(blank=True, null=True, verbose_name='訂單日期')
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, verbose_name='合約')
-    plan = models.ManyToManyField(Plan, null=True, verbose_name='方案') # 一個order可以擁有多個plan，一個plan也可以屬於多個order
+    plan = models.ManyToManyField(Plan, verbose_name='方案') # 一個order可以擁有多個plan，一個plan也可以屬於多個order
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
 
     def __str__(self):

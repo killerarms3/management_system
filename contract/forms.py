@@ -53,7 +53,6 @@ class ContractUpdateForm(forms.ModelForm):
                 }),
         required=False
         )
-
     class Meta:
         model = Contract
         fields = '__all__'
@@ -105,18 +104,6 @@ class OrderCreateForm(OrderUpdateForm):
             attrs={
                 'onchange':"addtr();"
                 }))
-    # subplan = forms.ModelChoiceField(label='子方案', queryset=Plan.objects.all(), required=True)
-    # quantity = forms.IntegerField(
-    #     label='採樣盒數量',
-    #     widget=forms.NumberInput(
-    #         attrs={
-    #             'class': 'form-control',
-    #             'min': '1',
-    #             'max': '100',
-    #         }),
-    #     required=True
-    #     )
-
     class Meta:
         model = Order
         fields = '__all__'
@@ -153,7 +140,6 @@ class DestroyedUpdateForm(forms.ModelForm):
             }),
         required=False
         )
-
     class Meta:
         model = Destroyed
         fields = ('is_sample_destroyed', 'sample_destroyed_date', 'return_date')
@@ -161,8 +147,7 @@ class DestroyedUpdateForm(forms.ModelForm):
 class DestroyedCreateForm(DestroyedUpdateForm):
     destroyed = apps.get_model('contract', 'Destroyed')
     id_list = destroyed.objects.all().values_list('box_id', flat=True)
-    box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於destroyed的box不予顯示
-    
+    box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於destroyed的box不予顯示    
     class Meta:
         model = Destroyed
         fields = '__all__'
@@ -171,7 +156,6 @@ class FailedCreateForm(forms.ModelForm):
     failed = apps.get_model('contract', 'Failed')
     id_list = failed.objects.all().values_list('box_id', flat=True)
     box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於failed的box不予顯示
-
     class Meta:
         model = Failed
         fields = '__all__'
@@ -180,7 +164,6 @@ class ExaminerCreateForm(forms.ModelForm):
     examiner = apps.get_model('contract', 'Examiner')
     id_list = examiner.objects.all().values_list('box_id', flat=True)
     box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於examiner的box不予顯示
-
     class Meta:
         model = Examiner
         fields = '__all__'
