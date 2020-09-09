@@ -20,16 +20,26 @@
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th scope="col">* 機構名稱(必填)</th>
+                            <th scope="col">* 機構名稱</th>
                                 <td>
                                     <input class="form-control" type="text" name="name" maxlength="256" value="{{ organization.name }}" required>
                                 </td>
                         </tr>
                         <tr>
-                            <th scope="col">部門/單位</th>
+                            <th scope="col">* 部門/單位</th>
                             <td>
-                                <input class="form-control" type="text" name="department" maxlength="256" value="{{ organization.department }}">
+                                <input class="form-control" type="text" name="department" maxlength="256" value="{{ organization.department }}" required>
                             </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">is_other</th>
+                            <td>
+                                <select class="multiple-select" id="is_other" name="is_other">
+                                    <option value="1" {% if organization.is_other %} selected {% endif %}>Yes</option>
+                                    <option value="0" {% if not organization.is_other %} selected {% endif %}>No</option>
+                                </select>
+                            </td>
+
                         </tr>
                     </tbody>
                 </table>
