@@ -103,7 +103,7 @@
 
 		});
         $('#query, #multiquery').on('keyup change', function () {
-            var querys = this.value.split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
             var i = parseInt($('#multiquery :selected').val(), 10);
             customer_table.column(i).search(querys.join('|'), true, false).draw();
         });
