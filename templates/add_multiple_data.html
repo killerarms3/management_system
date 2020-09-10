@@ -8,8 +8,8 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增機構</h3>
-            <form method="POST" action="{{ url('customer:add_organization') }}" enctype="multipart/form-data">{{ csrf_input }}
+            <h3 class="custom_text">{{ header }}</h3>
+            <form method="POST" action="{{ action_url }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
                 <ul class="messages">
                     {% for message in messages %}
@@ -20,15 +20,20 @@
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th scope="col">* 機構名稱</th>
+                            <th scope="col">範例表</th>
                                 <td>
-                                    <input class="form-control" type="text" name="name" maxlength="256" required>
+                                    <a href="{{ sheet_template }}" download>
+                                        <i class="fas fa-download"> 下載</i>
+                                    </a>
                                 </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 部門/單位</th>
+                            <th scope="col">* 上傳表格</th>
                             <td>
-                                <input class="form-control" type="text" name="department" maxlength="256" required>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="sheet" name="sheet">
+                                    <label class="custom-file-label" for="sheet">Choose file</label>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -38,5 +43,13 @@
         </div>
     </div>
 </div>
-
 {% endblock content %}
+{% block js %}
+<script>
+$('#sheet').change(function() {
+    var i = $(this).next('label').clone();
+    var file = $('#sheet')[0].files[0].name;
+    $(this).next('label').text(file);
+});
+</script>
+{% endblock js %}

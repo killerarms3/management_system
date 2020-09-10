@@ -8,8 +8,8 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">編輯機構</h3>
-            <form method="POST" action="{{ url('customer:change_organization', args=[organization.id]) }}" enctype="multipart/form-data">{{ csrf_input }}
+            <h3 class="custom_text">新增產品</h3>
+            <form method="POST" action="{{ url('product:add_product') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
                 <ul class="messages">
                     {% for message in messages %}
@@ -20,26 +20,27 @@
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th scope="col">* 機構名稱</th>
-                                <td>
-                                    <input class="form-control" type="text" name="name" maxlength="256" value="{{ organization.name }}" required>
-                                </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 部門/單位</th>
+                            <th scope="col">* 產品名稱</th>
                             <td>
-                                <input class="form-control" type="text" name="department" maxlength="256" value="{{ organization.department }}" required>
+                                <input class="form-control" type="text" name="name" maxlength="256" required>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">is_other</th>
+                            <th scope="col">產品前綴</th>
                             <td>
-                                <select class="multiple-select" id="is_other" name="is_other">
-                                    <option value="1" {% if organization.is_other %} selected {% endif %}>Yes</option>
-                                    <option value="0" {% if not organization.is_other %} selected {% endif %}>No</option>
+                                <input class="form-control" type="text" name="prefix" maxlength="16">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">產品大表</th>
+                            <td>
+                                <select class="multiple-select" id="project_content" name="project_content">
+                                    <option value="" selected>無</option>
+                                    {% for content in project_contents %}
+                                    <option value="{{ content.id }}">{{ content.model }}</option>
+                                    {% endfor %}
                                 </select>
                             </td>
-
                         </tr>
                     </tbody>
                 </table>
@@ -49,4 +50,10 @@
     </div>
 </div>
 {% endblock content %}
-
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+    });
+</script>
+{% endblock js %}

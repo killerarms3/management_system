@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">產品狀態{% if perms.experiment.can_add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆客戶</a>){% endif %}</h3>
+            <form method="POST" action="{{ url('experiment:add_experiment') }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th scope="col">* 編號</th>
+                                <td>
+                                    <select class="multiple-select" id="box" name="box" required>
+                                        <option value="" selected></option>
+                                        {% for box in boxes %}
+                                        <option value="{{ box.id }}">{{ box.serial_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 單位</th>
+                            <td>
+                                <select class="multiple-select" id="organization" name="organization" required>
+                                    <option value="" selected></option>
+                                    {% for organization in organizations %}
+                                    <option value="{{ organization.id }}">{{ organization.name }} {{ organization.department }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 收到日</th>
+                            <td>
+                                <input class="form-control" type="date" id="receiving_date" name="receiving_date" min="2017-01-01" max="2020-01-01" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">完成日</th>
+                            <td>
+                                <input class="form-control" type="date" id="complete_date" name="complete_date" min="2017-01-01" max="2020-01-01">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">移交日</th>
+                            <td>
+                                <input class="form-control" type="date" id="data_transfer_date" name="data_transfer_date" min="2017-01-01" max="2020-01-01">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">移交單位</th>
+                            <td>
+                                <select class="multiple-select" id="transfer_organization" name="transfer_organization" required>
+                                    <option value="" selected></option>
+                                    {% for organization in organizations %}
+                                    <option value="{{ organization.id }}">{{ organization.name }} {{ organization.department }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      placeholder: ''
+    });
+</script>
+<script>
+    var today = new Date();
+    var day = today.getDate();
+    var month = today.getMonth()+1;
+    var year = today.getFullYear();
+    if(day<10){
+        day="0"+day;
+    }
+    if(month<10){
+        month="0"+month;
+    }
+    today=year+"-"+month+"-"+day;
+    document.getElementById("receiving_date").setAttribute("max", today);
+    document.getElementById("complete_date").setAttribute("max", today);
+    document.getElementById("data_transfer_date").setAttribute("max", today);
+</script>
+
+{% endblock js %}
