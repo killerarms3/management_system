@@ -8,7 +8,14 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3>發票號碼: {{ receipt }}&nbsp;&nbsp;<a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>&nbsp;<a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a></h3>
+            <h3>發票號碼: {{ receipt }}
+            {% if perms.contract.change_receipt %}
+            &nbsp;&nbsp;<a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>
+            {% endif %}
+            {% if perms.contract.delete_receipt %}
+            &nbsp;<a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a>
+            {% endif %}
+            </h3>
             <table class="table table-hover">
                 <tr>
                     <th>合約:</th>

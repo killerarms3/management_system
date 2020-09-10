@@ -8,7 +8,7 @@
     <div class="card mb-3">
         <div class="card-body">
             <h3>合約清單
-            {% if perms.contract.can_add_contract %}
+            {% if perms.contract.add_contract %}
                 (<a href="{{ url('contract:contract_create') }}">新增</a>)
             {% endif %}
             </h3>
@@ -31,12 +31,12 @@
                     <tbody>
                         {% for contract in object_list %}
                         <tr>
-                            {% if perms.contract.can_change_contract %}
+                            {% if perms.contract.change_contract %}
                                 <td><a href="{{ url('contract:contract_edit', args=[contract.id]) }}"><i class="fas fa-edit"></i></a></td>
                             {% else %}
                                 <td></td>
                             {% endif %}
-                            {% if perms.contract.can_delete_contract %}
+                            {% if perms.contract.delete_contract %}
                                 <td><a href="{{ url('contract:contract_delete', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:contract_delete', args=[contract.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
                             {% else %}
                                 <td></td>
@@ -85,12 +85,9 @@
             {% else %}
                 <p>No Data!</p>
             {% endif %}
-
         </div>
     </div>
 </div>
-
-
 {% endblock content %}
 
 {% block js %}
@@ -102,7 +99,7 @@
 		$('#contract_table thead tr:eq(1) th').each(function (i) {
             if (i>1){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (contract_table.column(i).search() !== this.value) {
@@ -114,15 +111,11 @@
                 });
             }
 		});
-
 		var contract_table = $('#contract_table').DataTable({
 			dom: 'frtip',
 			scrollX: true,
 			orderCellsTop: true,
 		});
 	});
-
-
 </script>
-
 {% endblock js %}

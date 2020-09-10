@@ -8,7 +8,11 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>發票清單(<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)</h3>
+                <h3>發票清單
+                {% if perms.contract.add_receipt %}
+                    (<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                {% endif %}
+                </h3>
                 <table id="receipt_table" class="display" style="width:100%">
                     <thead>
                         <tr>
@@ -26,8 +30,16 @@
                     <tbody>
                         {% for receipt in object_list %}
                         <tr>
-                            <td><a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a></td>
-                            <td><a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a></td>
+                            <td>
+                            {% if perms.contract.change_receipt %}
+                                <a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>                            
+                            <td>
+                            {% if perms.contract.delete_receipt %}
+                                <a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
                             <td><a href="{{ receipt.get_absolute_url() }}">{{ receipt}}</a></td>
                             <td>{{ receipt.contract }}</td>
                             <td>{{ receipt.receipt_date }}</td>
@@ -58,7 +70,7 @@
 		$('#receipt_table thead tr:eq(1) th').each(function (i) {
             if (i!==0 && i!==1){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (receipt_table.column(i).search() !== this.value) {

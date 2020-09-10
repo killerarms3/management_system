@@ -8,11 +8,11 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>失敗原因清單(
+                <h3>失敗原因清單
                 {% if perms.contract.can_add_failed_reason %}
-                    <a href="{{ url('contract:failed_reason_create') }}">新增</a>
+                    (<a href="{{ url('contract:failed_reason_create') }}">新增</a>)
                 {% endif %}
-                )</h3>
+                </h3>
                 <table id="failed_reason_table" class="display" style="width:100%">
                     <thead>
                         <tr>
@@ -26,12 +26,12 @@
                         {% for failed_reason in object_list %}
                         <tr>
                             <td>
-                            {% if perms.contract.can_change_failed_reason %}
+                            {% if perms.contract.change_failed_reason %}
                                 <a href="{{ url('contract:failed_reason_edit', args=[failed_reason.id]) }}"><i class="fas fa-edit"></i></a>
                             {% endif %}                            
                             </td>
                             <td>
-                            {% if perms.contract.can_delete_failed_reason %}
+                            {% if perms.contract.delete_failed_reason %}
                                 <a href="{{ url('contract:failed_reason_delete', args=[failed_reason.id]) }}"><i class="fas fa-trash"></i></a>
                             {% endif %}                            
                             </td>                            
@@ -60,7 +60,7 @@
 		$('#failed_reason_table thead tr:eq(1) th').each(function (i) {
             if (i!==0 && i!==1){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (failed_reason_table.column(i).search() !== this.value) {
@@ -80,5 +80,4 @@
 		});
 	});
 </script>
-
 {% endblock js %}

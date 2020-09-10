@@ -7,13 +7,13 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3><Strong>Register</Strong></h3>
+                <h3><Strong>註冊</Strong></h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
                     {% for fields in form %}
                         <p>{{fields.label}} {{fields}}</p>
                     {% endfor %}
-                    <input type="submit" value="register"/>
+                    <input type="submit" value="註冊"/>
                     <input type="hidden" name="next" value="{{ next }}" />
                 </form>
             </div>

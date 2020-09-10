@@ -8,11 +8,11 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>銷毀清單(
-                    {% if perms.contract.can_add_destroyed %}
-                        <a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>
+                <h3>銷毀清單
+                    {% if perms.contract.add_destroyed %}
+                        (<a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
                     {% endif %}                    
-                )</h3>
+                </h3>
                 <table id="destroyed_table" class="display" style="width:100%">
                     <thead>
                         <tr>
@@ -27,13 +27,17 @@
                     <tbody>
                         {% for destroyed in object_list %}
                         <tr>
-                        {% if perms.contract.can_change_destroyed %}
-                            <td><a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_edit', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a></td>
-                        {% endif %}
-                        {% if perms.contract.can_delete_destroyed %}
-                            <td><a href="{{ url('contract:destroyed_delete', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_delete', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                        {% endif %}
-                        {% if perms.contract.can_view_box %}
+                            <td>
+                            {% if perms.contract.change_destroyed %}
+                                <a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_edit', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.delete_destroyed %}
+                                <a href="{{ url('contract:destroyed_delete', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_delete', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
+                        {% if perms.contract.view_box %}
                             <td><a href="{{ destroyed.box.get_absolute_url() }}">{{ destroyed.box }}</a></td>
                         {% else %}
                             <td>{{ destroyed.box.serial_number }}</td>
@@ -70,7 +74,7 @@
 		$('#destroyed_table thead tr:eq(1) th').each(function (i) {
             if (i!==0 && i!==1){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (destroyed_table.column(i).search() !== this.value) {

@@ -9,7 +9,7 @@
         <div class="card-body">            
             {% if object_list %}
                 <h3>訂單清單
-                {% if perms.contract.can_add_order %}
+                {% if perms.contract.add_order %}
                     (<a href="{{ url('contract:order_create') }}">新增</a>)
                 {% endif %}
                 </h3>
@@ -29,12 +29,12 @@
                     <tbody>
                         {% for order in object_list %}
                         <tr>
-                            {% if perms.contract.can_change_order %}
+                            {% if perms.contract.change_order %}
                                 <td><a href="{{ url('contract:order_edit', args=[order.id]) }}"><i class="fas fa-edit"></i></a></td>
                             {% else %}
                                 <td></td>
                             {% endif %}
-                            {% if perms.contract.can_delete_order %}
+                            {% if perms.contract.delete_order %}
                                 <td><a href="{{ url('contract:order_delete', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:order_delete', args=[order.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
                             {% else %}
                                 <td></td>
@@ -82,7 +82,7 @@
 		$('#order_table thead tr:eq(1) th').each(function (i) {
             if (i!==0 && i!==1 ){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (order_table.column(i).search() !== this.value) {

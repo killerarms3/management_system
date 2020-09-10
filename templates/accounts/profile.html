@@ -9,8 +9,11 @@
         <div class="card mb-3">
             <div class="card-body">
                 {% if user.is_authenticated %}
-                <h3>Profile(<a href="{{ url('profile-update', args=[user.id]) }}">Edit</a>)</h3>
-                <table>
+                <h3>Profile
+                &nbsp;&nbsp;<a href="{{ url('profile-update', args=[user.id]) }}"><i class="fas fa-edit"></i></a>
+                <span style="float:right;"><a href="{{ url('history:user-history-list') }}"><i class="fas fa-history"></i></a></span>
+                </h3>
+                <table class="table table-hover">                    
                     <tr>
                         <td><strong>User name: </strong><td><td>{{ user.username }}</td>
                     </tr>
@@ -52,3 +55,4 @@
         </div>
     </div>
 {% endblock %}
+

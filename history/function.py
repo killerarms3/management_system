@@ -1,10 +1,10 @@
 from .models import History
-from django.contrib.auth.models import User
 from django.apps import apps
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-import datetime
 from django.forms.models import model_to_dict
 from itertools import chain
+import datetime
 
 # 將object(一筆資料)裡的欄位名稱以及對應的值，轉成字典的型態輸出
 def object_to_dict(object):
@@ -14,15 +14,18 @@ def object_to_dict(object):
         # 將object_id去除
         if f.name == 'id':
             continue
-        data[f.name] = str(f.value_from_object(object))
+        if f.value_from_object(object):
+            data[f.name] = str(f.value_from_object(object))
+        else:
+            data[f.name] = ''
     # solution of many to many field
     for f in opts.many_to_many:
-        data[f.name] = [i.id for i in f.value_from_object(object)]
+        data[f.name] = str([i.id for i in f.value_from_object(object)])
     return data
 
 # 增加一筆紀錄的操作log到history
 def log_addition(user, app_label, model, object_id, action_flag, field_dict, previous_dict):
-    '''    
+    '''輸入說明
     user =          使用者；Object
     app_label =     小寫app的名稱(ex: 'contract')；字串
     model =         小寫的model名稱(ex: 'order')；字串
@@ -59,7 +62,7 @@ def log_addition(user, app_label, model, object_id, action_flag, field_dict, pre
         content_type = content_type,
         object_id = object_id,
         action_flag = action_flag,
-        change_message = change_message, # 儲存時會把字典轉成字串
+        change_message = change_message, # 儲存時會把字典轉成字串，部分欄位內容可能會造成之後解析change_message時產生問題
         date = datetime.datetime.today()
     )
 
@@ -72,8 +75,8 @@ def Update_log_dict(self, form):
     dict = object_to_dict(obj) # 轉成dictionary
     return obj.id, dict, pre_dict # 回傳 id, 修改前後字典
 
-# 封裝action:change所需的程式，大致步驟與上面的函式相同
-def Create_log_dict(self, form, model):    
+# 封裝action:add所需的程式，大致步驟與上面的函式相同
+def Create_log_dict(self, form, model):
     self.object = form.save()
     obj =  self.object
     # obj =  model.objects.all().order_by('-id').first() # 取得最新新增的object
@@ -83,42 +86,80 @@ def Create_log_dict(self, form, model):
 # change_message 是以字串儲存在database，因此若要轉換成dictionsry以便後續復原功能操作，在某些欄位可能會遇到一些問題
 # 例如：備註欄為是以TEXT field 型態儲存，若是其內容中含有用來切割字串的字元(EX:':{', ',', "'", ':'...)，都有可能造成切割字串時出現問題
 def message_transfer(change_message):
-    
-    test = change_message[1:-1] # 將最外圈的引號去除    
-    test_list = test.split(':{') # 以':{'將字串分開來分成各部分所需的元素
+    test = change_message[1:-1] # 將最外圈的引號去除
+    test_list = test.split(': {') # 以':{'將字串分開來分成各部分所需的元素
     first_el = test_list[0] # 將最前面的action存進first_el
-    second_el = test_list[1] # 將中間的fields存進second_el    
-    third_el = test_list[2] # 將fields資料內容放進third_el    
-    fourth_el = third_el[-9:] # 將previous存進fourth_el    
-    fifth_el = test_list[3] # 將previous資料內容放進fifth_el    
-    clear_third_el = third_el[:-11] # 把third_el前後的雜訊清除    
+    second_el = test_list[1] # 將中間的fields存進second_el
+    third_el = test_list[2] # 將fields資料內容放進third_el
+    fourth_el = third_el[-10:] # 將previous存進fourth_el
+    fifth_el = test_list[3] # 將previous資料內容放進fifth_el
+    clear_third_el = third_el[:-13] # 把third_el前後的雜訊清除
     clear_fifth_el = fifth_el[:-2] # 把fifth_el前後的雜訊清除
 
     recover_dict = {}
     temp_dict = {}
+    make_fields_list = []
+    make_pre_list = []
 
-    make_fields_list = clear_third_el.split(',')
-    make_pre_list = clear_fifth_el.split(',')
+    if first_el == "'add'":
+        make_fields_list = clear_third_el.split("', ")
+        for i in range(len(make_fields_list)):
+            make_pre_list.append('')
+    elif first_el == "'delete'":
+        make_pre_list = clear_fifth_el.split("', ")
+        for i in range(len(make_pre_list)):
+            make_fields_list.append('')
+    else:
+        make_fields_list = clear_third_el.split("', ")
+        make_pre_list = clear_fifth_el.split("', ")
+
     fields_dict = {}
     pre_dict = {}
 
     for fields_dict_el, pre_dict_el in zip(make_fields_list, make_pre_list):
-        fields_dict_list = fields_dict_el.split(':')
-        pre_dict_list = pre_dict_el.split(':')
-        fields_key = fields_dict_list[0]
-        fields_value = fields_dict_list[1]
-        pre_key = pre_dict_list[0]
-        pre_value = pre_dict_list[1]
-        fields_dict[fields_key[1:-1]] = fields_value[1:-1]
-        pre_dict[pre_key[1:-1]] = pre_value[1:-1]
-    # last step
+        if clear_third_el != '':
+            fields_dict_list = fields_dict_el.split("': '")
+            # 'box': '1 切割成 'box 1
+            fields_key = fields_dict_list[0] # 'box
+            fields_value = fields_dict_list[1] # 1
+            if "'" in fields_value: # 理論上只會存在於最後的element 2020-08-24'
+                fields_value = fields_value[:-1] # 清理成　2020-08-24
+            if '[' in fields_value or ']' in fields_value:
+                temp_list = fields_value[1:-1].split(', ')
+                if temp_list != ['']:
+                    for i in range(len(temp_list)):
+                        temp_list[i] = int(temp_list[i])
+                    fields_dict[fields_key[1:]] = temp_list
+                else:
+                    fields_dict[fields_key[1:]] = []
+            else:
+                fields_dict[fields_key[1:]] = fields_value # 每個key前方都會有一個引號 ' ，將其清理後'box -> box，並作為字典的key
+        # 同上
+        if clear_fifth_el != '':
+            pre_dict_list = pre_dict_el.split("': '")
+            pre_key = pre_dict_list[0]
+            pre_value = pre_dict_list[1]
+            if "'" in pre_value:
+                pre_value = pre_value[:-1]
+            if '[' in pre_value or ']' in pre_value:
+                temp_list = pre_value[1:-1].split(', ')
+                if temp_list != ['']:
+                    for i in range(len(temp_list)):
+                        temp_list[i] = int(temp_list[i])
+                    pre_dict[pre_key[1:]] = temp_list
+                else:
+                    pre_dict[pre_key[1:]] = []
+            else:
+                pre_dict[pre_key[1:]] = pre_value
+
     temp_dict[second_el[1:-1]] = fields_dict
     temp_dict[fourth_el[1:-1]] = pre_dict
+
     recover_dict[first_el[1:-1]] = temp_dict
     # structure of recover_dict
     '''
     recover_dict = {
-        'add':{
+        'action':{
             'fields':{
                 'attribute1':'value1',
                 'attribute2':'value2',
@@ -135,8 +176,48 @@ def message_transfer(change_message):
     previous則為修改前的值
     '''
     # 比較前後差異並將其找出
-    # for flag in recover_dict['add']['fields'].keys():
-    #     if recover_dict['add']['fields'][flag] != recover_dict['add']['preious'][flag]:
-    #         print(flag+': '+recover_dict['add']['fields'][flag])
-    return recover_dict
-    
+    diff_dict = {}
+
+    if first_el[1:-1] == 'add':
+        diff_dict = recover_dict['add']['fields']
+    elif first_el[1:-1] == 'delete':
+        diff_dict = recover_dict['delete']['previous']
+    else:
+        for flag in recover_dict[first_el[1:-1]]['fields'].keys():
+            if recover_dict[first_el[1:-1]]['fields'][flag] != recover_dict[first_el[1:-1]]['previous'][flag]:
+                diff_dict[flag] = recover_dict[first_el[1:-1]]['fields'][flag]
+    # structure of diff_dict
+    '''
+    recover_dict = {
+        'action':{
+            'fields':{
+                'attribute1':'value1',
+                'attribute2':'pre_value2',
+                ......
+            },
+            'previous':{
+                'attribute1':'pre_value1',
+                'attribute2':'pre_value2',
+                ......
+            }
+        }
+    }
+    action_flag = change 時：
+    diff_dict = {
+        'attribute':'value1',
+        ......
+    }
+    action_flag = add 時：
+    diff_dict = {
+        'attribute1':'value1',
+        'attribute2':'pre_value2',
+        ......
+    }
+    action_flag = delete 時：
+    diff_dict = {
+        'attribute1':'pre_value1',
+        'attribute2':'pre_value2',
+        ......
+    }
+    '''
+    return recover_dict, diff_dict

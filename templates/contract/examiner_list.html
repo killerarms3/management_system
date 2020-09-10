@@ -7,11 +7,11 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">            
-            <h3>受檢者清單(
-                {% if perms.contract.can_add_examiner %}
-                    <a href="{{ url('contract:examiner_create') }}" target="popup" onclick="window.open('{{ url('contract:examiner_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>
+            <h3>受檢者清單
+                {% if perms.contract.add_examiner %}
+                    (<a href="{{ url('contract:examiner_create') }}" target="popup" onclick="window.open('{{ url('contract:examiner_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
                 {% endif %}                    
-            )</h3>
+            </h3>
             <table id="examiner_table" class="display" style="width:100%">
                 <thead>
                     <tr>
@@ -24,12 +24,16 @@
                 <tbody>
                     {% for examiner in object_list %}
                     <tr>
-                    {% if perms.contract.can_change_examiner %}
-                        <td><a href="{{ url('contract:examiner_edit', args=[examiner.id]) }}"><i class="fas fa-edit"></i></a></td>
-                    {% endif %}
-                    {% if perms.contract.can_delete_examiner %}
-                        <td><a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}"><i class="fas fa-trash"></i></a></td>
-                    {% endif %}                            
+                        <td>
+                        {% if perms.contract.change_examiner %}
+                            <a href="{{ url('contract:examiner_edit', args=[examiner.id]) }}"><i class="fas fa-edit"></i></a>
+                        {% endif %}
+                        </td>
+                        <td>
+                        {% if perms.contract.delete_examiner %}
+                            <a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}"><i class="fas fa-trash"></i></a>
+                        {% endif %}
+                        </td>
                         <td><a href="{{ examiner.box.get_absolute_url() }}">{{ examiner.box.serial_number }}</a></td>
                         <td><a href="">{{ examiner.customer }}</a></td>                            
                     </tr> 
@@ -39,8 +43,6 @@
         </div>
     </div>
 </div>
-
-
 {% endblock content %}
 
 {% block js %}
@@ -50,7 +52,7 @@
 	$(document).ready(function () {
 		$('#examiner_table thead tr').clone(true).appendTo('#examiner_table thead');
 		$('#examiner_table thead tr:eq(1) th').each(function (i) {
-            if (i!==0 && i!==1){
+            if (i>1){
 			    var title = $(this).text();
 			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
@@ -71,8 +73,5 @@
 			orderCellsTop: true,
 		});
 	});
-
-
 </script>
-
 {% endblock js %}

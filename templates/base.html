@@ -13,7 +13,7 @@
     integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
   <!-- bootstrap css -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ static ('css/style.css') }}">
+  <link rel="stylesheet" href="{{ static('css/style.css') }}">
   {% block css %} {% endblock css %}
 </head>
 <body style="background-color: #f5f5f5;">
@@ -33,18 +33,42 @@
                 </ul>
                 <ul class="sidebar-nav">
                 <hr>
-                {% if user.is_authenticated %}                    
+                {% if user.is_authenticated %}
+                  {% if perms.customer.view_customer %}
                     <li><a href="{{ url('customer:view_customer') }}">All Customers</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_contract %}
                     <li><a href="{{ url('contract:view_contract') }}">All Contracts</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_order %}
                     <li><a href="{{ url('contract:order-list') }}">All Order</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_receipt %}
                     <li><a href="{{ url('contract:receipt-list') }}">All Receipt</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_box %}
                     <li><a href="{{ url('contract:box-list') }}">All Box</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_failed %}
                     <li><a href="{{ url('contract:failed-list') }}">All Failed Box</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_destroyed %}
                     <li><a href="{{ url('contract:destroyed-list') }}">All destroyed Box</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_examiner %}
                     <li><a href="{{ url('contract:examiner-list') }}">All examiner</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_payment_method %}
                     <li><a href="{{ url('contract:payment_method-list') }}">All Payment method</a></li>
+                  {% endif %}
+                  {% if perms.contract.view_failed_reason %}
                     <li><a href="{{ url('contract:failed_reason-list') }}">All Failed reason</a></li>
-                {% endif %}                
+                  {% endif %}
+                  {% if perms.history.view_history %}
+                    <li><a href="{{ url('history:history-list') }}">History</a></li>
+                  {% endif %}
+                    
+                {% endif %}
                     <!-- insert default text for every page -->
                 </ul>
             {% endblock %}
@@ -52,7 +76,6 @@
             <div class="col-sm-10">{% block content %}{% endblock %}</div>
         </div>
     </div>
-
   {% endblock %}
   {% block extra_body %}
   {% endblock %}

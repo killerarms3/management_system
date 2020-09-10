@@ -8,16 +8,15 @@
     <div class="card mb-3">
         <div class="card-body">            
             {% if object_list %}
-                <h3>付款方式清單(
+                <h3>付款方式清單
                     {% if perms.contract.can_add_payment_method %}
-                        <a href="{{ url('contract:add_payment_method') }}">新增</a>
-                    {% endif %}
-                    
-                )</h3>
+                        (<a href="{{ url('contract:add_payment_method') }}">新增</a>)
+                    {% endif %}                    
+                </h3>
                 <table id="payment_method_table" class="display" style="width:100%">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th size="1"></th>
                             <th></th>                            
                             <th>付款方式</th>                            
                         </tr>
@@ -25,12 +24,16 @@
                     <tbody>
                         {% for payment_method in object_list %}
                         <tr>
-                        {% if perms.contract.can_change_payment_method %}
-                            <td><a href="{{ url('contract:edit_payment_method', args=[payment_method.id]) }}"><i class="fas fa-edit"></i></a></td>
-                        {% endif %}
-                        {% if perms.contract.can_delete_payment_method %}
-                            <td><a href="{{ url('contract:delete_payment_method', args=[payment_method.id]) }}"><i class="fas fa-trash"></i></a></td>
-                        {% endif %}                            
+                            <td>
+                            {% if perms.contract.change_payment_method %}
+                                <a href="{{ url('contract:edit_payment_method', args=[payment_method.id]) }}"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.delete_payment_method %}
+                                <a href="{{ url('contract:delete_payment_method', args=[payment_method.id]) }}"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
                             <td>{{ payment_method }}</td>
                         </tr> 
                         {% endfor %}
@@ -42,8 +45,6 @@
         </div>
     </div>
 </div>
-
-
 {% endblock content %}
 
 {% block js %}
@@ -53,9 +54,9 @@
 	$(document).ready(function () {
 		$('#payment_method_table thead tr').clone(true).appendTo('#payment_method_table thead');
 		$('#payment_method_table thead tr:eq(1) th').each(function (i) {
-            if (i!==0 && i!==1){
+            if (i>1){
 			    var title = $(this).text();
-			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
 
 			    $('input', this).on('keyup change', function () {
 				    if (payment_method_table.column(i).search() !== this.value) {
@@ -67,15 +68,11 @@
                 });
             }
 		});
-
 		var payment_method_table = $('#payment_method_table').DataTable({
 			dom: 'frtip',
 			scrollX: true,
 			orderCellsTop: true,
 		});
 	});
-
-
 </script>
-
 {% endblock js %}

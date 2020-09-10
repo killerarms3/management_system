@@ -1,9 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry, CHANGE, ADDITION, DELETION
-
 class History(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, blank=False, on_delete=models.CASCADE)
@@ -11,4 +8,8 @@ class History(models.Model):
     action_flag = models.CharField(max_length=5)
     change_message = models.TextField()
     date = models.DateTimeField()
+
+    class Meta:
+        permissions = [('can_view_self_history', 'can view self history'),]
+
 # Create your models here.
