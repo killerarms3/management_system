@@ -8,10 +8,11 @@ from django.urls import reverse
 from contract.models import Box
 from accounts.models import Organization
 from experiment.models import Experiment
+from lib.multi_add import AddMultiData
 
 # Create your views here.
-# @login_required
-# @permission_required('experiment.add_experiment', raise_exception=True)
+@login_required
+@permission_required('experiment.add_experiment', raise_exception=True)
 @csrf_protect
 def add_experiment(request):
     boxes = Box.objects.all()
@@ -40,8 +41,26 @@ def add_experiment(request):
         return redirect(reverse('experiment:view_experiment'))
     return render(request, 'experiment/add_experiment.html', locals())
 
-# @login_required
-# @permission_required('experiment.view_experiment', raise_exception=True)
+@login_required
+@permission_required('experiment.add_experiment', raise_exception=True)
+@csrf_protect
+def add_experiments(request):
+    add_data = AddMultiData(field_number=6)
+    if request.method == 'POST':
+        column_codes, column_dict, data = add_data.read_upload(file_contents=request.FILES['sheet'].read())
+        is_failed = False
+        experiments = list()
+        # for idx, experiment_data in enumerate(data):
+        #     # experiment
+        #     experiment = Experiment()
+
+
+    return add_data.view_upload(request, header='新增多筆記錄', sheet_template='/experiment/add_experiments_template.xlsx', action_url=reverse('experiment:add_experiments'))
+
+
+
+@login_required
+@permission_required('experiment.view_experiment', raise_exception=True)
 @csrf_protect
 def view_experiment(request):
     experiments = Experiment.objects.all().order_by('box__id', '-receiving_date','-pk')

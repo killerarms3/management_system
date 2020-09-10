@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增實驗紀錄</h3>
+            <h3 class="custom_text">產品狀態{% if perms.experiment.can_add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆客戶</a>){% endif %}</h3>
             <form method="POST" action="{{ url('experiment:add_experiment') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
                 <ul class="messages">
@@ -42,7 +42,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 收到檢體日</th>
+                            <th scope="col">* 收到日</th>
                             <td>
                                 <input class="form-control" type="date" id="receiving_date" name="receiving_date" min="2017-01-01" max="2020-01-01" required>
                             </td>
@@ -54,7 +54,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">資料移交日</th>
+                            <th scope="col">移交日</th>
                             <td>
                                 <input class="form-control" type="date" id="data_transfer_date" name="data_transfer_date" min="2017-01-01" max="2020-01-01">
                             </td>
