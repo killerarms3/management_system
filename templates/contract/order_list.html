@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">            
+            {% if object_list %}
+                <h3>訂單清單
+                {% if perms.contract.add_order %}
+                    (<a href="{{ url('contract:order_create') }}">新增</a>)
+                {% endif %}
+                </h3>
+                <table id="order_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>訂單編號</th>
+                            <th>合約</th>
+                            <th>訂單日期</th>
+                            <th>方案</th>
+                            <th>採樣盒</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in object_list %}
+                        <tr>
+                            {% if perms.contract.change_order %}
+                                <td><a href="{{ url('contract:order_edit', args=[order.id]) }}"><i class="fas fa-edit"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            {% if perms.contract.delete_order %}
+                                <td><a href="{{ url('contract:order_delete', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:order_delete', args=[order.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            <td><a href="{{ order.get_absolute_url() }}">{{ order }}</a></td>
+                            <td>Contract {{ order.contract.pk }}</td>
+                            <td>{{ order.order_date }}</td>
+                            <td>
+                            {% for plan in order.plan.all() %}
+                                <a href="">{{ plan }}</a>({{ box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count() }})
+                                {% if not loop.last %};{% endif %}
+                            {% endfor %}
+                            </td>
+                            {% if box.objects.filter(order=order) %}
+                            <td>
+                            {% for box in box.objects.filter(order=order).all().order_by('serial_number') %}
+                                <a href="{{ box.get_absolute_url() }}">{{ box }}</a>
+                                {% if not loop.last %};{% endif %}
+                            {% endfor %}
+                            &nbsp;&nbsp;<a href="{{ url('contract:partial-box-list', args=[order.id]) }}"><i class="fas fa-list"></i></a>
+                            </td>
+                            {% else %}
+                            <td>None</td>
+                            {% endif %}
+                            <td>{{ order.memo }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No Data!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#order_table thead tr').clone(true).appendTo('#order_table thead');
+		$('#order_table thead tr:eq(1) th').each(function (i) {
+            if (i!==0 && i!==1 ){
+			    var title = $(this).text();
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (order_table.column(i).search() !== this.value) {
+					    order_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var order_table = $('#order_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+</script>
+{% endblock js %}

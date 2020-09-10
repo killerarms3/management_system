@@ -26,16 +26,15 @@ urlpatterns = [
     path('product/',include('product.urls', namespace='product')),
     path('experiment/',include('experiment.urls', namespace='experiment')),
     path('project/',include('project.urls', namespace='project')),
-]
-urlpatterns += [
     path('accounts/', include('accounts.urls')),
-]
-urlpatterns += [
+    path('accounts/', include('django.contrib.auth.urls'))
+    path('customer/', include('django.contrib.auth.urls')),
+    path('contract/', include('contract.urls', namespace = 'contract')),
+    path('contract/', include('django.contrib.auth.urls')),
     path('', RedirectView.as_view(url = 'accounts/', permanent = True)),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
 
-urlpatterns += [
-    path('accounts/', include('django.contrib.auth.urls'))
-]
+
+

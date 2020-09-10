@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">            
+            {% if object_list %}
+                <h3>採樣盒清單
+                    {% if perms.contract.can_add_box %}
+                        (<a href="{{ url('contract:box_create') }}">新增</a>)
+                    {% endif %}                    
+                </h3>
+                <table id="box_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>                            
+                            <th></th>
+                            <th></th>                            
+                            <th>採樣盒流水號</th>
+                            <th>訂單</th>
+                            <th>方案</th>
+                            <th>失敗註記</th>
+                            <th>失敗原因</th>
+                            <th>受測者</th>
+                            <th>銷毀註記</th>
+                            <th>宅配單號</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for box in object_list %}
+                        <tr>
+                        {% if perms.contract.change_box %}
+                            <td><a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a></td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if perms.contract.delete_box %}
+                            <td><a href="{{ url('contract:box_delete', args=[box.id]) }}" target="popup" onclick="window.open('{{ url('contract:box_delete', args=[box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if perms.contract.view_box %}
+                            <td><a href="{{ box.get_absolute_url() }}" target="popup" onclick="window.open('{{ box.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ box.serial_number }}</a></td>
+                        {% endif %}                            
+                            <td>{{ box.order }}</td>
+                        {% if perms.product.view_plan %}
+                            <td><a href="">{{ box.plan }}</a></td>
+                        {% else %}
+                            <td>{{ box.plan }}</td>
+                        {% endif %}                        
+                            {% if failed.objects.filter(box=box) %}
+                                <td>Failed</td>
+                                <td>
+                                <a href="{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}" target="popup" onclick="window.open('{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                {{ failed.objects.get(box=box).failed_reason }}
+                                </td>
+                            {% else %}
+                                <td>No</td>
+                                <td></td>
+                            {% endif %}
+                            {% if examiner.objects.filter(box=box) %}
+                                <td><a href="">{{ examiner.objects.get(box=box).customer }}</a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            <td>
+                            {% if destroyed.objects.filter(box=box) %}
+                                {% if perms.contract.view_destroyed %}
+                                    <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                {% endif %}                                
+                                {% if destroyed.objects.get(box=box).is_sample_destroyed %}
+                                    Destroyed
+                                {% else %}
+                                    Waiting to be destroyed
+                                {% endif %}
+                                {% if perms.contract.view_destroyed %}
+                                    </a>
+                                {% endif %}
+                                                               
+                            {% endif %}
+                            </td>
+                            <td>{{ box.tracing_number }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No Data!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#box_table thead tr').clone(true).appendTo('#box_table thead');
+		$('#box_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (box_table.column(i).search() !== this.value) {
+					    box_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var box_table = $('#box_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">            
+            <h3>受檢者清單
+                {% if perms.contract.add_examiner %}
+                    (<a href="{{ url('contract:examiner_create') }}" target="popup" onclick="window.open('{{ url('contract:examiner_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                {% endif %}                    
+            </h3>
+            <table id="examiner_table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>採樣盒編號</th>
+                        <th>受檢者</th>                            
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for examiner in object_list %}
+                    <tr>
+                        <td>
+                        {% if perms.contract.change_examiner %}
+                            <a href="{{ url('contract:examiner_edit', args=[examiner.id]) }}"><i class="fas fa-edit"></i></a>
+                        {% endif %}
+                        </td>
+                        <td>
+                        {% if perms.contract.delete_examiner %}
+                            <a href="{{ url('contract:examiner_delete', args=[examiner.id]) }}"><i class="fas fa-trash"></i></a>
+                        {% endif %}
+                        </td>
+                        <td><a href="{{ examiner.box.get_absolute_url() }}">{{ examiner.box.serial_number }}</a></td>
+                        <td><a href="">{{ examiner.customer }}</a></td>                            
+                    </tr> 
+                    {% endfor %}
+                </tbody>
+            </table>            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#examiner_table thead tr').clone(true).appendTo('#examiner_table thead');
+		$('#examiner_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (examiner_table.column(i).search() !== this.value) {
+					    examiner_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var examiner_table = $('#examiner_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+{% endblock js %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>採樣盒: {{ box.serial_number }}
+            {% if perms.contract.can_change_box %}
+                &nbsp;&nbsp;<a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a>
+            {% endif %}
+            {% if perms.contract.can_delete_box %}
+                &nbsp;<a href="{{ url('contract:box_delete', args=[box.id]) }}"><i class="fas fa-trash"></i></a>
+            {% endif %}            
+            </h3>
+            <table class="table table-hover">                
+                <tr>
+                    <th scope="row">訂單: </th>
+                    <td>{{ box.order }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">方案: </th>
+                    {% if perms.contract.can_change_box %}
+                        <td><a href="">{{ box.plan }}</a></td>
+                    {% else %}
+                        <td>{{ box.plan }}</td>
+                    {% endif %}                    
+                </tr>
+                {% if failed %}
+                    <tr>
+                        <th scope="row">失敗註記: </th>
+                        <td>Failed</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">失敗原因: </th>
+                        <td>{{ failed.failed_reason }}</td>
+                    </tr>
+                {% endif %}
+                {% if examiner %}
+                    <tr>
+                        <th scope="row">受測者: </th>
+                        <td>{{ examiner.customer }}</td>
+                    </tr>
+                {% endif %}
+                {% if destroyed %}
+                    <tr>
+                        <th scope="row">銷毀註記: </th>
+                        <td>
+                        {% if destroyed.is_sample_destroyed %}
+                            Destroyed
+                        {% else %}
+                            Waiting to be destroyed
+                        {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">銷毀日期: </th>
+                        <td>{{ destroyed.sample_destroyed_date }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">DNA取回公司日期: </th>
+                        <td>{{ destroyed.return_date }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <th scope="row">宅配單號: </th>
+                    <td>{{ box.tracing_number }}</td>
+                </tr>                
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

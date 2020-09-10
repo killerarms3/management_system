@@ -70,8 +70,5 @@ class Organization(models.Model):
     name = models.CharField(max_length=256)
     department = models.CharField(max_length=256)
     is_other = models.BooleanField(default=True)
-
-
-class Customer_Organization(models.Model):
-    customer = models.ForeignKey(Customer, on_delete='CASCADE')
-    organization = models.ForeignKey(Organization, on_delete='CASCADE')
+    def __str__(self):
+        return self.name + ', ' + self.department

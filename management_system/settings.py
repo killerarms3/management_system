@@ -25,7 +25,7 @@ SECRET_KEY = '[your secret key]'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'project',
     'customer',
     'contract',
-    'experiment'
+    'experiment',
+    'history',
 ]
 
 MIDDLEWARE = [
@@ -98,7 +99,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'management_system',
-        'USER': 'demo',
+        'USER': 'root',
         'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '3306'
@@ -158,6 +159,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'EMAIL'
-EMAIL_HOST_PASSWORD = 'password'
+EMAIL_HOST_USER = 'EmailAddress'
+EMAIL_HOST_PASSWORD = 'Password'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

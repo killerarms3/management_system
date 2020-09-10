@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>發票號碼: {{ receipt }}
+            {% if perms.contract.change_receipt %}
+            &nbsp;&nbsp;<a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>
+            {% endif %}
+            {% if perms.contract.delete_receipt %}
+            &nbsp;<a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a>
+            {% endif %}
+            </h3>
+            <table class="table table-hover">
+                <tr>
+                    <th>合約:</th>
+                    <td>Contract {{ receipt.contract.pk }}</td>
+                </tr>
+                <tr>
+                    <th>開立發票日期:</th>
+                    <td>{{ receipt.receipt_date }}</td>
+                </tr>
+                <tr>
+                    <th>開立發票金額:</th>
+                    <td>{{ receipt.receipt_amount }}</td>
+                </tr>
+                <tr>
+                    <th>付款日期:</th>
+                    <td>{{ receipt.payment_date }}</td>
+                </tr>
+                <tr>
+                    <th>付款方式:</th>
+                    <td>{{ receipt.payment_method }}</td>
+                </tr>
+                <tr>
+                    <th>備註:</th>
+                    <td><pre style="font-size: 16px">{{receipt.memo}}</pre></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

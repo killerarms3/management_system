@@ -6,8 +6,14 @@ class Product(models.Model):
     name = models.CharField(max_length=256)
     status = models.BooleanField(default=1)
 
+    def __str__(self):
+        return self.name
+
 class Prefix(models.Model):
     name = models.CharField(max_length=16)
+
+    def __str__(self):
+        return self.name
 
 class Product_Prefix(models.Model):
     product = models.ForeignKey(Product, on_delete='CASCADE')
@@ -20,6 +26,9 @@ class Plan(models.Model):
     status = models.BooleanField(default=1)
     description = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class Project(models.Model):
     product = models.ForeignKey(Product, on_delete='CASCADE')
-    content_type = models.ForeignKey(ContentType, on_delete='CASCADE')
+    contend_type = models.ForeignKey(ContentType, on_delete='CASCADE')

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">            
+            {% if object_list %}
+                <h3>銷毀清單
+                    {% if perms.contract.add_destroyed %}
+                        (<a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                    {% endif %}                    
+                </h3>
+                <table id="destroyed_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>採樣盒編號</th>
+                            <th>銷毀狀態</th>
+                            <th>銷毀日期</th>
+                            <th>DNA取回公司日期</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for destroyed in object_list %}
+                        <tr>
+                            <td>
+                            {% if perms.contract.change_destroyed %}
+                                <a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_edit', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.delete_destroyed %}
+                                <a href="{{ url('contract:destroyed_delete', args=[destroyed.id]) }}" target="popup" onclick="window.open('{{ url('contract:destroyed_delete', args=[destroyed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
+                        {% if perms.contract.view_box %}
+                            <td><a href="{{ destroyed.box.get_absolute_url() }}">{{ destroyed.box }}</a></td>
+                        {% else %}
+                            <td>{{ destroyed.box.serial_number }}</td>
+                        {% endif %}                            
+                            <td>
+                            {% if destroyed.is_sample_destroyed %}
+                                已銷毀
+                            {% else %}
+                                等待銷毀
+                            {% endif %}
+                            </td>
+                            <td>{{ destroyed.sample_destroyed_date }}</td>
+                            <td>{{ destroyed.return_date }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No Data!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#destroyed_table thead tr').clone(true).appendTo('#destroyed_table thead');
+		$('#destroyed_table thead tr:eq(1) th').each(function (i) {
+            if (i!==0 && i!==1){
+			    var title = $(this).text();
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (destroyed_table.column(i).search() !== this.value) {
+					    destroyed_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var destroyed_table = $('#destroyed_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}

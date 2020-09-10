@@ -1,0 +1,752 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ static('css/bookmark.css') }}">
+    <!--<link rel="stylesheet" href="{{ static('css/preline.css') }}">-->
+    {% block css %} {% endblock css %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>歷史紀錄</h3>
+            <div id="tab-demo">
+                <!-- 分頁頁籤 -->
+                <ul class="tab-title">
+                    <li><a href="#tab00">Customer</a></li>
+                    <li><a href="#tab01">Order</a></li>
+                    <li><a href="#tab02">Contract</a></li>
+                    <li><a href="#tab03">Box</a></li>
+                    <li><a href="#tab04">Receipt</a></li>
+                </ul>
+                <div id="tab00" class="tab-inner">
+                    <table id="history_table00" class="display" style="width:100%">
+                        <thead>
+                            <!-- 頁籤標題 -->
+                            <tr>
+                                <th>User</th>
+                                <th>Content Type</th>
+                                <th>Object Id</th>
+                                <th>Action Flag</th>
+                                <th>Changed fields</th>
+                                <th>Date Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in object_list %}
+                                {% if history.content_type.model == 'customer' %} <!-- 顯示customer的log -->
+                                    {% if diff_dict_list[history.id] != {} %} <!-- 篩選掉修改前後沒有變化的log -->
+                                    <tr>
+                                        <td>{{ history.user }}</td>
+                                        <td>{{ history.content_type }}</td>
+                                        <td>{{ history.object_id }}</td>
+                                        <td>{{ action_flag[history.action_flag] }}</td>
+                                        <td>
+                                            <table> <!-- change fields內的table -->
+                                                <tr>
+                                                    <th></th> <!-- 只列出被修改的attribute當標頭 -->
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        <th>
+                                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                        {% else %}
+                                                        {{ key }}
+                                                        {% endif %}
+                                                        </th>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% if action_flag[history.action_flag] != 'delete' %} <!-- action 是delete時沒有現在的資料，故篩選掉 -->
+                                                <tr>
+                                                    <th>Now</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %} <!-- 選出是foreignKey的attribute -->
+                                                            {% if key in ManytoManyList %} <!-- 找出m2m的attribute -->
+                                                                <td>
+                                                                {% if diff_dict_list[history.id][key] != [] %} <!-- m2m的attribute不為空 -->
+                                                                    {% for i in diff_dict_list[history.id][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <!-- 用id找出foreignKey的具體名稱 -->
+                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <!-- 不是foreignKey的attribute -->
+                                                            <td>{{ diff_dict_list[history.id][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                                {% if action_flag[history.action_flag] != 'add' %} <!-- action是add時沒有過去的資料 -->
+                                                <tr>
+                                                    <th>Previous</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %} <!-- 選出是foreignKey的attribute -->
+                                                            {% if key in ManytoManyList %} <!-- 找出m2m的attribute -->
+                                                                <td>
+                                                                {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != [] %} <!-- m2m的attribute不為空 -->
+                                                                    {% for i in dict[history.id][action_flag[history.action_flag]]['previous'][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <!-- 用id找出foreignKey的具體名稱 -->
+                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <!-- 不是foreignKey的attribute -->
+                                                            <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </td>
+                                        <!--<td><a href=""><i class="fas fa-list"></i></a></td>-->
+                                        <!-- recover by modified record -->
+                                        <td>
+                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                        <a href="{{ url('history:recover-confirm', args=[history.id]) }}">{{ history.date }}</a>
+                                        {% else %}
+                                        {{ history.date }}
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tab01" class="tab-inner">
+                    <table id="history_table01" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Content Type</th>
+                                <th>Object Id</th>
+                                <th>Action Flag</th>
+                                <th>Changed fields</th>
+                                <th>Date Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in object_list %}
+                                {% if history.content_type.model == 'order' %}
+                                    {% if diff_dict_list[history.id] != {} %}
+                                    <tr>
+                                        <td>{{ history.user }}</td>
+                                        <td>{{ history.content_type }}</td>
+                                        <td>{{ history.object_id }}</td>
+                                        <td>{{ action_flag[history.action_flag] }}</td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th></th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                    <!-- recover by attribute -->
+                                                        <th>
+                                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                        {% else %}
+                                                        {{ key }}
+                                                        {% endif %}
+                                                        </th>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% if action_flag[history.action_flag] != 'delete' %}
+                                                <tr>
+                                                    <th>Now</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if diff_dict_list[history.id][key] != [] %}
+                                                                    {% for i in diff_dict_list[history.id][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ diff_dict_list[history.id][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                                {% if action_flag[history.action_flag] != 'add' %}
+                                                <tr>
+                                                    <th>Previous</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != [] %}
+                                                                    {% for i in dict[history.id][action_flag[history.action_flag]]['previous'][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </td>
+                                        <!--<td><a href=""><i class="fas fa-list"></i></a></td>-->
+                                        <!-- recover template -->
+                                        <td>
+                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                        <a href="{{ url('history:recover-confirm', args=[history.id]) }}">{{ history.date }}</a>
+                                        {% else %}
+                                        {{ history.date }}
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tab02" class="tab-inner">
+                    <table id="history_table02" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Content Type</th>
+                                <th>Object Id</th>
+                                <th>Action Flag</th>
+                                <th>Changed fields</th>
+                                <th>Date Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in object_list %}
+                                {% if history.content_type.model == 'contract' %}
+                                    {% if diff_dict_list[history.id] != {} %}
+                                    <tr>
+                                        <td>{{ history.user }}</td>
+                                        <td>{{ history.content_type }}</td>
+                                        <td>{{ history.object_id }}</td>
+                                        <td>{{ action_flag[history.action_flag] }}</td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th></th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        <th>
+                                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                        {% else %}
+                                                        {{ key }}
+                                                        {% endif %}
+                                                        </th>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% if action_flag[history.action_flag] != 'delete' %}
+                                                <tr>
+                                                    <th>Now</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if diff_dict_list[history.id][key] != [] %}
+                                                                    {% for i in diff_dict_list[history.id][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ diff_dict_list[history.id][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                                {% if action_flag[history.action_flag] != 'add' %}
+                                                <tr>
+                                                    <th>Previous</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != [] %}
+                                                                    {% for i in dict[history.id][action_flag[history.action_flag]]['previous'][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </td>
+                                        <!--<td><a href=""><i class="fas fa-list"></i></a></td>-->
+                                        <td>
+                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                        <a href="{{ url('history:recover-confirm', args=[history.id]) }}">{{ history.date }}</a>
+                                        {% else %}
+                                        {{ history.date }}
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tab03" class="tab-inner">
+                    <table id="history_table03" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Content Type</th>
+                                <th>Object Id</th>
+                                <th>Action Flag</th>
+                                <th>Changed fields</th>
+                                <th>Date Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in object_list %}
+                                {% if history.content_type.model == 'box' or history.content_type.model == 'failed' or history.content_type.model == 'destroyed' or history.content_type.model == 'examiner' %}
+                                    {% if diff_dict_list[history.id] != {} %}
+                                    <tr>
+                                        <td>{{ history.user }}</td>
+                                        <td>{{ history.content_type }}</td>
+                                        <td>{{ history.object_id }}</td>
+                                        <td>{{ action_flag[history.action_flag] }}</td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th></th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        <th>
+                                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                        {% else %}
+                                                        {{ key }}
+                                                        {% endif %}
+                                                        </th>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% if action_flag[history.action_flag] != 'delete' %}
+                                                <tr>
+                                                    <th>Now</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if diff_dict_list[history.id][key] != [] %}
+                                                                    {% for i in diff_dict_list[history.id][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ diff_dict_list[history.id][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                                {% if action_flag[history.action_flag] != 'add' %}
+                                                <tr>
+                                                    <th>Previous</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != [] %}
+                                                                    {% for i in dict[history.id][action_flag[history.action_flag]]['previous'][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </td>
+                                        <!--<td><a href=""><i class="fas fa-list"></i></a></td>-->
+                                        <td>
+                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                        <a href="{{ url('history:recover-confirm', args=[history.id]) }}">{{ history.date }}</a>
+                                        {% else %}
+                                        {{ history.date }}
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tab04" class="tab-inner">
+                    <table id="history_table04" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Content Type</th>
+                                <th>Object Id</th>
+                                <th>Action Flag</th>
+                                <th>Changed fields</th>
+                                <th>Date Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in object_list %}
+                                {% if history.content_type.model == 'receipt' %}
+                                    {% if diff_dict_list[history.id] != {} %}
+                                    <tr>
+                                        <td>{{ history.user }}</td>
+                                        <td>{{ history.content_type }}</td>
+                                        <td>{{ history.object_id }}</td>
+                                        <td>{{ action_flag[history.action_flag] }}</td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th></th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        <th>
+                                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                        {% else %}
+                                                        {{ key }}
+                                                        {% endif %}
+                                                        </th>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% if action_flag[history.action_flag] != 'delete' %}
+                                                <tr>
+                                                    <th>Now</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if diff_dict_list[history.id][key] != [] %}
+                                                                    {% for i in diff_dict_list[history.id][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>
+                                                            {% if diff_dict_list[history.id][key] != '' %}
+                                                            {{ diff_dict_list[history.id][key] }}
+                                                            {% else %}
+                                                            None
+                                                            {% endif %}
+                                                            </td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                                {% if action_flag[history.action_flag] != 'add' %}
+                                                <tr>
+                                                    <th>Previous</th>
+                                                    {% for key in diff_dict_list[history.id].keys() %}
+                                                        {% if key in model_dict.keys() %}
+                                                            {% if key in ManytoManyList %}
+                                                                <td>
+                                                                {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != [] %}
+                                                                    {% for i in dict[history.id][action_flag[history.action_flag]]['previous'][key] %}
+                                                                        {{ model_dict[key].objects.get(pk=i) }}
+                                                                        {% if not loop.last %}; {% endif %}
+                                                                    {% endfor %}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                </td>
+                                                            {% else %}
+                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <td>
+                                                            {% if dict[history.id][action_flag[history.action_flag]]['previous'][key] != '' %}
+                                                            {{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}
+                                                            {% else %}
+                                                            None
+                                                            {% endif %}
+                                                            </td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </td>
+                                        <!--<td><a href=""><i class="fas fa-list"></i></a></td>-->
+                                        <td>
+                                        {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
+                                        <a href="{{ url('history:recover-confirm', args=[history.id]) }}">{{ history.date }}</a>
+                                        {% else %}
+                                        {{ history.date }}
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#history_table01 thead tr').clone(true).appendTo('#history_table01 thead');
+		$('#history_table01 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table01.column(i).search() !== this.value) {
+					    history_table01
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table01.column(i).search() !== this.value) {
+					    history_table01
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table01 = $('#history_table01').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+<script>
+	$(document).ready(function () {
+		$('#history_table02 thead tr').clone(true).appendTo('#history_table02 thead');
+		$('#history_table02 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table02.column(i).search() !== this.value) {
+					    history_table02
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table02.column(i).search() !== this.value) {
+					    history_table02
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table02 = $('#history_table02').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+<script>
+	$(document).ready(function () {
+		$('#history_table03 thead tr').clone(true).appendTo('#history_table03 thead');
+		$('#history_table03 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table03.column(i).search() !== this.value) {
+					    history_table03
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table03.column(i).search() !== this.value) {
+					    history_table03
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table03 = $('#history_table03').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+<script>
+	$(document).ready(function () {
+		$('#history_table04 thead tr').clone(true).appendTo('#history_table04 thead');
+		$('#history_table04 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table04.column(i).search() !== this.value) {
+					    history_table04
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table04.column(i).search() !== this.value) {
+					    history_table04
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table04 = $('#history_table04').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+<script>
+	$(document).ready(function () {
+		$('#history_table00 thead tr').clone(true).appendTo('#history_table00 thead');
+		$('#history_table00 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table00.column(i).search() !== this.value) {
+					    history_table00
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table00.column(i).search() !== this.value) {
+					    history_table00
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table00 = $('#history_table00').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+<script>
+    $(function(){
+    var $li = $('ul.tab-title li');
+        $($li. eq(0) .addClass('active').find('a').attr('href')).siblings('.tab-inner').hide();    
+        $li.click(function(){
+            $($(this).find('a'). attr ('href')).show().siblings ('.tab-inner').hide();
+            $(this).addClass('active'). siblings ('.active').removeClass('active');
+        });
+    });
+</script>
+{% endblock js %}

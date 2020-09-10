@@ -14,7 +14,13 @@
         <p><strong>Date Joined:</strong> {{ user.date_joined }}</p>
         <p><strong>Last Login:</strong> {{ user.last_login }}</p>
     {% else %}
+<<<<<<< HEAD
         <p>Please <a href = "{% url 'login' %}">login</a> first!</p>
     {% endif %}
     <p><a href="{% url 'profile-update' user.id %}">Edit</a></p>
+=======
+        <p>Please <a href = "{{ url('login') }}">login</a> first!</p>
+    {% endif %}
+    <p><a href="{{ url('profile-update') user.id }}">Edit</a></p>
+>>>>>>> sheet_contract
 {% endblock %}
