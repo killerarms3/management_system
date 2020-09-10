@@ -6,11 +6,7 @@ from django.views.generic import ListView
 from django.views.generic import DetailView
 from .views import register
 import re
-<<<<<<< HEAD
-
-=======
 from django.conf.urls.static import static
->>>>>>> sheet_contract
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -20,8 +16,4 @@ urlpatterns = [
     path('profile/<int:pk>/update', views.profile_update, name = 'profile-update'),
     path('active/<token>', views.active_user, name = 'active_user'),
     path('check_mail/<username>', views.email_send_again, name = 'send_again'),
-<<<<<<< HEAD
 ]
-=======
-]
->>>>>>> sheet_contract

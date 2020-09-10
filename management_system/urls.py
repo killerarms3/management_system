@@ -27,11 +27,12 @@ urlpatterns = [
     path('experiment/',include('experiment.urls', namespace='experiment')),
     path('project/',include('project.urls', namespace='project')),
     path('accounts/', include('accounts.urls')),
-    path('accounts/', include('django.contrib.auth.urls'))
+    path('accounts/', include('django.contrib.auth.urls')),
     path('customer/', include('django.contrib.auth.urls')),
     path('contract/', include('contract.urls', namespace = 'contract')),
     path('contract/', include('django.contrib.auth.urls')),
     path('', RedirectView.as_view(url = 'accounts/', permanent = True)),
+    path('history/',include('history.urls', namespace='history')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)

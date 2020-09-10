@@ -72,3 +72,7 @@ class Organization(models.Model):
     is_other = models.BooleanField(default=True)
     def __str__(self):
         return self.name + ', ' + self.department
+
+class Customer_Organization(models.Model):
+    customer = models.ForeignKey(Customer, on_delete='CASCADE')
+    organization = models.ForeignKey(Organization, on_delete='CASCADE')

@@ -10,8 +10,10 @@ class CustomerAdmin(admin.ModelAdmin):
         'first_name',
         'birth_date',
         'title',
+        'job',
         'email',
-        'phone_number',
+        'tel',
+        'mobile',
         'address',
         'memo'
     )

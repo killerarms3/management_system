@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-from django.shortcuts import render
-
-# Create your views here.
-=======
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity
 from history.models import History
@@ -744,4 +739,3 @@ class Payment_methodDeleteView(PermissionRequiredMixin, DeleteView_add_log):
 class Payment_methodListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.can_view_payment_method'
     model = Payment_method
->>>>>>> sheet_contract

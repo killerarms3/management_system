@@ -1,8 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
-
-# Register your models here.
-=======
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity
 
 @admin.register(Contract)
@@ -88,4 +84,3 @@ class Order_quantityAdmin(admin.ModelAdmin):
         'quantity',
     )
 # Register your models here.
->>>>>>> sheet_contract
