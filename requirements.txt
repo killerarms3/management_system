@@ -4,3 +4,4 @@ Jinja2==2.10.1
 mysqlclient==1.4.2.post1
 sqlparse==0.3.0
 tqdm==4.32.2
+xlrd==1.2.0
