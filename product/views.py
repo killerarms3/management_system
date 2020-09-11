@@ -115,11 +115,10 @@ def change_product(request, id):
                 content_type = ContentType.objects.get(id=request.POST['project_content'])
                 if has_project:
                     project = has_project[0]
-                    project.content_type = content_type
                 else:
                     project = Project()
                     project.product = product
-                    project.content_type = content_type
+                project.content_type = content_type
                 project.save()
             else:
                 has_project[0].delete()

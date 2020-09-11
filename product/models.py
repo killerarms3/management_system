@@ -31,4 +31,4 @@ class Plan(models.Model):
 
 class Project(models.Model):
     product = models.ForeignKey(Product, on_delete='CASCADE')
-    contend_type = models.ForeignKey(ContentType, on_delete='CASCADE')
+    content_type = models.ForeignKey(ContentType, on_delete='CASCADE')
