@@ -24,7 +24,7 @@
                             <tr>
                                 <th>訂單</th>
                                 <td>
-                                {% for order in orders %}                                
+                                {% for order in orders %}
                                     <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
                                     {% if not loop.last %}, {% endif %}
                                 {% endfor %}
@@ -32,7 +32,7 @@
                                 <a href="{{ url('contract:add_specify_order', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_order', args=[contract.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
                                 {% endif %}
                                 </td>
-                            </tr>                            
+                            </tr>
                             <tr>
                                 <th>發票</th>
                                 <td>
@@ -51,7 +51,7 @@
                                 <td>{{ fields }}</td>
                             </tr>
                             {% endif %}
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>

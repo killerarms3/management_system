@@ -6,18 +6,17 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>採樣盒清單
                     {% if perms.contract.can_add_box %}
                         (<a href="{{ url('contract:box_create') }}">新增</a>)
-                    {% endif %}                    
+                    {% endif %}
                 </h3>
                 <table id="box_table" class="display" style="width:100%">
                     <thead>
-                        <tr>                            
+                        <tr>
                             <th></th>
-                            <th></th>                            
+                            <th></th>
                             <th>採樣盒流水號</th>
                             <th>訂單</th>
                             <th>方案</th>
@@ -43,13 +42,13 @@
                         {% endif %}
                         {% if perms.contract.view_box %}
                             <td><a href="{{ box.get_absolute_url() }}" target="popup" onclick="window.open('{{ box.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ box.serial_number }}</a></td>
-                        {% endif %}                            
+                        {% endif %}
                             <td>{{ box.order }}</td>
                         {% if perms.product.view_plan %}
                             <td><a href="">{{ box.plan }}</a></td>
                         {% else %}
                             <td>{{ box.plan }}</td>
-                        {% endif %}                        
+                        {% endif %}
                             {% if failed.objects.filter(box=box) %}
                                 <td>Failed</td>
                                 <td>
@@ -69,7 +68,7 @@
                             {% if destroyed.objects.filter(box=box) %}
                                 {% if perms.contract.view_destroyed %}
                                     <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                {% endif %}                                
+                                {% endif %}
                                 {% if destroyed.objects.get(box=box).is_sample_destroyed %}
                                     Destroyed
                                 {% else %}
@@ -78,17 +77,14 @@
                                 {% if perms.contract.view_destroyed %}
                                     </a>
                                 {% endif %}
-                                                               
+
                             {% endif %}
                             </td>
                             <td>{{ box.tracing_number }}</td>
-                        </tr> 
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -97,6 +93,10 @@
 {% block js %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
 		$('#box_table thead tr').clone(true).appendTo('#box_table thead');

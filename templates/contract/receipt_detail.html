@@ -26,16 +26,24 @@
                     <td>{{ receipt.receipt_date }}</td>
                 </tr>
                 <tr>
-                    <th>開立發票金額:</th>
+                    <th>發票金額:</th>
                     <td>{{ receipt.receipt_amount }}</td>
                 </tr>
                 <tr>
-                    <th>付款日期:</th>
+                    <th>入賬日期:</th>
                     <td>{{ receipt.payment_date }}</td>
+                </tr>
+                <tr>
+                    <th>單位:</th>
+                    <td>{{ receipt.receipt_org }}</td>
                 </tr>
                 <tr>
                     <th>付款方式:</th>
                     <td>{{ receipt.payment_method }}</td>
+                </tr>
+                <tr>
+                    <th>發票內容:</th>
+                    <td><pre style="font-size: 16px">{{ receipt.receipt_content }}</pre></td>
                 </tr>
                 <tr>
                     <th>備註:</th>

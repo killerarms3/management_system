@@ -6,8 +6,7 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>發票清單
                 {% if perms.contract.add_receipt %}
                     (<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
@@ -22,8 +21,10 @@
                             <th>合約</th>
                             <th>開立發票日期</th>
                             <th>發票金額</th>
-                            <th>付款日期</th>
+                            <th>入賬日期</th>
+                            <th>單位</th>
                             <th>付款方式</th>
+                            <th>發票內容</th>
                             <th>備註</th>
                         </tr>
                     </thead>
@@ -34,7 +35,7 @@
                             {% if perms.contract.change_receipt %}
                                 <a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>
                             {% endif %}
-                            </td>                            
+                            </td>
                             <td>
                             {% if perms.contract.delete_receipt %}
                                 <a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a>
@@ -45,19 +46,17 @@
                             <td>{{ receipt.receipt_date }}</td>
                             <td>{{ receipt.receipt_amount }}</td>
                             <td>{{ receipt.payment_date }}</td>
+                            <td>{{ receipt.receipt_org }}</td>
                             <td>{{ receipt.payment_method }}</td>
+                            <td>{{ receipt.receipt_content }}</td>
                             <td>{{ receipt.memo }}</td>
-                        </tr> 
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
         </div>
     </div>
 </div>
-
 
 {% endblock content %}
 
@@ -82,15 +81,12 @@
                 });
             }
 		});
-
 		var receipt_table = $('#receipt_table').DataTable({
 			dom: 'frtip',
 			scrollX: true,
 			orderCellsTop: true,
 		});
 	});
-
-
 </script>
 
 {% endblock js %}

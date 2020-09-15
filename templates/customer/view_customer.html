@@ -55,7 +55,6 @@
     </div>
 </div>
 <script>
-
 </script>
 
 {% endblock content %}
@@ -89,7 +88,6 @@
                 multiquery.options.add(option);
             }
 		});
-
 		var customer_table = $('#customer_table').DataTable({
 			dom: 'Bfrtip',
 			buttons: [
@@ -100,7 +98,6 @@
 			exportOptions: {
 				rows: 'visible'
 			},
-
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
@@ -108,8 +105,5 @@
             customer_table.column(i).search(querys.join('|'), true, false).draw();
         });
 	});
-
-
 </script>
-
 {% endblock js %}

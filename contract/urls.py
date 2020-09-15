@@ -82,3 +82,6 @@ urlpatterns += [
     path('delete_payment_method/<int:pk>', views.Payment_methodDeleteView.as_view(), name = 'delete_payment_method'),
     path('payment_method_list', views.Payment_methodListView.as_view(), name = 'payment_method-list'),
 ]
+urlpatterns += [
+    path('search', views.Search, name = 'search'),
+]
