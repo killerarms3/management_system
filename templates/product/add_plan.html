@@ -20,7 +20,7 @@
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th scope="col">* 產品(<a href="{{ url('product:add_product') }}">新增產品</a>)</th>
+                            <th scope="col">* 產品{% if perms.product.can_add_product %}(<a href="{{ url('product:add_product') }}">新增產品</a>){% endif %}</th>
                                 <td>
                                     <select class="multiple-select" id="product" name="product">
                                         {% for product in products %}
