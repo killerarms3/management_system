@@ -13,26 +13,26 @@ class Job(models.Model):
     name = models.CharField(max_length=32)
     is_other = models.BooleanField(default=True)
 
+class Customer_Type(models.Model):
+    name = models.CharField(max_length=32)
+
 class Customer(models.Model):
     last_name = models.CharField(max_length=32)
     first_name = models.CharField(max_length=32)
     birth_date = models.DateField(blank=True, null=True)
     title = models.ForeignKey(Title, on_delete='CASCADE')
     job = models.ForeignKey(Job, on_delete='CASCADE')
+    line_id = models.CharField(max_length=32, blank=True, null=True)
     email = models.CharField(max_length=320, blank=True, null=True)
     tel = models.CharField(max_length=32, blank=True, null=True)
     mobile = models.CharField(max_length=32, blank=True, null=True)
     address = models.CharField(max_length=320, blank=True, null=True)
     memo = models.TextField(blank=True, null=True)
+    customer_type = models.ForeignKey(Customer_Type, on_delete='CASCADE')
 
     def clean(self):
         errors = list()
         # 若重複，則更新舊資料!?
-        # if not self.pk:
-        #     exist_customers = Customer.objects.filter(last_name=self.last_name, first_name=self.first_name)
-        #     if exist_customers:
-        #         if {exist_customers[0].mobile, exist_customers[0].tel}.intersection({self.mobile, self.tel}) - {None, ''}:
-        #             errors.append({'customer': ['此客戶已存在']})
         if not self.tel and not self.mobile:
             errors.append({'phone_number': ['手機電話或市內電話只少要填一個']})
         if self.birth_date:
@@ -60,6 +60,9 @@ class Customer(models.Model):
                     error_dict[key].extend(error[key])
             raise ValidationError(error_dict)
 
+    def __str__(self):
+        return self.last_name + self.first_name
+
 class Feedback(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
     product = models.ForeignKey(Product, on_delete='CASCADE')
@@ -71,8 +74,10 @@ class Organization(models.Model):
     department = models.CharField(max_length=256)
     is_other = models.BooleanField(default=True)
     def __str__(self):
-        return self.name + ', ' + self.department
+        return self.name + '-' + self.department
 
 class Customer_Organization(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
     organization = models.ForeignKey(Organization, on_delete='CASCADE')
+
+
