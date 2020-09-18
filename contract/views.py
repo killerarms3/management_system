@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity
+from experiment.models import Experiment
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -138,9 +139,11 @@ class OrderUpdateView(PermissionRequiredMixin, UpdateView_add_log):
         Box = apps.get_model('contract', 'Box')        
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         box_list = Box.objects.filter(order=order).order_by('serial_number')
+        experiment_list = Experiment.objects.filter(box_id__in=list(box_list.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
         context = super().get_context_data(**kwargs)
         # box_list 用以顯示Order中的Box
         context['box_list'] = box_list
+        context['experiment_list'] = experiment_list
         return context
 
 class OrderCreateView(PermissionRequiredMixin, CreateView):
