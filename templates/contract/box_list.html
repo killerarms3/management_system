@@ -77,7 +77,6 @@
                                 {% if perms.contract.view_destroyed %}
                                     </a>
                                 {% endif %}
-
                             {% endif %}
                             </td>
                             <td>{{ box.tracing_number }}</td>
@@ -85,6 +84,9 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <h4 class="custom_text">多筆查詢</h4>
+                <select id="multiquery"></select>
+                <textarea class="form-control" row="3" id="query"></textarea>
         </div>
     </div>
 </div>
@@ -101,6 +103,7 @@
 	$(document).ready(function () {
 		$('#box_table thead tr').clone(true).appendTo('#box_table thead');
 		$('#box_table thead tr:eq(1) th').each(function (i) {
+            var multiquery = document.getElementById('multiquery');
             if (i>1){
 			    var title = $(this).text();
 			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
@@ -113,17 +116,27 @@
 						    .draw();
 				    }
                 });
+                // add options to multiquery
+                var option = new Option(title, i);
+                multiquery.options.add(option);
             }
 		});
-
 		var box_table = $('#box_table').DataTable({
-			dom: 'frtip',
+			dom: 'Bfrtip',
+            buttons: [
+				'copy', 'csv', 'excel'
+			],
 			scrollX: true,
 			orderCellsTop: true,
+            exportOptions: {
+				rows: 'visible'
+			},
 		});
+        $('#query, #multiquery').on('keyup change', function () {
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var i = parseInt($('#multiquery :selected').val(), 10);
+            box_table.column(i).search(querys.join('|'), true, false).draw();
+        });
 	});
-
-
 </script>
-
 {% endblock js %}

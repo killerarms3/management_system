@@ -54,6 +54,9 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <h4 class="custom_text">多筆查詢</h4>
+                <select id="multiquery"></select>
+                <textarea class="form-control" row="3" id="query"></textarea>
         </div>
     </div>
 </div>
@@ -63,10 +66,15 @@
 {% block js %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
 		$('#receipt_table thead tr').clone(true).appendTo('#receipt_table thead');
 		$('#receipt_table thead tr:eq(1) th').each(function (i) {
+            var multiquery = document.getElementById('multiquery');
             if (i!==0 && i!==1){
 			    var title = $(this).text();
 			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
@@ -79,14 +87,27 @@
 						    .draw();
 				    }
                 });
+                // add options to multiquery
+                var option = new Option(title, i);
+                multiquery.options.add(option);
             }
 		});
 		var receipt_table = $('#receipt_table').DataTable({
-			dom: 'frtip',
+			dom: 'Bfrtip',
+            buttons: [
+				'copy', 'csv', 'excel'
+			],
 			scrollX: true,
 			orderCellsTop: true,
+            exportOptions: {
+				rows: 'visible'
+			},
 		});
+        $('#query, #multiquery').on('keyup change', function () {
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var i = parseInt($('#multiquery :selected').val(), 10);
+            receipt_table.column(i).search(querys.join('|'), true, false).draw();
+        });
 	});
 </script>
-
 {% endblock js %}

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity
+from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity, Upload_Image, Upload_File
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from django.apps import apps
 from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
 from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, BoxUpdateForm, SpecifyFailedCreateForm,
                     SpecifyDestroyedCreateForm, ExaminerCreateForm, SpecifyExaminerCreateForm, OrderUpdateForm, OrderCreateForm,
                     ContractCreateForm, ContractUpdateForm, ReceiptUpdateForm, SpecifyReceiptCreateForm, SpecifyOrderCreateForm,
@@ -53,6 +54,17 @@ class ContractListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.add_contract'
     model = Contract
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        dict = {}
+        Upload_File = apps.get_model('contract', 'Upload_File')
+        upload_file = Upload_File.objects.filter(content_type=ContentType.objects.get(app_label='contract', model='contract'))
+        for file in upload_file:
+            dict[file.object_id] = file.file_upload
+        context['upload_file'] = upload_file
+        context['dict'] = dict
+        return context
+
 class ContractCreate(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.add_contract'
     model = Contract
@@ -81,7 +93,7 @@ class ContractDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = 'contract.delete_contract'
     model = Contract
     success_url = reverse_lazy('contract:view_contract')
-
+    
     # --------- history --------
     def post(self, request, *args, **kwargs):
         sub_table_list = ['Order', 'Receipt']
@@ -225,6 +237,19 @@ class ReceiptDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'contract.view_receipt'
     model = Receipt
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        Upload_Image = apps.get_model('contract', 'Upload_Image')
+        if Upload_Image.objects.filter(content_type=ContentType.objects.get(app_label='contract', model='receipt'), object_id=self.kwargs.get('pk')):
+            tag = True
+            upload_image = Upload_Image.objects.get(content_type=ContentType.objects.get(app_label='contract', model='receipt'), object_id=self.kwargs.get('pk'))
+            context['upload_image'] = upload_image.image
+        else:
+            tag = False
+
+        context['tag'] = tag
+        return context
+
 class ReceiptCreateView(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.add_receipt'
     model = Receipt
@@ -235,6 +260,19 @@ class ReceiptUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     model = Receipt
     template_name = 'contract/receipt_change.html'
     form_class = ReceiptUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        Upload_Image = apps.get_model('contract', 'Upload_Image')
+        if Upload_Image.objects.filter(content_type=ContentType.objects.get(app_label='contract', model='receipt'), object_id=self.kwargs.get('pk')):
+            tag = True
+            upload_image = Upload_Image.objects.get(content_type=ContentType.objects.get(app_label='contract', model='receipt'), object_id=self.kwargs.get('pk'))
+            context['upload_image'] = upload_image.image
+        else:
+            tag = False
+
+        context['tag'] = tag
+        return context
 
 class ReceiptDeleteView(PermissionRequiredMixin, DeleteView_add_log):
     permission_required = 'contract.delete_receipt'
@@ -574,7 +612,6 @@ def AddSpecifyBoxtoExaminer(request, pk):
     if request.method == 'POST':
         form = SpecifyExaminerCreateForm(request.POST)
         if form.is_valid():
-
             examiner.box = box
             examiner.customer = form.cleaned_data['customer']
             examiner.save()
@@ -745,8 +782,40 @@ def Search(request):
     models_list = []
     for model in model_list:
         models_list.append(model._meta.model_name)
-
     if request.method == "POST":
-        
         return render(request, 'contract/search.html', locals())
     return render(request, 'contract/search.html', locals())
+
+def Upload_image(request, pk):
+    header = '上傳圖片'
+    content_type = ContentType.objects.get(app_label='contract', model='receipt')
+    if request.method == 'POST':
+        img = request.FILES.get('sheet')
+        if Upload_Image.objects.filter(content_type=content_type, object_id=pk):
+            upload_image = Upload_Image.objects.get(content_type=content_type, object_id=pk)
+        else:
+            upload_image = Upload_Image()
+        upload_image.content_type = content_type
+        upload_image.object_id = pk
+        upload_image.image = img
+        upload_image.save()
+        messages.info(request, '已成功新增資料')
+        return render(request, 'contract/upload.html', locals())
+    return render(request, 'contract/upload.html', locals())
+
+def Upload_file(request, pk):
+    header = '上傳PDF'
+    content_type = ContentType.objects.get(app_label='contract', model='contract')
+    if request.method == 'POST':
+        file = request.FILES.get('sheet')
+        if Upload_File.objects.filter(content_type=content_type, object_id=pk):
+            upload_file = Upload_File.objects.get(content_type=content_type, object_id=pk)
+        else:
+            upload_file = Upload_File()
+        upload_file.content_type = content_type
+        upload_file.object_id = pk
+        upload_file.file_upload = file
+        upload_file.save()
+        messages.info(request, '已成功新增資料')
+        return render(request, 'contract/upload.html', locals())
+    return render(request, 'contract/upload.html', locals())

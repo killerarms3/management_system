@@ -26,10 +26,10 @@
                             {% else %}
                                 <tr>
                                     <th>{{ fields.label }}</th>
-                                    <td>{{ fields }}</td>                                                               
+                                    <td>{{ fields }}</td>
                                 </tr>
                             {% endif %}
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                     {% if specify_order %}
@@ -40,7 +40,6 @@
         </div>
     </div>
 {% endblock content %}
-
 {% block js %}
 <script>
     $('select').multipleSelect({

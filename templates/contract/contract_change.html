@@ -50,8 +50,17 @@
                                 <th>{{ fields.label }}</th>
                                 <td>{{ fields }}</td>
                             </tr>
-                            {% endif %}
+                            {% endif %}                            
                         {% endfor %}
+                            <tr>
+                                <th>PDF上傳</th>
+                                <td>
+                                    <div class="custom-file">
+                                        <input type="file" class="form-control-file" id="sheet" name="sheet">
+                                        <label class="custom-file-label" for="sheet">Choose file</label>
+                                    </div>
+                                </td>
+                            </tr>
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>
@@ -81,5 +90,12 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+</script>
+<script>
+    $('#sheet').change(function() {
+        var i = $(this).next('label').clone();
+        var file = $('#sheet')[0].files[0].name;
+        $(this).next('label').text(file);
+    });
 </script>
 {% endblock %}

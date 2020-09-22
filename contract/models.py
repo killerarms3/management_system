@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from customer.models import Customer, Organization
 from product.models import Plan
 from django.urls import reverse
+from django.contrib.contenttypes.models import ContentType
 
 # Create your models here.
 class Contract(models.Model):
@@ -53,7 +54,7 @@ class Receipt(models.Model):
     payment_date = models.DateField(blank=True, null=True, verbose_name='入賬日期')
     receipt_org = models.ForeignKey(Organization, null=True, on_delete=models.CASCADE, verbose_name='* 單位')
     payment_method = models.ForeignKey(Payment_method, on_delete=models.CASCADE, verbose_name='* 付款方式')
-    receipt_content = models.TextField(blank=True, null=True, verbose_name='發票內容')    
+    receipt_content = models.TextField(blank=True, null=True, verbose_name='發票內容')
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
 
     def __str__(self):
@@ -63,12 +64,12 @@ class Receipt(models.Model):
         return reverse("contract:receipt-detail", args=[str(self.pk)])
 
 class Failed_reason(models.Model):
-    failed_reason = models.CharField(max_length=32, unique=True, verbose_name='失敗原因') # 設為unique不希望名稱重複
+    failed_reason = models.CharField(max_length=32, unique=True, verbose_name='* 失敗原因') # 設為unique不希望名稱重複
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
 
     def __str__(self):
         return self.failed_reason
-        
+
     def get_absolute_url(self):
         return reverse("contract:failed_reason-detail", args=[str(self.pk)])
 
@@ -80,13 +81,13 @@ class Box(models.Model):
 
     def __str__(self):
         return self.serial_number + ', ' + str(self.pk)
-    
+
     def get_absolute_url(self):
         return reverse("contract:box-detail", args=[str(self.pk)])
 
 class Failed(models.Model):
-    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='*採樣盒')
-    failed_reason = models.ForeignKey(Failed_reason, on_delete=models.CASCADE, verbose_name='*失敗原因')
+    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='* 採樣盒')
+    failed_reason = models.ForeignKey(Failed_reason, on_delete=models.CASCADE, verbose_name='* 失敗原因')
 
 class Destroyed(models.Model):
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='* 檢驗盒')
@@ -100,3 +101,13 @@ class Destroyed(models.Model):
 class Examiner(models.Model):
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='* 採樣盒')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='* 受測者')
+
+class Upload_Image(models.Model):
+    content_type = models.ForeignKey(ContentType, blank=False, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(blank=False)
+    image = models.ImageField(upload_to='image/', blank=False, null=False)
+
+class Upload_File(models.Model):
+    content_type = models.ForeignKey(ContentType, blank=False, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(blank=False)
+    file_upload = models.FileField(upload_to='file/', blank=False, null=False)
