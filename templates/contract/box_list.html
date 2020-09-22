@@ -26,6 +26,8 @@
                             <th>受測者</th>
                             <th>銷毀註記</th>
                             <th>宅配單號</th>
+                            <th>產品狀態</th>
+                            <th>大表</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,6 +84,26 @@
                             {% endif %}
                             </td>
                             <td>{{ box.tracing_number }}</td>
+                            <td>
+                            {% if experiment.objects.filter(box=box) %}
+                                {% if perms.experiment.can_view_experiment %}
+                                <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                    {% if experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().data_transfer_date %}
+                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().transfer_organization }}
+                                    {% else %}
+                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().organization }}
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                            </td>
+                            <td>
+                                {% for obj in project %}
+                                {% if obj.objects.filter(box=box) %}
+                                <a href="{{ obj.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ obj.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ obj.__name__ }}</a>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
                         </tr> 
                         {% endfor %}
                     </tbody>

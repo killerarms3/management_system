@@ -262,6 +262,20 @@ class BoxDetailView(PermissionRequiredMixin, generic.DetailView):
                 context[name] = obj
             else:
                 context[name] = False
+        # experiment
+        experiments = Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk')
+        if experiments:
+            context['experiment'] = experiments[0]
+        else:
+            context['experiment'] = False
+        # project
+        for Obj in apps.get_app_config('project').get_models():
+            if Obj.objects.filter(box=box):
+                obj = Obj.objects.get(box=box)
+                context['project'] = obj
+                break
+            else:
+                context['project'] = False
         return context
 
 class BoxListView(PermissionRequiredMixin, generic.ListView):
@@ -275,6 +289,10 @@ class BoxListView(PermissionRequiredMixin, generic.ListView):
             name = Name.lower()
             obj = apps.get_model('contract', Name)
             context[name] = obj
+        context['experiment'] = Experiment
+        context['project'] = list()
+        for Obj in apps.get_app_config('project').get_models():
+            context['project'].append(Obj)
         return context
 
 class BoxDeleteView(PermissionRequiredMixin, DeleteView):
