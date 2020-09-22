@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity, Upload_Image, Upload_File
+from experiment.models import Experiment
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -122,9 +123,11 @@ class OrderDetailView(PermissionRequiredMixin, generic.DetailView):
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         order_quantity = all_order_quantity.objects.filter(order=order)
         box = all_box.objects.filter(order=order)
+        experiment = Experiment.objects.filter(box_id__in=list(box.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
         context = super().get_context_data(**kwargs)
         context['order_quantity'] = order_quantity
         context['box'] = box
+        context['experiment'] = experiment
         return context
 
 class OrderListView(PermissionRequiredMixin, generic.ListView):
@@ -151,9 +154,11 @@ class OrderUpdateView(PermissionRequiredMixin, UpdateView_add_log):
         Box = apps.get_model('contract', 'Box')
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         box_list = Box.objects.filter(order=order).order_by('serial_number')
+        experiment_list = Experiment.objects.filter(box_id__in=list(box_list.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
         context = super().get_context_data(**kwargs)
         # box_list 用以顯示Order中的Box
         context['box_list'] = box_list
+        context['experiment_list'] = experiment_list
         return context
 
 class OrderCreateView(PermissionRequiredMixin, CreateView):
@@ -296,6 +301,20 @@ class BoxDetailView(PermissionRequiredMixin, generic.DetailView):
                 context[name] = obj
             else:
                 context[name] = False
+        # experiment
+        experiments = Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk')
+        if experiments:
+            context['experiment'] = experiments[0]
+        else:
+            context['experiment'] = False
+        # project
+        for Obj in apps.get_app_config('project').get_models():
+            if Obj.objects.filter(box=box):
+                obj = Obj.objects.get(box=box)
+                context['project'] = obj
+                break
+            else:
+                context['project'] = False
         return context
 
 class BoxListView(PermissionRequiredMixin, generic.ListView):
@@ -309,6 +328,10 @@ class BoxListView(PermissionRequiredMixin, generic.ListView):
             name = Name.lower()
             obj = apps.get_model('contract', Name)
             context[name] = obj
+        context['experiment'] = Experiment
+        context['project'] = list()
+        for Obj in apps.get_app_config('project').get_models():
+            context['project'].append(Obj)
         return context
 
 class BoxDeleteView(PermissionRequiredMixin, DeleteView):

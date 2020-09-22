@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">產品狀態{% if perms.experiment.can_add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆客戶</a>){% endif %}</h3>
+            <h3 class="custom_text">產品狀態{% if perms.experiment.can_add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆記錄</a>){% endif %}</h3>
             <form method="POST" action="{{ url('experiment:add_experiment') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
                 <ul class="messages">
@@ -60,7 +60,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">移交單位</th>
+                            <th scope="col">* 移交單位</th>
                             <td>
                                 <select class="multiple-select" id="transfer_organization" name="transfer_organization" required>
                                     <option value="" selected></option>

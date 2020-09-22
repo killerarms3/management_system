@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">編輯資料</h3>
+            <form method="POST" id="form" action="{{ url('project:change_data', args=[model, id]) }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        {% for field in form %}
+                        <tr>
+                            <th>{{ field.label }}</th>
+                            <td>{{ field }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      placeholder: ''
+    });
+</script>
+<script>
+    $('#form').submit(function(){
+        $('select[name="box"]').removeAttr('disabled');
+    });
+</script>
+{% endblock js %}

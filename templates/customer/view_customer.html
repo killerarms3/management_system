@@ -24,10 +24,12 @@
                         <th>機構</th>
                         <th>職業</th>
                         <th>職稱</th>
+                        <th>LINE ID</th>
                         <th>E-mail</th>
                         <th>手機電話</th>
                         <th>市內電話</th>
                         <th>通訊地址</th>
+                        <th>客戶種類</th>
                         <th>備註</th>
                     </tr>
                 </thead>
@@ -39,10 +41,12 @@
                         <td>{{ customer.organization }}</td>
                         <td>{{ customer.job.name }}</td>
                         <td>{{ customer.title.name }}</td>
+                        <td>{{ customer.line_id }}</td>
                         <td>{{ customer.email }}</td>
                         <td>{{ customer.mobile }}</td>
                         <td>{{ customer.tel }}</td>
                         <td>{{ customer.address }}</td>
+                        <td>{{ customer.customer_type.name }}</td>
                         <td>{{ customer.memo }}</td>
                     </tr>
                     {% endfor %}
