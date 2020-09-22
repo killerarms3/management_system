@@ -21,7 +21,16 @@
                                     <td>{{ fields }}</td>
                                 {% endif %}
                             </tr>
-                        {% endfor %}                        
+                        {% endfor %}
+                        <tr>
+                            <th>圖片上傳</th>
+                            <td>
+                                <div class="custom-file">
+                                    <input type="file" class="form-control-file" id="sheet" name="sheet">
+                                    <label class="custom-file-label" for="sheet">Choose file</label>
+                                </div>
+                            </td>
+                        </tr>
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>
@@ -37,6 +46,13 @@
       filter: true,
       selectAll: false,
       showClear: true
+    });
+</script>
+<script>
+    $('#sheet').change(function() {
+        var i = $(this).next('label').clone();
+        var file = $('#sheet')[0].files[0].name;
+        $(this).next('label').text(file);
     });
 </script>
 {% endblock %}

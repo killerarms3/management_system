@@ -16,8 +16,8 @@
                         目標 :
                     </th>
                     <td>
-                        <select id="target" name="target">
-                            {% for model in contract_models_list %}
+                        <select>
+                            {% for model in models_list %}
                                 <option value="{{ model }}">{{ model }}</option>
                             {% endfor %}
                         </select>

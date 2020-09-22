@@ -6,8 +6,7 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>失敗清單
                 {% if perms.contract.add_failed %}
                     (<a href="{{ url('contract:failed_create') }}" target="popup" onclick="window.open('{{ url('contract:failed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
@@ -18,7 +17,7 @@
                         <tr>
                             <th></th>
                             <th></th>
-                            <th>採樣盒</th>                            
+                            <th>採樣盒</th>
                             <th>訂單</th>
                             <th>方案</th>
                             <th>失敗原因</th>
@@ -47,16 +46,13 @@
                                 <td><a href="">{{ failed.box.plan }}</a></td>
                             {% else %}
                                 <td>{{ failed.box.plan }}</td>
-                            {% endif %}                            
+                            {% endif %}
                                 <td>{{ failed.failed_reason }}</td>
                                 <td>{{ failed.box.tracing_number }}</td>
-                        </tr> 
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
         </div>
     </div>
 </div>

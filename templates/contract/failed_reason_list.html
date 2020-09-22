@@ -6,8 +6,7 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>失敗原因清單
                 {% if perms.contract.can_add_failed_reason %}
                     (<a href="{{ url('contract:failed_reason_create') }}">新增</a>)
@@ -41,9 +40,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
         </div>
     </div>
 </div>

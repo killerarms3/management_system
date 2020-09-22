@@ -6,8 +6,7 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>付款方式清單
                     {% if perms.contract.can_add_payment_method %}
                         (<a href="{{ url('contract:add_payment_method') }}">新增</a>)
@@ -38,10 +37,7 @@
                         </tr> 
                         {% endfor %}
                     </tbody>
-                </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
+                </table>            
         </div>
     </div>
 </div>

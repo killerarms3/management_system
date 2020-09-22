@@ -6,12 +6,11 @@
 <br>
 <div class="container">
     <div class="card mb-3">
-        <div class="card-body">            
-            {% if object_list %}
+        <div class="card-body">
                 <h3>銷毀清單
                     {% if perms.contract.add_destroyed %}
                         (<a href="{{ url('contract:destroyed_create') }}" target="popup" onclick="window.open('{{ url('contract:destroyed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
-                    {% endif %}                    
+                    {% endif %}
                 </h3>
                 <table id="destroyed_table" class="display" style="width:100%">
                     <thead>
@@ -41,7 +40,7 @@
                             <td><a href="{{ destroyed.box.get_absolute_url() }}">{{ destroyed.box }}</a></td>
                         {% else %}
                             <td>{{ destroyed.box.serial_number }}</td>
-                        {% endif %}                            
+                        {% endif %}
                             <td>
                             {% if destroyed.is_sample_destroyed %}
                                 已銷毀
@@ -51,13 +50,10 @@
                             </td>
                             <td>{{ destroyed.sample_destroyed_date }}</td>
                             <td>{{ destroyed.return_date }}</td>
-                        </tr> 
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <p>No Data!</p>
-            {% endif %}
         </div>
     </div>
 </div>

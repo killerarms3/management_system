@@ -9,7 +9,7 @@ from django.apps import apps
 
 class ContractCreateForm(forms.ModelForm):
     contract_date = forms.DateField(
-        label='簽約日期', 
+        label='* 簽約日期',
         widget=forms.DateInput(
             # 定義Contract Date內容最大值與最小值
             attrs={
@@ -19,8 +19,8 @@ class ContractCreateForm(forms.ModelForm):
                 'min': '1820-01-01',
                 'max': '2100-01-01'
             }),
-        required=False
-        )    
+        required=True
+        )
     class Meta:
         model = Contract
         fields = '__all__'
@@ -28,7 +28,7 @@ class ContractCreateForm(forms.ModelForm):
 class ContractUpdateForm(forms.ModelForm):
     user = forms.ModelChoiceField(label='負責人', queryset=User.objects.all(), required=True)
     contract_date = forms.DateField(
-        label='訂購日期', 
+        label='訂購日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -98,7 +98,7 @@ class OrderUpdateForm(forms.ModelForm):
 
 class OrderCreateForm(OrderUpdateForm):
     plan = forms.ModelMultipleChoiceField(
-        label='方案',
+        label='* 方案',
         queryset=Plan.objects.all(),
         widget=forms.SelectMultiple(
             attrs={
@@ -117,7 +117,7 @@ class SpecifyOrderCreateForm(OrderUpdateForm):
 class DestroyedUpdateForm(forms.ModelForm):
     is_sample_destroyed = forms.BooleanField(label='銷毀註記', help_text='Is destroyed or not', required=False) # 因其為布林值，required=False以表現其狀態
     sample_destroyed_date = forms.DateField(
-        label='銷毀日期', 
+        label='銷毀日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -129,7 +129,7 @@ class DestroyedUpdateForm(forms.ModelForm):
         required=False
         )
     return_date = forms.DateField(
-        label='DNA取回日期', 
+        label='DNA取回日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -147,7 +147,7 @@ class DestroyedUpdateForm(forms.ModelForm):
 class DestroyedCreateForm(DestroyedUpdateForm):
     destroyed = apps.get_model('contract', 'Destroyed')
     id_list = destroyed.objects.all().values_list('box_id', flat=True)
-    box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於destroyed的box不予顯示    
+    box = forms.ModelChoiceField(label='採樣盒', queryset=Box.objects.exclude(id__in=id_list), required = True) # 已經存在於destroyed的box不予顯示
     class Meta:
         model = Destroyed
         fields = '__all__'
@@ -198,7 +198,7 @@ class BoxUpdateForm(forms.Form):
     examiner = forms.ModelChoiceField(label='受測者', queryset=Customer.objects.all(), required=False)
     is_sample_destroyed = forms.BooleanField(label='銷毀註記', help_text='Is destroyed or not', required=False)
     sample_destroyed_date = forms.DateField(
-        label='銷毀日期', 
+        label='銷毀日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -210,7 +210,7 @@ class BoxUpdateForm(forms.Form):
         required=False
         )
     return_date = forms.DateField(
-        label='DNA取回日期', 
+        label='DNA取回日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -243,7 +243,7 @@ class BoxUpdateForm(forms.Form):
 
 class ReceiptUpdateForm(forms.ModelForm):
     receipt_date = forms.DateField(
-        label='開立發票日期', 
+        label='* 開立發票日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -255,7 +255,7 @@ class ReceiptUpdateForm(forms.ModelForm):
         required=False
         )
     payment_date = forms.DateField(
-        label='付款日期', 
+        label='入賬日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -294,7 +294,7 @@ class SpecifyReceiptCreateForm(ReceiptUpdateForm):
 
 class MultipleBoxCreateForm(forms.ModelForm):
     quantity = forms.IntegerField(
-        label='採樣盒數量',
+        label='* 採樣盒數量',
         widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
@@ -315,7 +315,7 @@ class SpecifyBoxCreateForm(MultipleBoxCreateForm):
 class MultipleSerialNumberCreateForm(forms.Form):
     sub_plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required=True)
     quantity = forms.IntegerField(
-        label='採樣盒數量',
+        label='* 採樣盒數量',
         widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
