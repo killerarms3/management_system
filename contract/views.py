@@ -110,9 +110,11 @@ class OrderDetailView(PermissionRequiredMixin, generic.DetailView):
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         order_quantity = all_order_quantity.objects.filter(order=order)
         box = all_box.objects.filter(order=order)
+        experiment = Experiment.objects.filter(box_id__in=list(box.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
         context = super().get_context_data(**kwargs)
         context['order_quantity'] = order_quantity
         context['box'] = box
+        context['experiment'] = experiment
         return context
 
 class OrderListView(PermissionRequiredMixin, generic.ListView):
@@ -430,7 +432,7 @@ class ExaminerDeleteView(PermissionRequiredMixin, DeleteView_add_log):
 @permission_required('contract.can_change_box')
 @csrf_protect
 def BoxUpdateView(request, pk):
-    Box = apps.get_model('contract', 'Box')    
+    Box = apps.get_model('contract', 'Box')
     box = Box.objects.get(pk=pk)
     # 標記Box是否擁有這些關係
     exist_tag = {'failed':False, 'destroyed':False, 'examiner':False}
@@ -444,7 +446,7 @@ def BoxUpdateView(request, pk):
             obj = Obj.objects.get(box=box)
             exist_tag[name] = True
             sub_table[name] = obj
-    
+
     if request.method == 'POST':
         form = BoxUpdateForm(request.POST)
         if form.is_valid():

@@ -157,6 +157,39 @@ def view_specific_experiment(request, serial_number):
     return render(request, 'experiment/view_experiment.html', locals())
 
 @login_required
+@permission_required('experiment.view_experiment', raise_exception=True)
+@csrf_protect
+def view_experiment_list(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return redirect(reverse('contract:order-list'))
+    boxes = Box.objects.filter(order=order)
+    experiments = Experiment.objects.filter(box_id__in=list(boxes.values_list(flat=True))).order_by('box__id', '-receiving_date','-pk')
+    experiment_records = dict()
+    for experiment in experiments:
+        if experiment.box.serial_number not in experiment_records:
+            experiment_records[experiment.box.serial_number] = list()
+        record = {
+            'id': str(experiment.id),
+            'box_id': str(experiment.box.id),
+            'change_experiment':reverse('experiment:change_experiment', kwargs={'id': experiment.id}),
+            'serial_number': experiment.box.serial_number,
+            'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
+            'receiving_date': str(experiment.receiving_date) if experiment.receiving_date else '',
+            'complete_date': str(experiment.complete_date) if experiment.complete_date else '',
+            'data_transfer_date': str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
+            'transfer_organization': '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
+            'failed_id': str()
+        }
+        faileds = Failed.objects.filter(box=experiment.box)
+        if faileds:
+            record['failed_id'] = str(faileds[0].id)
+        experiment_records[experiment.box.serial_number].append(record)
+    return render(request, 'experiment/view_experiment.html', locals())
+
+
+@login_required
 @permission_required('experiment.change_experiment', raise_exception=True)
 @csrf_protect
 def change_experiment(request, id):
