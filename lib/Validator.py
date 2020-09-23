@@ -4,6 +4,7 @@ def ValidateOrganization(Model, field_name, query, get_or_create=False):
     status = str()
     messages = list()
     organization = None
+    created = None
     try:
         querys = query.split('-')
         if len(querys) == 2:
@@ -28,4 +29,4 @@ def ValidateOrganization(Model, field_name, query, get_or_create=False):
         # 'NoneType' object has no attribute 'split'
         status = 'Falied'
         messages.append('%s: 此欄位必填' % (field_name))
-    return status, messages, organization
+    return status, messages, organization, created

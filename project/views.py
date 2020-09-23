@@ -9,6 +9,8 @@ from django.contrib.contenttypes.models import ContentType
 from contract.models import Box
 from language.models import Code
 from project.forms import GetDataCreateForm, ProjectBox
+from history.models import History
+from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 # Create your views here.
 
 @login_required
@@ -83,6 +85,7 @@ def add_data(request, model):
                 data.__dict__.update(**form.cleaned_data)
                 data.box = form.cleaned_data['box']
                 data.save()
+                log_addition(request.user, 'project', model, data.id, '1', object_to_dict(data), {})
                 messages.info(request, '已成功新增資料')
                 return redirect(reverse('project:add_data', kwargs={'model': model}))
         else:
@@ -108,9 +111,11 @@ def change_data(request, model, id):
     if request.method == 'POST':
         form = FormClass(request.POST)
         if form.is_valid():
+            pre_dict = object_to_dict(data)
             data.__dict__.update(**form.cleaned_data)
             data.box = form.cleaned_data['box']
             data.save()
+            log_addition(request.user, 'project', model, data.id, '2', object_to_dict(data), pre_dict)
             messages.info(request, '已成功更新資料')
         else:
             messages.error(request, '更新失敗，表格含無法辨認的資料')

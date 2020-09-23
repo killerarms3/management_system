@@ -12,6 +12,8 @@ from lib.multi_add import AddMultiData
 from lib.Validator import ValidateOrganization
 from django.core.exceptions import ValidationError
 import datetime
+from history.models import History
+from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 
 # Create your views here.
 @login_required
@@ -40,6 +42,7 @@ def add_experiment(request):
             experiment.data_transfer_date = request.POST['data_transfer_date']
         experiment.transfer_organization = transfer_organization
         experiment.save()
+        log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
         messages.info(request, '已成功新增紀錄')
         return redirect(reverse('experiment:view_experiment'))
     return render(request, 'experiment/add_experiment.html', locals())
@@ -55,11 +58,11 @@ def add_experiments(request):
         experiments = list()
         for idx, experiment_data in enumerate(data):
             # 之後改寫
-            status, mess, organization = ValidateOrganization(Organization, 'organization', experiment_data['organization'])
+            status, mess, organization = ValidateOrganization(Organization, 'organization', experiment_data['organization'])[:3]
             if mess:
                 data[idx]['status'] = status
                 data[idx]['messages'].extend(mess)
-            status, mess, transfer_organization = ValidateOrganization(Organization, 'transfer_organization', experiment_data['transfer_organization'])
+            status, mess, transfer_organization = ValidateOrganization(Organization, 'transfer_organization', experiment_data['transfer_organization'])[:3]
             if mess:
                 data[idx]['status'] = status
                 data[idx]['messages'].extend(mess)
@@ -88,9 +91,13 @@ def add_experiments(request):
             for idx, experiment in enumerate(experiments):
                 exist_experiments = Experiment.objects.filter(box=experiment.box, organization=experiment.organization, receiving_date=experiment.receiving_date)
                 if exist_experiments:
+                    pre_dict = object_to_dict(exist_experiments[0])
                     experiment.id = exist_experiments[0].id
+                    experiment.save()
+                    log_addition(request.user, 'experiment', 'experiment', experiment.id, '2', object_to_dict(experiment), pre_dict)
                 else:
                     experiment.save()
+                    log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
                 data[idx]['status'] = 'success'
             messages.info(request, '已成功新增資料')
         action_url = reverse('experiment:view_experiment')
@@ -206,6 +213,7 @@ def change_experiment(request, id):
         if exist_experiment and exist_experiment[0].id != id:
             messages.error(request, '此紀錄已存在')
             return HttpResponseRedirect('/experiment/view_experiment')
+        pre_dict = object_to_dict(experiment)
         experiment.box = box
         experiment.organization = organization
         experiment.receiving_date = request.POST['receiving_date']
@@ -215,6 +223,7 @@ def change_experiment(request, id):
             experiment.data_transfer_date = request.POST['data_transfer_date']
         experiment.transfer_organization = transfer_organization
         experiment.save()
+        log_addition(request.user, 'experiment', 'experiment', experiment.id, '2', object_to_dict(experiment), pre_dict)
         messages.info(request, '已成功更新紀錄')
         return redirect(reverse('experiment:view_experiment'))
     return render(request, 'experiment/change_experiment.html', locals())
@@ -256,6 +265,7 @@ def add_order_experiments(request, order_id):
         # 都沒問題，才存
         for experiment in experiments:
             experiment.save()
+            log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
         messages.info(request, '已成功更新紀錄')
         return redirect(reverse('experiment:view_experiment'))
     return render(request, 'experiment/add_order_experiments.html', locals())

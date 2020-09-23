@@ -12,6 +12,8 @@ from lib.Validator import ValidateOrganization
 from django.core.exceptions import ValidationError
 from customer.models import Organization, Customer, Customer_Organization, Title, Job, Customer_Type
 from django.template.defaulttags import register
+from history.models import History
+from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 
 # import customer.models as customer_models
 
@@ -28,6 +30,7 @@ def add_organization(request):
             return redirect(reverse('customer:add_organization'))
         else:
             messages.info(request, '已成功新增機構')
+            log_addition(request.user, 'customer', 'organization', organization.id, '1', object_to_dict(organization), {})
             return redirect(reverse('customer:add_customer'))
     return render(request, 'customer/add_organization.html', locals())
 
@@ -43,10 +46,12 @@ def change_organization(request, id):
         if exist_organization and exist_organization[0].id != id:
             messages.error(request, '此機構已存在')
             return redirect(reverse('customer:view_organization'))
+        pre_dict = object_to_dict(organization)
         organization.name = request.POST['name']
         organization.department = request.POST['department']
         organization.is_other = request.POST['is_other']
         organization.save()
+        log_addition(request.user, 'customer', 'organization', organization.id, '2', object_to_dict(organization), pre_dict)
         return redirect(reverse('customer:view_organization'))
     return render(request, 'customer/change_organization.html', locals())
 
@@ -82,7 +87,8 @@ def add_customer(request):
         title = Title.objects.get(id=request.POST['title'])
         customer.title = title
         customer.customer_type = Customer_Type.objects.get(id=request.POST['customer_type'])
-        #customer.save()
+        customer.save()
+        log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), {})
         if request.POST.getlist('organization'):
             for organization_id in request.POST.getlist('organization'):
                 organization = Organization.objects.get(id=organization_id)
@@ -90,6 +96,7 @@ def add_customer(request):
                 customer_organization.customer = customer
                 customer_organization.organization = organization
                 customer_organization.save()
+                log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
         messages.info(request, '已成功新增客戶')
     return render(request, 'customer/add_customer.html', locals())
 
@@ -116,6 +123,8 @@ def add_customers(request):
             try:
                 Job(name=customer_data['job']).full_clean()
                 job, created = Job.objects.get_or_create(name=customer_data['job'])
+                if created:
+                    log_addition(request.user, 'customer', 'job', job.id, '1', object_to_dict(job), {})
                 customer.job = job
             except ValidationError as err:
                 data[idx]['status'] = 'Failed'
@@ -123,6 +132,8 @@ def add_customers(request):
             try:
                 Title(name=customer_data['title']).full_clean()
                 title, created = Title.objects.get_or_create(name=customer_data['title'])
+                if created:
+                    log_addition(request.user, 'customer', 'title', title.id, '1', object_to_dict(title), {})
                 customer.title = title
             except ValidationError as err:
                 data[idx]['status'] = 'Failed'
@@ -142,7 +153,9 @@ def add_customers(request):
             customers.append(customer)
             # organization非必填
             if customer_data['organization']:
-                status, mess, organization = ValidateOrganization(Organization, 'organization', customer_data['organization'], True)
+                status, mess, organization, created = ValidateOrganization(Organization, 'organization', customer_data['organization'], True)
+                if created:
+                    log_addition(request.user, 'customer', 'organization', organization.id, '1', object_to_dict(organization), {})
                 if mess:
                     data[idx]['status'] = status
                     data[idx]['messages'].extend(mess)
@@ -155,17 +168,22 @@ def add_customers(request):
             messages.info(request, '表格資料內容錯誤，請修正後重新上傳!')
         else:
             for idx, customer in enumerate(customers):
+                pre_dict = {}
                 for exist_customer in Customer.objects.filter(last_name=customer.last_name, first_name=customer.first_name):
-                    print(customer)
-                    print({exist_customer.mobile, exist_customer.tel}.intersection({customer.mobile, customer.tel}) - {None, ''})
                     if {exist_customer.mobile, exist_customer.tel}.intersection({customer.mobile, customer.tel}) - {None, ''}:
+                        pre_dict = object_to_dict(exist_customer)
                         customer.id = exist_customer.id
                         break
-                if not customer.id:
-                    customer.save()
+                customer.save()
+                if pre_dict:
+                    log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
+                else:
+                    log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), pre_dict)
                 # customer_organization
                 if idx in customer_organizations:
-                    customer_organization, create = Customer_Organization.objects.get_or_create(customer=customer, organization=customer_organizations[idx].organization)
+                    customer_organization, created = Customer_Organization.objects.get_or_create(customer=customer, organization=customer_organizations[idx].organization)
+                    if created:
+                        log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
                 data[idx]['status'] = 'success'
             messages.info(request, '已成功新增資料')
         action_url = reverse('customer:view_customer')
@@ -198,6 +216,7 @@ def change_customer(request, id):
             if {exist_customers[0].mobile, exist_customers[0].tel}.intersection({request.POST['mobile'], request.POST['tel']}) - {None, ''}:
                 messages.error(request, '此客戶已存在')
                 return redirect(reverse('customer:view_customer'))
+        pre_dict = object_to_dict(customer)
         customer.__dict__.update(**request.POST.dict())
         if request.POST['birth_date']:
             customer.birth_date = request.POST['birth_date']
@@ -207,18 +226,22 @@ def change_customer(request, id):
         customer.title = Title.objects.get(id=request.POST['title'])
         customer.customer_type = Customer_Type.objects.get(id=request.POST['customer_type'])
         customer.save()
+        log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
         if request.POST.getlist('organization'):
             new_add = set(request.POST.getlist('organization')) - organization_ids
             need_remove = organization_ids - set(request.POST.getlist('organization'))
             for organization_id in need_remove:
                 organization = Organization.objects.get(id=organization_id)
-                Customer_Organization.objects.filter(customer=customer, organization=organization).delete()
+                customer_organization = Customer_Organization.objects.get(customer=customer, organization=organization)
+                log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '3', {}, object_to_dict(customer_organization))
+                customer_organization.delete()
             for organization_id in new_add:
                 organization = Organization.objects.get(id=organization_id)
                 customer_organization = Customer_Organization()
                 customer_organization.customer = customer
                 customer_organization.organization = organization
                 customer_organization.save()
+                log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
         messages.info(request, '已成功更新客戶')
         return HttpResponseRedirect('/customer/view_customer')
     return render(request, 'customer/change_customer.html', locals())
@@ -249,6 +272,7 @@ def add_title(request):
         title = Title()
         title.name = request.POST['name']
         title.save()
+        log_addition(request.user, 'customer', 'title', title.id, '1', object_to_dict(title), {})
         messages.error(request, '已成功新增職稱')
         return redirect(reverse('customer:add_customer'))
     return render(request, 'customer/add_title.html', locals())
@@ -269,9 +293,11 @@ def change_title(request, id):
         if exist_title and exist_title[0].id != id:
             messages.error(request, '此職稱已存在')
             return redirect(reverse('customer:view_title'))
+        pre_dict = object_to_dict(title)
         title.name = request.POST['name']
         title.is_other = request.POST['is_other']
         title.save()
+        log_addition(request.user, 'customer', 'title', title.id, '2', object_to_dict(title), pre_dict)
         return redirect(reverse('customer:view_title'))
     return render(request, 'customer/change_title.html', locals())
 
@@ -287,6 +313,7 @@ def add_job(request):
         job = Job()
         job.name = request.POST['name']
         job.save()
+        log_addition(request.user, 'customer', 'job', job.id, '1', object_to_dict(job), {})
         messages.error(request, '已成功新增職業')
         return redirect(reverse('customer:add_customer'))
     return render(request, 'customer/add_job.html', locals())
@@ -307,8 +334,10 @@ def change_job(request, id):
         if exist_job and exist_job[0].id != id:
             messages.error(request, '此職業已存在')
             return redirect(reverse('customer:view_job'))
+        pre_dict = object_to_dict(job)
         job.name = request.POST['name']
         job.is_other = request.POST['is_other']
         job.save()
+        log_addition(request.user, 'customer', 'job', job.id, '2', object_to_dict(job), pre_dict)
         return redirect(reverse('customer:view_job'))
     return render(request, 'customer/change_job.html', locals())
