@@ -34,3 +34,10 @@
 </div>
 
 {% endblock content %}
+{% block js %}
+<script>
+    $('input[type="text"]').change(function() {
+        this.value = $.trim(this.value);
+    });
+</script>
+{% endblock js %}

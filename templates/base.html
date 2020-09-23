@@ -67,7 +67,10 @@
                   {% if perms.history.view_history %}
                     <li><a href="{{ url('history:history-list') }}">History</a></li>
                   {% endif %}
-
+                    <li><a href="{{ url('experiment:view_experiment') }}">Experiment</a></li>
+                    <li><a href="{{ url('product:view_product') }}">Product</a></li>
+                    <li><a href="{{ url('product:view_plan') }}">Plan</a></li>
+                    <li><a href="{{ url('contract:search') }}">Search</a></li>
                 {% endif %}
                     <!-- insert default text for every page -->
                 </ul>
@@ -98,7 +101,6 @@
   <link rel="stylesheet" href="https://unpkg.com/multiple-select@1.5.2/dist/multiple-select.min.css">
   <!-- Latest compiled and minified JavaScript -->
   <script src="https://unpkg.com/multiple-select@1.5.2/dist/multiple-select.min.js"></script>
-
   {% block js %}{% endblock js %}
 </body>
 

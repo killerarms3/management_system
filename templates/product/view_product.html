@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">產品名單(<a href="{{ url('product:add_product') }}" target="popup" onclick="window.open('{{ url('product:add_product') }}','popup','width=600, height=600'); return false;">新增產品</a>)</h3>
+            <h3 class="custom_text">產品名單(<a href="{{ url('product:add_product') }}">新增產品</a>)</h3>
             {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -30,9 +30,9 @@
                     {% for product in products %}
                     <tr>
                         <td><a href="{{ url('product:change_product', args=[product.id]) }}"><i class="fas fa-edit"></i></a></td>
-                        <td>{{ product.name }}</td>
+                        <td><a href="{{ product.get_absolute_url() }}">{{ product.name }}</a></td>
                         <td>{{ product.prefix }}</td>
-                        <td>{{ product.project }}</td>
+                        <td><a href="{{ url('project:view_project_table', args=[product.project]) }}">{{ product.project }}</a></td>
                         <td>{% if product.status == 1 %}Available{% else %}Unavilable{% endif %}</td>
                     </tr>
                     {% endfor %}

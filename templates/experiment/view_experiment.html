@@ -27,6 +27,7 @@
                         <th>完成日</th>
                         <th>移交日</th>
                         <th>移交單位</th>
+                        <th>失敗註記</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,11 +41,12 @@
                         <td>{{ experiment_records[record][0]['complete_date'] }}</td>
                         <td>{{ experiment_records[record][0]['data_transfer_date'] }}</td>
                         <td>{{ experiment_records[record][0]['transfer_organization'] }}</td>
+                        <td>{% if experiment_records[record][0]['failed_id'] %}<a href="{{ url('contract:failed_edit', args=[experiment_records[record][0]['failed_id']]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[experiment_records[record][0]['failed_id']]) }}', 'popup', 'width=800', height='600'); return false">Failed</a>{% else %}<a href="{{ url('contract:add_specify_failed', args=[experiment_records[record][0]['box_id']]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_failed', args=[experiment_records[record][0]['box_id']]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a>{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            <h4 class="custom_text">多筆查詢</h4>
+            <h4 class="custom_text">多筆編號查詢</h4>
             <textarea class="form-control" row="3" id="query"></textarea>
         </div>
     </div>
@@ -128,7 +130,7 @@
                 '<th>移交單位</th>'+
             '</tr>'+
         '</thead>';
-    var experiment_records = {{ experiment_records|safe }}
+    var experiment_records = {{ experiment_records|safe }};
     for (experiment of experiment_records[d[2]]) {
         subtable += '<tr>'+
         '<td><a href="'+experiment['change_experiment']+'"><i class="fas fa-edit"></i></a></td>'+

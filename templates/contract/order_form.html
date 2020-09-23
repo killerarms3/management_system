@@ -22,14 +22,14 @@
                                 <tr>
                                     <th>{{ fields.label }}</th>
                                     <td colspan="3">{{ fields }}</td>
-                                </tr>                                
+                                </tr>
                             {% else %}
                                 <tr>
                                     <th>{{ fields.label }}</th>
-                                    <td colspan="3">{{ fields }}</td>                                                               
+                                    <td colspan="3">{{ fields }}</td>
                                 </tr>
                             {% endif %}
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                     {% if specify_contract %}
@@ -62,7 +62,7 @@
     }
     today=year+"-"+month+"-"+day;
 </script>
- <script type="text/javascript">      
+ <script type="text/javascript">
     function addtr(){
         var opts = [], opt;
         var str = '';
@@ -76,9 +76,9 @@
             document.getElementById("tab").deleteRow(3);
         }
         for (var i = 0; i < len; i++ ){
-            tradd[i] = tab.insertRow(3);            
+            tradd[i] = tab.insertRow(3);
         }
-        for (var i = 0; i < len; i++ ){            
+        for (var i = 0; i < len; i++ ){
             opt = objS.options[i].text;
             if ( objS.options[i].selected ){
                 var content = '<th>'+opt+'</th>'+'<td><input type="number" name="'+opt+'_quantity" class="form-control" min="1" max="100" required id="id_quantity"></td><td><strong>Tracing Number:</strong></td><td><input type="text" name="'+opt+'_tracing_number" class="form-control" required id="id_tracing_number"></td>';

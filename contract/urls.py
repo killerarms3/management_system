@@ -76,9 +76,19 @@ urlpatterns += [
 urlpatterns += [
     path('add_organization', views.add_organization, name = 'add_organization'),
 ]
+
 urlpatterns += [
     path('add_payment_method', views.Payment_methodCreateView.as_view(), name = 'add_payment_method'),
     path('edit_payment_method/<int:pk>', views.Payment_methodUpdateView.as_view(), name = 'edit_payment_method'),
     path('delete_payment_method/<int:pk>', views.Payment_methodDeleteView.as_view(), name = 'delete_payment_method'),
     path('payment_method_list', views.Payment_methodListView.as_view(), name = 'payment_method-list'),
+]
+
+urlpatterns += [
+    path('search', views.Search, name = 'search'),
+]
+
+urlpatterns += [
+    path('upload/image/<int:pk>', views.Upload_image, name = 'upload_image'),
+    path('upload/file/<int:pk>', views.Upload_file, name = 'upload_file'),
 ]
