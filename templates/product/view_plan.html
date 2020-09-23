@@ -31,7 +31,7 @@
                     {% for plan in plans %}
                     <tr>
                         <td><a href="{{ url('product:change_plan', args=[plan.id]) }}"><i class="fas fa-edit"></i></a></td>
-                        <td>{{ plan.product.name }}</td>
+                        <td><a href="{{ plan.product.get_absolute_url() }}">{{ plan.product.name }}</a></td>
                         <td>{{ plan.name }}</td>
                         <td>{{ plan.price }}</td>
                         <td>{{ plan.description }}</td>

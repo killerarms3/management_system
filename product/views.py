@@ -178,6 +178,12 @@ def view_plan(request):
     return render(request, 'product/view_plan.html', locals())
 
 @login_required
+@permission_required('product.view_plan', raise_exception=True)
+def view_product_plan(request, id):
+    plans = Plan.objects.filter(product__id=id)
+    return render(request, 'product/view_plan.html', locals())
+
+@login_required
 @permission_required('product.change_plan', raise_exception=True)
 @csrf_protect
 def change_plan(request, id):
