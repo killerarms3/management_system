@@ -8,7 +8,7 @@
     <div class="card mb-3">
         <div class="card-body">
                 <h3>採樣盒清單
-                    {% if perms.contract.can_add_box %}
+                    {% if perms.contract.add_box %}
                         (<a href="{{ url('contract:box_create') }}">新增</a>)
                     {% endif %}
                 </h3>
@@ -84,7 +84,7 @@
                             <td>{{ box.tracing_number }}</td>
                             <td>
                             {% if experiment.objects.filter(box=box) %}
-                                {% if perms.experiment.can_view_experiment %}
+                                {% if perms.experiment.view_experiment %}
                                 <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
                                     {% if experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().data_transfer_date %}
                                     {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().transfer_organization }}

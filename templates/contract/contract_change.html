@@ -15,7 +15,7 @@
                             {% if fields.label == '機構/單位' %}
                             <tr>
                                 <th>{{ fields.label }}
-                                {% if perms.customer.can_add_organization %}
+                                {% if perms.customer.add_organization %}
                                 (<a href="{{ url('contract:add_organization') }}">新增</a>)
                                 {% endif %}
                                 </th>
@@ -28,7 +28,7 @@
                                     <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
                                     {% if not loop.last %}, {% endif %}
                                 {% endfor %}
-                                {% if perms.contract.can_add_order %}
+                                {% if perms.contract.add_order %}
                                 <a href="{{ url('contract:add_specify_order', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_order', args=[contract.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
                                 {% endif %}
                                 </td>
@@ -40,7 +40,7 @@
                                     <a href="{{ receipt.get_absolute_url() }}" target="popup" onclick="window.open('{{ receipt.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ receipt }}</a>
                                     {% if not loop.last %}<br>{% endif %}
                                 {% endfor %}
-                                {% if perms.contract.can_add_receipt %}
+                                {% if perms.contract.add_receipt %}
                                 <a href="{{ url('contract:add_specify_receipt', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_receipt', args=[contract.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
                                 {% endif %}
                                 </td>

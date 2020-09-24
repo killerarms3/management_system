@@ -8,7 +8,7 @@
     <div class="card mb-3">
         <div class="card-body">
                 <h3>失敗原因清單
-                {% if perms.contract.can_add_failed_reason %}
+                {% if perms.contract.add_failed_reason %}
                     (<a href="{{ url('contract:failed_reason_create') }}">新增</a>)
                 {% endif %}
                 </h3>

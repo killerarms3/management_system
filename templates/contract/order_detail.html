@@ -8,8 +8,8 @@
     <div class="card mb-3">
         <div class="card-body">
             <h3>{{ order }}
-            {% if perms.contract.can_change_order %}&nbsp;&nbsp;<a href="{{ url('contract:order_edit', args=[order.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}
-            {% if perms.contract.can_delete_order %}&nbsp;&nbsp;<a href="{{ url('contract:order_delete', args=[order.id]) }}"><i class="fas fa-trash"></i></a>{% endif %}
+            {% if perms.contract.change_order %}&nbsp;&nbsp;<a href="{{ url('contract:order_edit', args=[order.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}
+            {% if perms.contract.delete_order %}&nbsp;&nbsp;<a href="{{ url('contract:order_delete', args=[order.id]) }}"><i class="fas fa-trash"></i></a>{% endif %}
             </h3>
             <table class="table table-hover">
                 <tr>

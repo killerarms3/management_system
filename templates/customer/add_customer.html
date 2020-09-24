@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增客戶{% if perms.customer.can_add_customer %}(<a href="{{ url('customer:add_customers') }}">新增多筆客戶</a>){% endif %}</h3>
+            <h3 class="custom_text">新增客戶{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_customers') }}">新增多筆客戶</a>){% endif %}</h3>
             <form method="POST" action="{{ url('customer:add_customer') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
                 <ul class="messages">
@@ -38,7 +38,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">機構{% if perms.customer.can_add_organization %}(<a href="{{ url('customer:add_organization') }}">新增機構</a>){% endif %}</th>
+                            <th scope="col">機構{% if perms.customer.add_organization %}(<a href="{{ url('customer:add_organization') }}">新增機構</a>){% endif %}</th>
                             <td>
                                 <select multiple="multiple" class="multiple-select" id="organization" name="organization">
                                     {% for organization in organizations %}
@@ -48,7 +48,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 職業{% if perms.customer.can_add_job %}(<a href="{{ url('customer:add_job') }}">新增職業</a>){% endif %}</th>
+                            <th scope="col">* 職業{% if perms.customer.add_job %}(<a href="{{ url('customer:add_job') }}">新增職業</a>){% endif %}</th>
                             <td>
                                 <select class="multiple-select" id="job" name="job" required>
                                     <option value=""></option>
@@ -59,7 +59,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 職稱{% if perms.customer.can_add_title %}(<a href="{{ url('customer:add_title') }}">新增職稱</a>){% endif %}</th>
+                            <th scope="col">* 職稱{% if perms.customer.add_title %}(<a href="{{ url('customer:add_title') }}">新增職稱</a>){% endif %}</th>
                             <td>
                                 <select class="multiple-select" id="title" name="title" required>
                                     <option value=""></option>

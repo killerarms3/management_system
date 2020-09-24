@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity, Upload_Image, Upload_File
 from experiment.models import Experiment
+from product.models import Project
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -491,6 +492,11 @@ class ExaminerDeleteView(PermissionRequiredMixin, DeleteView_add_log):
 def BoxUpdateView(request, pk):
     Box = apps.get_model('contract', 'Box')
     box = Box.objects.get(pk=pk)
+    proj = Project.objects.filter(product=box.plan.product).first()
+    if proj:
+        Proj = apps.get_model('project', proj.content_type.model)
+        project = Proj.objects.filter(box=box).first()
+
     # 標記Box是否擁有這些關係
     exist_tag = {'failed':False, 'destroyed':False, 'examiner':False}
     sub_table_list = ['Failed', 'Examiner', 'Destroyed']
@@ -566,6 +572,8 @@ def BoxUpdateView(request, pk):
         'failed_exist': exist_tag['failed'],
         'destroyed_exist': exist_tag['destroyed'],
         'examiner_exist': exist_tag['examiner'],
+        'proj': proj,
+        'project': project
     }
     return render(request, 'contract/box_change.html', context)
 

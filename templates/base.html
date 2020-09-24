@@ -52,7 +52,7 @@
                   {% if perms.contract.view_failed %}
                     <li><a href="{{ url('contract:failed-list') }}">All Failed Box</a></li>
                   {% endif %}
-                  {% if perms.contract.view_destroyed %}
+                  <!-- {% if perms.contract.view_destroyed %}
                     <li><a href="{{ url('contract:destroyed-list') }}">All destroyed Box</a></li>
                   {% endif %}
                   {% if perms.contract.view_examiner %}
@@ -63,14 +63,14 @@
                   {% endif %}
                   {% if perms.contract.view_failed_reason %}
                     <li><a href="{{ url('contract:failed_reason-list') }}">All Failed reason</a></li>
-                  {% endif %}
+                  {% endif %} -->
                   {% if perms.history.view_history %}
                     <li><a href="{{ url('history:history-list') }}">History</a></li>
                   {% endif %}
                     <li><a href="{{ url('experiment:view_experiment') }}">Experiment</a></li>
                     <li><a href="{{ url('product:view_product') }}">Product</a></li>
                     <li><a href="{{ url('product:view_plan') }}">Plan</a></li>
-                    <li><a href="{{ url('contract:search') }}">Search</a></li>
+                    <!-- <li><a href="{{ url('contract:search') }}">Search</a></li> -->
                 {% endif %}
                     <!-- insert default text for every page -->
                 </ul>

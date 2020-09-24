@@ -23,7 +23,7 @@
                                     {% for box in box_list %}
                                         <a href="{{ box.get_absolute_url() }}">{{ box }}</a>{% if not loop.last %};{% endif %}
                                     {% endfor %}
-                                    {% if perms.contract.can_add_box %}
+                                    {% if perms.contract.add_box %}
                                     &nbsp;<a href="{{ url('contract:add_specify_box', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_box', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
                                     {% endif %}
                                     </td>
@@ -34,7 +34,7 @@
                                         {% for serial_number in experiment_list %}
                                         <a href="{{ url('experiment:view_specific_experiment', args=[serial_number]) }}">{{ serial_number }}</a>{% if not loop.last %};{% endif %}
                                         {% endfor %}
-                                        {% if perms.experiment.can_add_experiment %}
+                                        {% if perms.experiment.add_experiment %}
                                         &nbsp;<a href="{{ url('experiment:add_order_experiments', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('experiment:add_order_experiments', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
                                         {% endif %}
                                     </td>

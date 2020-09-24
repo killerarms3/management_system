@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">客戶名單{% if perms.customer.can_add_customer %}(<a href="{{ url('customer:add_customer') }}">新增客戶</a>){% endif %}</h3>
+            <h3 class="custom_text">客戶名單{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_customer') }}">新增客戶</a>){% endif %}</h3>
             {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -36,7 +36,7 @@
                 <tbody>
                     {% for customer in customers %}
                     <tr>
-                        <td>{% if perms.customer.can_change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
+                        <td>{% if perms.customer.change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
                         <td>{{ customer.last_name }}{{ customer.first_name }}</td>
                         <td>{{ customer.organization }}</td>
                         <td>{{ customer.job.name }}</td>

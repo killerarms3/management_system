@@ -37,7 +37,7 @@ def view_project_table(request, model):
     available_models = ContentType.objects.filter(app_label='project').values_list('model', flat=True)
     if model not in available_models:
         return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.can_view_' + model):
+    if not request.user.has_perm('project.view_' + model):
         return HttpResponseRedirect('/project/view_project')
     Project_table = apps.get_model('project', model)
     table_data = list()
@@ -67,7 +67,7 @@ def add_data(request, model):
         contenttype = ContentType.objects.get(app_label='project', model=model)
     except ContentType.DoesNotExist:
         return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.can_add_' + model):
+    if not request.user.has_perm('project.add_' + model):
         return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
     field_tags = getlabels('project', model)
@@ -100,7 +100,7 @@ def change_data(request, model, id):
         contenttype = ContentType.objects.get(app_label='project', model=model)
     except ContentType.DoesNotExist:
         return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.can_add_' + model):
+    if not request.user.has_perm('project.add_' + model):
         return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
     field_tags = getlabels('project', model)
@@ -127,7 +127,7 @@ def view_specific_data(request, model, serial_number):
         contenttype = ContentType.objects.get(app_label='project', model=model)
     except ContentType.DoesNotExist:
         return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.can_view_' + model):
+    if not request.user.has_perm('project.view_' + model):
         return HttpResponseRedirect('/project/view_project')
     Project_table = apps.get_model('project', model)
     available_boxes = ProjectBox(model).values_list('serial_number', flat=True)
