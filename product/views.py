@@ -44,7 +44,7 @@ def add_product(request):
             project.content_type = content_type
             project.save()
         messages.info(request, '已成功新增產品')
-        return redirect(reverse('product:add_plan'))
+        return redirect(reverse('product:add_product'))
     return render(request, 'product/add_product.html', locals())
 
 # @login_required

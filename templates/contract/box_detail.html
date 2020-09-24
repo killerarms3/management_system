@@ -68,7 +68,19 @@
                 <tr>
                     <th scope="row">宅配單號: </th>
                     <td>{{ box.tracing_number }}</td>
-                </tr>                
+                </tr>
+                {% if experiment %}
+                <tr>
+                    <th scope="row">產品狀態: </th>
+                    <td><a href="{{ experiment.get_absolute_url() }}">{% if experiment.data_transfer_date %}{{ experiment.transfer_organization }}{% else %}{{ experiment.organization }}{% endif %}</a></td>
+                </tr>
+                {% endif %}
+                {% if project %}
+                <tr>
+                    <th scope="row">大表: </th>
+                    <td><a href="{{ project.get_absolute_url() }}">{{ project.__class__.__name__ }}</a></td>
+                </tr>
+                {% endif %}
             </table>
         </div>
     </div>

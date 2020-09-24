@@ -42,8 +42,7 @@ INSTALLED_APPS = [
     'contract',
     'experiment',
     'history',
-    'notifications',
-    'newsletter',
+    'language',
 ]
 
 MIDDLEWARE = [

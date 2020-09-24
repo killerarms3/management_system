@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">方案名單(<a href="{{ url('product:add_plan') }}" target="popup" onclick="window.open('{{ url('product:add_plan') }}','popup','width=600, height=600'); return false;">新增方案</a>)</h3>
+            <h3 class="custom_text">方案名單(<a href="{{ url('product:add_plan') }}">新增方案</a>)</h3>
             {% if messages %}
             <ul class="messages">
                 {% for message in messages %}

@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_protect
 from django.apps import apps
 import xlrd
+from django.conf import settings
+from django.shortcuts import HttpResponse
+import os
 
 class AddMultiData():
     def __init__(self, field_number):
@@ -43,3 +46,10 @@ class AddMultiData():
             data_dict.update({'status': '', 'messages': list()})
             data.append(data_dict)
         return column_codes, column_dict, data
+
+def download(request, filename):
+    in_file = open(os.path.join(settings.BASE_DIR, 'templates', 'download', filename), 'rb')
+    response = HttpResponse(in_file)
+    response['Content-Type'] = 'application/octet-stream'
+    response['Content-Disposition'] = 'attachment;filename="%s"' % (filename)
+    return response

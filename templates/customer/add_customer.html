@@ -32,13 +32,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 生日</th>
+                            <th scope="col">生日</th>
                             <td>
-                                <input class="form-control" type="date" id="birth_date" name="birth_date" min="1820-01-01" max="2020-01-01" required>
+                                <input class="form-control" type="date" id="birth_date" name="birth_date" min="1820-01-01" max="2020-01-01">
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">機構{% if perms.customer.can_add_organization %}(<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}','popup','width=600, height=600'); return false;">新增機構</a>){% endif %}</th>
+                            <th scope="col">機構{% if perms.customer.can_add_organization %}(<a href="{{ url('customer:add_organization') }}">新增機構</a>){% endif %}</th>
                             <td>
                                 <select multiple="multiple" class="multiple-select" id="organization" name="organization">
                                     {% for organization in organizations %}
@@ -48,7 +48,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 職業{% if perms.customer.can_add_job %}(<a href="{{ url('customer:add_job') }}" target="popup" onclick="window.open('{{ url('customer:add_job') }}','popup','width=600, height=600'); return false;">新增職業</a>){% endif %}</th>
+                            <th scope="col">* 職業{% if perms.customer.can_add_job %}(<a href="{{ url('customer:add_job') }}">新增職業</a>){% endif %}</th>
                             <td>
                                 <select class="multiple-select" id="job" name="job" required>
                                     <option value=""></option>
@@ -59,7 +59,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* 職稱{% if perms.customer.can_add_title %}(<a href="{{ url('customer:add_title') }}" target="popup" onclick="window.open('{{ url('customer:add_title') }}','popup','width=600, height=600'); return false;">新增職稱</a>){% endif %}</th>
+                            <th scope="col">* 職稱{% if perms.customer.can_add_title %}(<a href="{{ url('customer:add_title') }}">新增職稱</a>){% endif %}</th>
                             <td>
                                 <select class="multiple-select" id="title" name="title" required>
                                     <option value=""></option>
@@ -70,9 +70,15 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="col">* Email</th>
+                            <th scope="col">LINE ID</th>
                             <td>
-                                <input class="form-control" type="email" id="email" name="email" maxlength="320" required>
+                                <input class="form-control" type="text" id="line_id" name="line_id" maxlength="32">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Email</th>
+                            <td>
+                                <input class="form-control" type="email" id="email" name="email" maxlength="320">
                             </td>
                         </tr>
                         <tr>
@@ -90,13 +96,23 @@
                         <tr>
                             <th scope="col">* 通訊地址</th>
                             <td>
-                                <input class="form-control" type="text" id="address" name="address" maxlength="320">
+                                <input class="form-control" type="text" id="address" name="address" maxlength="320" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 客戶類別</th>
+                            <td>
+                                <select class="multiple-select" id="customer_type" name="customer_type" required>
+                                    {% for customer_type in customer_types %}
+                                    <option value="{{ customer_type.id }}">{{ customer_type.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </td>
                         </tr>
                         <tr>
                             <th scope="col">備註</th>
                             <td>
-                                <textarea cols="10" rows="10"id="memo" name="memo"></textarea>
+                                <textarea class="form-control" rows="10" id="memo" name="memo"></textarea>
                             </td>
                         </tr>
                     </tbody>

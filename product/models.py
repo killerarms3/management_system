@@ -27,8 +27,16 @@ class Plan(models.Model):
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
+<<<<<<< HEAD
         return self.product.name +', ' + self.name
 
 class Project(models.Model):
     product = models.ForeignKey(Product, on_delete='CASCADE')
     contend_type = models.ForeignKey(ContentType, on_delete='CASCADE')
+=======
+        return self.product.name + '-' + self.name
+
+class Project(models.Model):
+    product = models.ForeignKey(Product, on_delete='CASCADE')
+    content_type = models.ForeignKey(ContentType, on_delete='CASCADE')
+>>>>>>> 1b9e22db940c62d6b380ee395c71f84b4fcecffe

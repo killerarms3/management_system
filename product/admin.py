@@ -36,5 +36,5 @@ class PlanAsmin(admin.ModelAdmin):
 class ProjectAdmin(admin.ModelAdmin):
     list_display = (
         'product',
-        'contend_type'
+        'content_type'
     )

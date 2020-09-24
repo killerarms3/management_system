@@ -19,6 +19,7 @@ from django.urls import include
 from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
+from lib.multi_add import download 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,8 +34,7 @@ urlpatterns = [
     path('contract/', include('django.contrib.auth.urls')),
     path('', RedirectView.as_view(url = 'accounts/', permanent = True)),
     path('history/',include('history.urls', namespace='history')),
-    # path('newsletter/', include('newsletter.urls', namespace='newsletter')),
-    # path('newsletter/', include('django.contrib.auth.urls')),
+    path('download/<filename>/', download, name='download'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)

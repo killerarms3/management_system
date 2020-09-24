@@ -48,6 +48,18 @@
                     </td>
                 </tr>
                 <tr>
+                    <th scope="row"><strong>紀錄: </strong></th>
+                    <td>
+                        {% for serial_number in experiment %}
+                            <a href="{{ url('experiment:view_specific_experiment', args=[serial_number]) }}">{{ serial_number }}</a>
+                            {% if not loop.last %};{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="{{ url('experiment:view_experiment_list', args=[order.id]) }}"><i class="fas fa-list"></i></a>
+                    </td>
+                </tr>
+                <tr>
                     <th scope="row"><strong>備註: </strong></th>
                     <td colspan="2"><pre style="font-size: 16px">{{ order.memo }}</pre></td>
                 </tr>
