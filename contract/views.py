@@ -77,6 +77,11 @@ class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     form_class = ContractUpdateForm
     template_name = 'contract/contract_change.html'
     success_url = reverse_lazy('contract:view_contract')
+
+    def post(self, request, *args, **kwargs):
+        contract_upload_file(request, self.kwargs['pk'])
+        return super().post(request, *args, **kwargs)
+
     # 傳入Order與Receipt給template並固定contract
     def get_context_data(self, **kwargs):
         Order = apps.get_model('contract', 'Order')
@@ -93,7 +98,7 @@ class ContractDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = 'contract.delete_contract'
     model = Contract
     success_url = reverse_lazy('contract:view_contract')
-    
+
     # --------- history --------
     def post(self, request, *args, **kwargs):
         sub_table_list = ['Order', 'Receipt']
@@ -261,6 +266,11 @@ class ReceiptUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     template_name = 'contract/receipt_change.html'
     form_class = ReceiptUpdateForm
 
+    def post(self, request, *args, **kwargs):
+        receipt_upload_image(request, self.kwargs['pk'])
+        print(1)
+        return super().post(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         Upload_Image = apps.get_model('contract', 'Upload_Image')
@@ -270,7 +280,6 @@ class ReceiptUpdateView(PermissionRequiredMixin, UpdateView_add_log):
             context['upload_image'] = upload_image.image
         else:
             tag = False
-
         context['tag'] = tag
         return context
 
@@ -819,3 +828,33 @@ def Upload_file(request, pk):
         messages.info(request, '已成功新增資料')
         return render(request, 'contract/upload.html', locals())
     return render(request, 'contract/upload.html', locals())
+
+def receipt_upload_image(request, pk):    
+    if request.FILES.get('sheet'):
+        content_type = ContentType.objects.get(app_label='contract', model='receipt')
+        img = request.FILES.get('sheet')
+        print(2)
+        if Upload_Image.objects.filter(content_type=content_type, object_id=pk):
+            upload_image = Upload_Image.objects.get(content_type=content_type, object_id=pk)
+            upload_image.image = img
+            upload_image.save()
+        else:
+            upload_image = Upload_Image()
+            upload_image.content_type = content_type
+            upload_image.object_id = pk
+            upload_image.image = img
+            upload_image.save()
+
+
+def contract_upload_file(request, pk):
+    if request.FILES.get('sheet'):
+        content_type = ContentType.objects.get(app_label='contract', model='contract')
+        file = request.FILES.get('sheet')
+        if Upload_File.objects.filter(content_type=content_type, object_id=pk):
+            upload_file = Upload_File.objects.get(content_type=content_type, object_id=pk)
+        else:
+            upload_file = Upload_File()
+        upload_file.content_type = content_type
+        upload_file.object_id = pk
+        upload_file.file_upload = file
+        upload_file.save()

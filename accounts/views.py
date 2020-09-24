@@ -136,6 +136,12 @@ def active_user(request, token):
 		user = User.objects.get(username=username)
 	except User.DoesNotExist:
 		return HttpResponse('The user is not exist.')
+	user_profile = UserProfile()
+	user_profile.user = user
+	user_profile.save()
+	profile = Profile()
+	profile.user = user
+	profile.save()	
 	user.is_active = True
 	user.save()
 	confirm = 'Verification is success, please login again.'

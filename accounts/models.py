@@ -28,10 +28,8 @@ class Profile(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
-    phone_number = models.CharField(max_length=10)
-    address = models.CharField(max_length=50)
+    phone_number = models.CharField(max_length=10, null=True)
+    address = models.CharField(max_length=50, null=True)
     gender = models.CharField(max_length=10, null=True)
-
     
-
 # Create your models here.
