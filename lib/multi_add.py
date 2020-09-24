@@ -43,6 +43,3 @@ class AddMultiData():
             data_dict.update({'status': '', 'messages': list()})
             data.append(data_dict)
         return column_codes, column_dict, data
-
-
-

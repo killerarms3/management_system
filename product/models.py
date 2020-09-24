@@ -27,7 +27,7 @@ class Plan(models.Model):
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.product.name +', ' + self.name
 
 class Project(models.Model):
     product = models.ForeignKey(Product, on_delete='CASCADE')

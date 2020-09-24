@@ -33,6 +33,8 @@ urlpatterns = [
     path('contract/', include('django.contrib.auth.urls')),
     path('', RedirectView.as_view(url = 'accounts/', permanent = True)),
     path('history/',include('history.urls', namespace='history')),
+    # path('newsletter/', include('newsletter.urls', namespace='newsletter')),
+    # path('newsletter/', include('django.contrib.auth.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
