@@ -30,6 +30,9 @@ class Customer(models.Model):
     memo = models.TextField(blank=True, null=True)
     customer_type = models.ForeignKey(Customer_Type, on_delete='CASCADE')
 
+    def __str__(self):
+        return self.first_name + ', ' + self.last_name
+
     def clean(self):
         errors = list()
         # 若重複，則更新舊資料!?
@@ -79,5 +82,3 @@ class Organization(models.Model):
 class Customer_Organization(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
     organization = models.ForeignKey(Organization, on_delete='CASCADE')
-
-

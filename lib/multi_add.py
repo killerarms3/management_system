@@ -53,4 +53,3 @@ def download(request, filename):
     response['Content-Type'] = 'application/octet-stream'
     response['Content-Disposition'] = 'attachment;filename="%s"' % (filename)
     return response
-

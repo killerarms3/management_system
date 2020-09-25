@@ -24,22 +24,22 @@
                         <td><strong>Last Name:</strong> <td><td>{{ user.last_name }}</td>
                     </tr>                    
                     <tr>
-                        <td><strong>Gender:</strong><td><td>{{ user.userprofile.gender }}</td>
+                        <td><strong>Gender:</strong><td><td>{% if user.userprofile.gender %}{{ user.userprofile.gender }}{% endif %}</td>
                     </tr>
                     <tr>
                         <td><strong>E-mail:</strong><td><td>{{ user.email }}</td>
                     </tr>
                     <tr>
-                        <td><strong>Phone Number:</strong><td><td>{{ user.userprofile.phone_number }}</td>
+                        <td><strong>Phone Number:</strong><td><td>{% if user.userprofile.phone_number %}{{ user.userprofile.phone_number }}{% endif %}</td>
                     </tr>
                     <tr>
-                        <td><strong>Address:</strong><td><td>{{ user.userprofile.address }}</td>
+                        <td><strong>Address:</strong><td><td>{% if user.userprofile.address %}{{ user.userprofile.address }}{% endif %}</td>
                     </tr>
                     <tr>
-                        <td><strong>Organization:</strong><td><td>{{ user.profile.organization }}</td>
+                        <td><strong>Organization:</strong><td><td>{% if user.profile.organization %}{{ user.profile.organization }}{% endif %}</td>
                     </tr>      
                     <tr>
-                        <td><strong>Title:</strong><td><td>{{ user.profile.title.name }}</td>
+                        <td><strong>Title:</strong><td><td>{% if user.profile.title %}{{ user.profile.title }}{% endif %}</td>
                     </tr>
                     <tr>
                         <td><strong>Date Joined:</strong><td><td>{{ user.date_joined }}</td>
