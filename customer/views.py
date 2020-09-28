@@ -113,7 +113,7 @@ def add_customers(request):
         for idx, customer_data in enumerate(data):
             # 之後改寫
             # 若機構、職業、職稱不存在，則是否要直接創立，還是要只接受已有的機構?
-            # 目前都給自動新增，但是會是在is_other會是true
+            # 改不直接創立，避免出現一堆簡稱
             customer = Customer()
             customer.__dict__.update(**customer_data)
             if customer_data['birth_date']:
@@ -121,23 +121,17 @@ def add_customers(request):
             else:
                 customer.birth_date = None
             try:
-                Job(name=customer_data['job']).full_clean()
-                job, created = Job.objects.get_or_create(name=customer_data['job'])
-                if created:
-                    log_addition(request.user, 'customer', 'job', job.id, '1', object_to_dict(job), {})
+                job = Job.objects.get(name=customer_data['job'])
                 customer.job = job
-            except ValidationError as err:
+            except Job.DoesNotExist:
                 data[idx]['status'] = 'Failed'
-                data[idx]['messages'].extend(['%s: %s' % (key, ';'.join(err.message_dict[key])) for key in err.message_dict])
+                data[idx]['messages'].append('job: 不存在的職業')
             try:
-                Title(name=customer_data['title']).full_clean()
-                title, created = Title.objects.get_or_create(name=customer_data['title'])
-                if created:
-                    log_addition(request.user, 'customer', 'title', title.id, '1', object_to_dict(title), {})
+                title = Title.objects.get(name=customer_data['title'])
                 customer.title = title
-            except ValidationError as err:
+            except Title.DoesNotExist:
                 data[idx]['status'] = 'Failed'
-                data[idx]['messages'].extend(['%s: %s' % (key, ';'.join(err.message_dict[key])) for key in err.message_dict])
+                data[idx]['messages'].append('title: 不存在的職稱')
             # customer_type
             try:
                 customer_type = Customer_Type.objects.get(name=customer_data['customer_type'])
@@ -153,9 +147,7 @@ def add_customers(request):
             customers.append(customer)
             # organization非必填
             if customer_data['organization']:
-                status, mess, organization, created = ValidateOrganization(Organization, 'organization', customer_data['organization'], True)
-                if created:
-                    log_addition(request.user, 'customer', 'organization', organization.id, '1', object_to_dict(organization), {})
+                status, mess, organization = ValidateOrganization(Organization, 'organization', customer_data['organization'])[:3]
                 if mess:
                     data[idx]['status'] = status
                     data[idx]['messages'].extend(mess)

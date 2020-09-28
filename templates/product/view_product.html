@@ -32,7 +32,7 @@
                         <td><a href="{{ url('product:change_product', args=[product.id]) }}"><i class="fas fa-edit"></i></a></td>
                         <td><a href="{{ product.get_absolute_url() }}">{{ product.name }}</a></td>
                         <td>{{ product.prefix }}</td>
-                        <td><a href="{{ url('project:view_project_table', args=[product.project]) }}">{{ product.project }}</a></td>
+                        <td>{% if product.project %}<a href="{{ url('project:view_project_table', args=[product.project]) }}">{{ product.project }}</a>{% endif %}</td>
                         <td>{% if product.status == 1 %}Available{% else %}Unavilable{% endif %}</td>
                     </tr>
                     {% endfor %}

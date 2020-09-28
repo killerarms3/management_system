@@ -35,23 +35,23 @@
                 <hr>
                 {% if user.is_authenticated %}
                   {% if perms.customer.view_customer %}
-                    <li><a href="{{ url('customer:view_customer') }}">All Customers</a></li>
+                    <li><a href="{{ url('customer:view_customer') }}">客戶名單</a></li>
                   {% endif %}
                   {% if perms.contract.view_contract %}
-                    <li><a href="{{ url('contract:view_contract') }}">All Contracts</a></li>
+                    <li><a href="{{ url('contract:view_contract') }}">合約</a></li>
                   {% endif %}
                   {% if perms.contract.view_order %}
-                    <li><a href="{{ url('contract:order-list') }}">All Order</a></li>
+                    <li><a href="{{ url('contract:order-list') }}">訂購單</a></li>
                   {% endif %}
                   {% if perms.contract.view_receipt %}
-                    <li><a href="{{ url('contract:receipt-list') }}">All Receipt</a></li>
+                    <li><a href="{{ url('contract:receipt-list') }}">發票</a></li>
                   {% endif %}
                   {% if perms.contract.view_box %}
-                    <li><a href="{{ url('contract:box-list') }}">All Box</a></li>
+                    <li><a href="{{ url('contract:box-list') }}">採樣盒</a></li>
                   {% endif %}
-                  {% if perms.contract.view_failed %}
+                  <!-- {% if perms.contract.view_failed %}
                     <li><a href="{{ url('contract:failed-list') }}">All Failed Box</a></li>
-                  {% endif %}
+                  {% endif %} -->
                   <!-- {% if perms.contract.view_destroyed %}
                     <li><a href="{{ url('contract:destroyed-list') }}">All destroyed Box</a></li>
                   {% endif %}
@@ -65,11 +65,11 @@
                     <li><a href="{{ url('contract:failed_reason-list') }}">All Failed reason</a></li>
                   {% endif %} -->
                   {% if perms.history.view_history %}
-                    <li><a href="{{ url('history:history-list') }}">History</a></li>
+                    <li><a href="{{ url('history:history-list') }}">歷史記錄</a></li>
                   {% endif %}
-                    <li><a href="{{ url('experiment:view_experiment') }}">Experiment</a></li>
-                    <li><a href="{{ url('product:view_product') }}">Product</a></li>
-                    <li><a href="{{ url('product:view_plan') }}">Plan</a></li>
+                    <li><a href="{{ url('experiment:view_experiment') }}">產品狀態</a></li>
+                    <li><a href="{{ url('product:view_product') }}">產品</a></li>
+                    <li><a href="{{ url('product:view_plan') }}">方案</a></li>
                     <!-- <li><a href="{{ url('contract:search') }}">Search</a></li> -->
                 {% endif %}
                     <!-- insert default text for every page -->
