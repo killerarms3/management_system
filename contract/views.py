@@ -374,13 +374,18 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         new_serial_number_list = []
         plan = form.cleaned_data['plan']
+        Product_Prefix = apps.get_model('product', 'product_prefix')
+        target = Product_Prefix.objects.get(product=plan.product)
+        prefix = target.prefix.name
         quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
-        box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
-        max_serial_number = box_serial_number_list[0][0]
-        perfix = max_serial_number[:3]
+        box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+        if box_serial_number_list:
+            max_serial_number = box_serial_number_list[0][0]
+        else:
+            max_serial_number = prefix+'000000'
         max_number = int(max_serial_number[3:])
         for i in range(quantity):
-            new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6)) # 創造新增的box的serial number，數字會補齊六位
+            new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 創造新增的box的serial number，數字會補齊六位
         for list in new_serial_number_list:
             Box.objects.create(
                 serial_number = list,
@@ -766,14 +771,19 @@ def AddSpecifyOrdertoBox(request, pk):
         form = SpecifyBoxCreateForm(request.POST)
         if form.is_valid():
             new_serial_number_list = []
-            plan = form.cleaned_data['plan']
-            quantity = form.cleaned_data['quantity']
-            box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number')
-            max_serial_number = box_serial_number_list[0][0]
-            perfix = max_serial_number[:3]
+            plan = form.cleaned_data['plan']            
+            Product_Prefix = apps.get_model('product', 'product_prefix')
+            target = Product_Prefix.objects.get(product=plan.product)
+            prefix = target.prefix.name
+            quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
+            box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+            if box_serial_number_list:
+                max_serial_number = box_serial_number_list[0][0]
+            else:
+                max_serial_number = prefix+'000000'            
             max_number = int(max_serial_number[3:])
             for i in range(quantity):
-                new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6))
+                new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6))
             for list in new_serial_number_list:
                 Box.objects.create(
                     serial_number = list,
