@@ -187,27 +187,32 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
             for plan in form.cleaned_data['plan']:
                 order.plan.add(plan.id)
             order.save()
+            Product_Prefix = apps.get_model('product', 'product_prefix')
 
             # plan是ManytoMany關係，有可能有複數個，故利用迴圈逐個處理，以下皆考慮相同plan的狀況
             for plan in form.cleaned_data['plan']:
-                quantity_tag = plan.name+'_quantity' # template上quantity欄位的name
-                tracing_number_tag = plan.name+'_tracing_number' # template上tracing_number欄位的對應name
+                quantity_tag = plan.product.name+'-'+plan.name+'_quantity' # template上quantity欄位的name
+                #tracing_number_tag = plan.name+'_tracing_number' # template上tracing_number欄位的對應name
                 quantity = request.POST[quantity_tag] # 利用前面得到的name取得在template輸入的值
-                tracing_number = request.POST[tracing_number_tag] # 同上
-                new_serial_number_list = []
-                box_serial_number_list = Box.objects.filter(plan=plan).values_list('serial_number').order_by('-serial_number') # 取得box的serial number，並大到小排序
-                max_serial_number = box_serial_number_list[0][0] # 取得serial number的最大值
-                perfix = max_serial_number[:3] # 取得serial number中的前綴詞(代號)
+                #tracing_number = request.POST[tracing_number_tag] # 同上
+                new_serial_number_list = []            
+                target = Product_Prefix.objects.get(product=plan.product)
+                prefix = target.prefix.name                
+                box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+                if box_serial_number_list:
+                    max_serial_number = box_serial_number_list[0][0]
+                else:
+                    max_serial_number = prefix+'000000'
                 max_number = int(max_serial_number[3:]) #將前綴詞之外的轉成正整數數值
                 for i in range(int(quantity)): # 先前取得的quantity即為本次新增的box數量
-                    new_serial_number_list.append(perfix + str(max_number+i+1).zfill(6)) # 從現存在於database中serial number的最大值之後產生新的serial number，並將數字部分補齊六個(ex: 36補成000036)
+                    new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 從現存在於database中serial number的最大值之後產生新的serial number，並將數字部分補齊六個(ex: 36補成000036)
                 # 新增
                 for list in new_serial_number_list:
                     Box.objects.create(
                     serial_number = list,
                     plan = plan,
                     order = order,
-                    tracing_number = tracing_number
+                    tracing_number = ''
                     )
                     # --------- history --------
                     box_new =  Box.objects.all().order_by('-id').first()

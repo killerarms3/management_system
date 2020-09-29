@@ -14,19 +14,19 @@
                         {% if specify_contract %}
                             <tr>
                                 <th>合約</th>
-                                <td colspan="3">{{ contract }}</td>
+                                <td colspan="2">{{ contract }}</td>
                             </tr>
                         {% endif %}
                         {% for fields in form %}
                             {% if fields.label == '方案' %}
                                 <tr>
                                     <th>{{ fields.label }}</th>
-                                    <td colspan="3">{{ fields }}</td>
+                                    <td colspan="2">{{ fields }}</td>
                                 </tr>
                             {% else %}
                                 <tr>
                                     <th>{{ fields.label }}</th>
-                                    <td colspan="3">{{ fields }}</td>
+                                    <td colspan="2">{{ fields }}</td>
                                 </tr>
                             {% endif %}
                         {% endfor %}
@@ -81,7 +81,7 @@
         for (var i = 0; i < len; i++ ){
             opt = objS.options[i].text;
             if ( objS.options[i].selected ){
-                var content = '<th>'+opt+'</th>'+'<td><input type="number" name="'+opt+'_quantity" class="form-control" min="1" max="100" required id="id_quantity"></td><td><strong>Tracing Number:</strong></td><td><input type="text" name="'+opt+'_tracing_number" class="form-control" required id="id_tracing_number"></td>';
+                var content = '<th>'+opt+'</th>'+'<td><strong>數量</strong></td><td><input type="number" name="'+opt+'_quantity" class="form-control" min="1" max="100" required id="id_quantity"></td>';
                 tradd[i].innerHTML=content;
             }
         }
