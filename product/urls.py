@@ -10,6 +10,7 @@ urlpatterns=[
     path('add_plan', product_views.add_plan, name='add_plan'),
     path('view_plan', product_views.view_plan, name='view_plan'),
     path('change_plan/<int:id>/', product_views.change_plan, name='change_plan'),
+    path('view_plan/<int:id>', product_views.view_specific_plan, name='view_specific_plan')
     ]
 
 

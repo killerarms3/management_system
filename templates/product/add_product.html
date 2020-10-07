@@ -9,39 +9,26 @@
     <div class="card mb-3">
         <div class="card-body">
             <h3 class="custom_text">新增產品</h3>
+            <ul class="fa-ul" style="margin-left: 0;">
+                <li><i class="fas fa-info-circle"> 【產品名稱】不可重複</i></li>
+                <li><i class="fas fa-info-circle"> 【產品前綴】為產生流水號時，流水號前會添加的字串</i></li>
+            </ul>
             <form method="POST" action="{{ url('product:add_product') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
-                <ul class="messages">
+                <ul class="fa-ul" style="margin-left: 0;">
                     {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                     {% endfor %}
                 </ul>
                 {% endif %}
                 <table class="table table-hover">
                     <tbody>
+                        {% for field in form %}
                         <tr>
-                            <th scope="col">* 產品名稱</th>
-                            <td>
-                                <input class="form-control" type="text" name="name" maxlength="256" required>
-                            </td>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}{% if field.name == 'product' %}{% if perms.product.add_product %}(<a href="{{ url('product:add_product') }}">新增產品</a>){% endif %}{% endif %}</th>
+                            <td>{{ field }}</td>
                         </tr>
-                        <tr>
-                            <th scope="col">產品前綴</th>
-                            <td>
-                                <input class="form-control" type="text" name="prefix" maxlength="16">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">產品大表</th>
-                            <td>
-                                <select class="multiple-select" id="project_content" name="project_content">
-                                    <option value="" selected>無</option>
-                                    {% for content in project_contents %}
-                                    <option value="{{ content.id }}">{{ content.model }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
@@ -57,6 +44,10 @@
     });
     $('input[type="text"]').change(function() {
         this.value = $.trim(this.value);
+    });
+    $('form').submit(function(){
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
     });
 </script>
 {% endblock js %}

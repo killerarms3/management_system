@@ -1,25 +1,13 @@
 from django.contrib import admin
-from .models import Product, Prefix, Product_Prefix, Plan, Project
+from .models import Product, Plan, Project
 # Register your models here.
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'name',
+        'prefix',
         'status'
-    )
-
-@admin.register(Prefix)
-class PrefixAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-    )
-
-@admin.register(Product_Prefix)
-class Product_PrefixAdmin(admin.ModelAdmin):
-    list_display = (
-        'product',
-        'prefix'
     )
 
 @admin.register(Plan)
