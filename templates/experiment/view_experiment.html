@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ static('css/datatable_custom.css') }}">
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">產品狀態(<a href="{{ url('experiment:add_experiment') }}">新增紀錄</a>)</h3>
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <table id="experiment_table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>編號</th>
+                        <th>單位</th>
+                        <th>收到日</th>
+                        <th>完成日</th>
+                        <th>移交日</th>
+                        <th>移交單位</th>
+                        <th>失敗註記</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in experiment_records %}
+                    <tr>
+                        <td class="details-control"></td>
+                        <td><a href="{{ experiment_records[record][0]['change_experiment'] }}"><i class="fas fa-edit"></i></a></td>
+                        <td>{{ experiment_records[record][0]['serial_number'] }}</td>
+                        <td>{{ experiment_records[record][0]['organization'] }}</td>
+                        <td>{{ experiment_records[record][0]['receiving_date'] }}</td>
+                        <td>{{ experiment_records[record][0]['complete_date'] }}</td>
+                        <td>{{ experiment_records[record][0]['data_transfer_date'] }}</td>
+                        <td>{{ experiment_records[record][0]['transfer_organization'] }}</td>
+                        <td>{% if experiment_records[record][0]['failed_id'] %}<a href="{{ url('contract:failed_edit', args=[experiment_records[record][0]['failed_id']]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[experiment_records[record][0]['failed_id']]) }}', 'popup', 'width=800', height='600'); return false">Failed</a>{% else %}<a href="{{ url('contract:add_specify_failed', args=[experiment_records[record][0]['box_id']]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_failed', args=[experiment_records[record][0]['box_id']]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h4 class="custom_text">多筆編號查詢</h4>
+            <textarea class="form-control" row="3" id="query"></textarea>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#experiment_table thead tr').clone(true).appendTo('#experiment_table thead');
+		$('#experiment_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (experiment_table.column(i).search() !== this.value) {
+					    experiment_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var experiment_table = $('#experiment_table').DataTable({
+			dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel'
+            ],
+			scrollX: true,
+			orderCellsTop: true,
+            exportOptions: {
+                rows: 'visible'
+            },
+		});
+        $('#query').on('keyup change', function () {
+            var querys = this.value.split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            experiment_table.column(2).search(querys.join('|'), true, false).draw();
+        });
+
+        $('#experiment_table tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = experiment_table.row(tr);
+        if (row.child.isShown()) {
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown');
+        }
+        else {
+            // Open this row
+            row.child(format(row.data())).show();
+            tr.addClass('shown');
+            }
+        });
+	});
+
+    function format (d) {
+    // d is the original data object for the row
+    // d[2] is serial_number
+    var subtable = '<table class="display" style="width:100%">'+
+        '<thead>'+
+            '<tr>'+
+                '<th></th>'+
+                '<th>編號</th>'+
+                '<th>單位</th>'+
+                '<th>收到日</th>'+
+                '<th>完成日</th>'+
+                '<th>移交日</th>'+
+                '<th>移交單位</th>'+
+            '</tr>'+
+        '</thead>';
+    var experiment_records = {{ experiment_records|safe }};
+    for (experiment of experiment_records[d[2]]) {
+        subtable += '<tr>'+
+        '<td><a href="'+experiment['change_experiment']+'"><i class="fas fa-edit"></i></a></td>'+
+        '<td>'+experiment['serial_number']+'</td>'+
+        '<td>'+experiment['organization']+'</td>'+
+        '<td>'+experiment['receiving_date']+'</td>'+
+        '<td>'+experiment['complete_date']+'</td>'+
+        '<td>'+experiment['data_transfer_date']+'</td>'+
+        '<td>'+experiment['transfer_organization']+'</td>'+
+        '</tr>';
+    }
+    subtable +=  '</table>';
+    return subtable;
+   }
+
+</script>
+
+{% endblock js %}

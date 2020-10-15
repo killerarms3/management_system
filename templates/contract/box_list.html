@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+                <h3>採樣盒清單
+                    {% if perms.contract.add_box %}
+                        (<a href="{{ url('contract:box_create') }}">新增</a>)
+                    {% endif %}
+                </h3>
+                <table id="box_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>採樣盒流水號</th>
+                            <th>訂單</th>
+                            <th>方案</th>
+                            <th>失敗註記</th>
+                            <th>失敗原因</th>
+                            <th>受測者</th>
+                            <th>銷毀註記</th>
+                            <th>宅配單號</th>
+                            <th>產品狀態</th>
+                            <th>大表</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for box in object_list %}
+                        <tr>
+                        {% if perms.contract.change_box %}
+                            <td><a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a></td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if perms.contract.delete_box %}
+                            <td><a href="{{ url('contract:box_delete', args=[box.id]) }}" target="popup" onclick="window.open('{{ url('contract:box_delete', args=[box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if perms.contract.view_box %}
+                            <td><a href="{{ box.get_absolute_url() }}" target="popup" onclick="window.open('{{ box.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ box.serial_number }}</a></td>
+                        {% endif %}
+                            <td>{{ box.order }}</td>
+                        {% if perms.product.view_plan %}
+                            <td><a href="">{{ box.plan }}</a></td>
+                        {% else %}
+                            <td>{{ box.plan }}</td>
+                        {% endif %}
+                            {% if failed.objects.filter(box=box) %}
+                                <td>Failed</td>
+                                <td>
+                                <a href="{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}" target="popup" onclick="window.open('{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                {{ failed.objects.get(box=box).failed_reason }}
+                                </td>
+                            {% else %}
+                                <td>No</td>
+                                <td></td>
+                            {% endif %}
+                            {% if examiner.objects.filter(box=box) %}
+                                <td><a href="">{{ examiner.objects.get(box=box).customer }}</a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            <td>
+                            {% if destroyed.objects.filter(box=box) %}
+                                {% if perms.contract.view_destroyed %}
+                                    <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                {% endif %}
+                                {% if destroyed.objects.get(box=box).is_sample_destroyed %}
+                                    Destroyed
+                                {% else %}
+                                    Waiting to be destroyed
+                                {% endif %}
+                                {% if perms.contract.view_destroyed %}
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                            </td>
+                            <td>{{ box.tracing_number }}</td>
+                            <td>
+                            {% if experiment.objects.filter(box=box) %}
+                                {% if perms.experiment.view_experiment %}
+                                <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
+                                    {% if experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().data_transfer_date %}
+                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().transfer_organization }}
+                                    {% else %}
+                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().organization }}
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                            </td>
+                            <td>
+                                {% for obj in project %}
+                                {% if obj.objects.filter(box=box) %}
+                                <a href="{{ obj.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ obj.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ obj.__name__ }}</a>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <h4 class="custom_text">多筆查詢</h4>
+                <select id="multiquery"></select>
+                <textarea class="form-control" row="3" id="query"></textarea>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#box_table thead tr').clone(true).appendTo('#box_table thead');
+		$('#box_table thead tr:eq(1) th').each(function (i) {
+            var multiquery = document.getElementById('multiquery');
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (box_table.column(i).search() !== this.value) {
+					    box_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+                // add options to multiquery
+                var option = new Option(title, i);
+                multiquery.options.add(option);
+            }
+		});
+		var box_table = $('#box_table').DataTable({
+			dom: 'Bfrtip',
+            buttons: [
+				'copy', 'csv', 'excel'
+			],
+			scrollX: true,
+			orderCellsTop: true,
+            exportOptions: {
+				rows: 'visible'
+			},
+		});
+        $('#query, #multiquery').on('keyup change', function () {
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var i = parseInt($('#multiquery :selected').val(), 10);
+            box_table.column(i).search(querys.join('|'), true, false).draw();
+        });
+	});
+</script>
+{% endblock js %}

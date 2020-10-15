@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+                <h3>失敗清單
+                {% if perms.contract.add_failed %}
+                    (<a href="{{ url('contract:failed_create') }}" target="popup" onclick="window.open('{{ url('contract:failed_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                {% endif %}
+                </h3>
+                <table id="failed_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>採樣盒</th>
+                            <th>訂單</th>
+                            <th>方案</th>
+                            <th>失敗原因</th>
+                            <th>宅配單號</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for failed in object_list %}
+                        <tr>
+                            <td>
+                            {% if perms.contract.change_failed %}
+                                <a href="{{ url('contract:failed_edit', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.delete_failed %}
+                                <a href="{{ url('contract:failed_delete', args=[failed.id]) }}" target="popup" onclick="window.open('{{ url('contract:failed_delete', args=[failed.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.view_failed %}
+                                <a href="{{ failed.box.get_absolute_url() }}">{{ failed.box.serial_number }}</a>
+                            {% endif %}
+                            <td>{{ failed.box.order }}</td>
+                            {% if perms.product.view_plan %}
+                                <td><a href="">{{ failed.box.plan }}</a></td>
+                            {% else %}
+                                <td>{{ failed.box.plan }}</td>
+                            {% endif %}
+                                <td>{{ failed.failed_reason }}</td>
+                                <td>{{ failed.box.tracing_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#failed_table thead tr').clone(true).appendTo('#failed_table thead');
+		$('#failed_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input size="8" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (failed_table.column(i).search() !== this.value) {
+					    failed_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var failed_table = $('#failed_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}

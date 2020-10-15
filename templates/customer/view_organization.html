@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">機構名單(<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}','popup','width=600, height=600'); return false;">新增機構</a>)</h3>
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <p>{{ organizations.objects.get(id=1) }}</p>
+            <table id="organization_table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>機構名稱</th>
+                        <th>部門/單位</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for organization in organizations %}
+                    <tr>
+                        <td><a href="{{ url('customer:change_organization', args=[organization.id]) }}"><i class="fas fa-edit"></i></a></td>
+                        <td>{{ organization.name }}</td>
+                        <td>{{ organization.department }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#organization_table thead tr').clone(true).appendTo('#organization_table thead');
+		$('#organization_table thead tr:eq(1) th').each(function (i) {
+            if (i!==0){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (organization_table.column(i).search() !== this.value) {
+					    organization_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var organization_table = $('#organization_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}

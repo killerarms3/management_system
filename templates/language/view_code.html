@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">欄位名稱表</h3>
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <select class="multiple-select" id="key">
+                        <option value="" selected></option>
+                        {% for key in code_tables %}
+                        <option value="{{ key }}">{{ key }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-6" id="change_code"></div>
+
+            </div>
+
+            <div id="code_table"></div>
+
+        </div>
+    </div>
+</div>
+<script>
+
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+    });
+$('#key').change(function() {
+    var key =  $('#key').val();
+    if (key) {
+        var app_label = key.split("-")[0];
+        var model = key.split("-")[1];
+        var code_table = {{ code_tables|safe }};
+        var tables = '<table class="table table-hover"><tbody>';
+        for (idx in code_table[key]['field_names']) {
+            var field_name = code_table[key]['field_names'][idx];
+            var value = code_table[key]['label'][field_name];
+            tables += `
+            <tr>
+                <th>${field_name}</th>
+                <td>${value}</td>
+            </tr>
+            `;
+        }
+        tables += '</tbody></table>';
+        $('#code_table').html(tables);
+        var change_code_url = `<a href="/language/change_code/${app_label}/${model}"><i class="fas fa-edit"></i></a>`
+        $('#change_code').html(change_code_url);
+    }
+});
+
+</script>
+
+{% endblock js %}

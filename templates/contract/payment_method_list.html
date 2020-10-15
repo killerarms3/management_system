@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+                <h3>付款方式清單
+                    {% if perms.contract.can_add_payment_method %}
+                        (<a href="{{ url('contract:add_payment_method') }}">新增</a>)
+                    {% endif %}                    
+                </h3>
+                <table id="payment_method_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th size="1"></th>
+                            <th></th>                            
+                            <th>付款方式</th>                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment_method in object_list %}
+                        <tr>
+                            <td>
+                            {% if perms.contract.change_payment_method %}
+                                <a href="{{ url('contract:edit_payment_method', args=[payment_method.id]) }}"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>
+                            {% if perms.contract.delete_payment_method %}
+                                <a href="{{ url('contract:delete_payment_method', args=[payment_method.id]) }}"><i class="fas fa-trash"></i></a>
+                            {% endif %}
+                            </td>
+                            <td>{{ payment_method }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#payment_method_table thead tr').clone(true).appendTo('#payment_method_table thead');
+		$('#payment_method_table thead tr:eq(1) th').each(function (i) {
+            if (i>1){
+			    var title = $(this).text();
+			    $(this).html('<input size="10" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (payment_method_table.column(i).search() !== this.value) {
+					    payment_method_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var payment_method_table = $('#payment_method_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+{% endblock js %}

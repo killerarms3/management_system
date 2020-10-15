@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">客戶名單{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_customer') }}">新增客戶</a>){% endif %}</h3>
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <table id="customer_table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>姓名</th>
+                        <th>機構</th>
+                        <th>職業</th>
+                        <th>職稱</th>
+                        <th>LINE ID</th>
+                        <th>E-mail</th>
+                        <th>手機電話</th>
+                        <th>市內電話</th>
+                        <th>通訊地址</th>
+                        <th>客戶種類</th>
+                        <th>備註</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{% if perms.customer.change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
+                        <td>{{ customer.last_name }}{{ customer.first_name }}</td>
+                        <td>{{ customer.organization }}</td>
+                        <td>{{ customer.job.name }}</td>
+                        <td>{{ customer.title.name }}</td>
+                        <td>{{ customer.line_id }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.mobile }}</td>
+                        <td>{{ customer.tel }}</td>
+                        <td>{{ customer.address }}</td>
+                        <td>{{ customer.customer_type.name }}</td>
+                        <td>{{ customer.memo }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h4 class="custom_text">多筆查詢</h4>
+            <select id="multiquery"></select>
+            <textarea class="form-control" row="3" id="query"></textarea>
+        </div>
+    </div>
+</div>
+<script>
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#customer_table thead tr').clone(true).appendTo('#customer_table thead');
+		$('#customer_table thead tr:eq(1) th').each(function (i) {
+            var multiquery = document.getElementById('multiquery');
+            if (i!==0){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (customer_table.column(i).search() !== this.value) {
+					    customer_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+                // add options to multiquery
+                var option = new Option(title, i);
+                multiquery.options.add(option);
+            }
+		});
+		var customer_table = $('#customer_table').DataTable({
+			dom: 'Bfrtip',
+			buttons: [
+				'copy', 'csv', 'excel'
+			],
+			scrollX: true,
+			orderCellsTop: true,
+			exportOptions: {
+				rows: 'visible'
+			},
+		});
+        $('#query, #multiquery').on('keyup change', function () {
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var i = parseInt($('#multiquery :selected').val(), 10);
+            customer_table.column(i).search(querys.join('|'), true, false).draw();
+        });
+	});
+</script>
+{% endblock js %}

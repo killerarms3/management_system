@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>Account Info</h3>
+                    <table class="table table-hover">
+                        <tr>
+                            <td>Username: </td><td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <td>E-mail: </td><td>{{ user.email }}</td>                            
+                        </tr>
+                        <tr>                            
+                            <td colspan="2"><h3>Update My Profile</h3></td>
+                        </tr>
+                        <form action="" method="POST">
+                        {{ csrf_input }}                                                    
+                        {% for field in form %}
+                            <tr>
+                                <td>{{ field.label }} </td>
+                                <td>{{ field }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="2">
+                            <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+                            <input type="hidden" name="next" value="{{ next }}" />
+                            </td>
+                        </tr>
+                        </form>
+                    </table>                    
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      selectAll: false,
+      showClear: true
+    });
+</script>
+{% endblock %}

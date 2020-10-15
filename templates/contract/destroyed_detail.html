@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>採樣盒編號: {{ destroyed.box.serial_number }}
+            {% if perms.contract.can_change_destroyed %}
+                &nbsp;&nbsp;<a href="{{ url('contract:destroyed_edit', args=[destroyed.id]) }}"><i class="fas fa-edit"></i></a>
+            {% endif %}
+            {% if perms.contract.can_delete_destroyed %}
+                &nbsp;&nbsp;<a href="{{ url('contract:destroyed_delete', args=[destroyed.id]) }}"><i class="fas fa-trash"></i></a>
+            {% endif %}            
+            </h3>
+            <table class="table table-hover">
+                <tr>
+                    <th scope="row"><strong>銷毀註記: </strong></th>
+                    <td>
+                    {% if destroyed.is_sample_destroyed %}
+                        Destroyed
+                    {% else %}
+                        Waitind to be destroyed
+                    {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><strong>銷毀日期: </strong></th>
+                    <td>{{ destroyed.sample_destroyed_date }}</td>
+                </tr>
+                <tr>
+                    <th scope="row"><strong>DNA取回公司日期: </strong></th>
+                    <td>{{ destroyed.return_date }}</td>
+                </tr>          
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h1>Delete Failed Reason</h1>
+            <hr>
+            <p>Are you sure want to delete the record of failed reason: <a href="">{{ failed_reason }}</a>?</p>
+            <br>
+            <form action = "" method = "POST">
+                {{ csrf_input }}
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value = "Yes, delete."/>                
+            </form>            
+        </div>
+    </div>
+</div>
+{% endblock %}

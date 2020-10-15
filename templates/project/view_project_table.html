@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ static('css/datatable_custom.css') }}">
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">{{ model }}(<a href="{{ url('project:add_data', args=[model]) }}">新增資料</a>)</h3>
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <table id="project_table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for field_name in field_names %}
+                        <th>{{ field_tags[field_name] }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in table_data %}
+                    <tr>
+                        <td><a href="{{ url('project:change_data', args=[model, data['id']]) }}"><i class="fas fa-edit"></i></a></td>
+                        {% for field_name in field_names %}
+                        <td>{{ data[field_name] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#project_table thead tr').clone(true).appendTo('#project_table thead');
+		$('#project_table thead tr:eq(1) th').each(function (i) {
+            if (i!==0){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (project_table.column(i).search() !== this.value) {
+					    project_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var project_table = $('#project_table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+    });
+</script>
+
+{% endblock js %}

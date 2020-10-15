@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">{{ header }}</h3>
+            <form method="POST" action="{{ action_url }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th scope="col">範例表</th>
+                                <td>
+                                    <a href="{{ url('download', args=[sheet_template]) }}" download>
+                                        <i class="fas fa-download"> 下載</i>
+                                    </a>
+                                </td>
+                        </tr>
+                        <tr>
+                            <th scope="col">* 上傳表格</th>
+                            <td>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="sheet" name="sheet">
+                                    <label class="custom-file-label" for="sheet">Choose file</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+$('#sheet').change(function() {
+    var i = $(this).next('label').clone();
+    var file = $('#sheet')[0].files[0].name;
+    $(this).next('label').text(file);
+});
+</script>
+{% endblock js %}

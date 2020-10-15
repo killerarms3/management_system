@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>合約清單
+            {% if perms.contract.add_contract %}
+                (<a href="{{ url('contract:contract_create') }}">新增</a>)
+            {% endif %}
+            </h3>            
+                <table id="contract_table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>ID</th>
+                            <th>客戶</th>
+                            <th>負責人</th>
+                            <th>日期</th>
+                            <th>機構</th>
+                            <th>訂單</th>
+                            <th>發票</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contract in object_list %}
+                        <tr>
+                            {% if perms.contract.change_contract %}
+                                <td><a href="{{ url('contract:contract_edit', args=[contract.id]) }}"><i class="fas fa-edit"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            {% if perms.contract.delete_contract %}
+                                <td><a href="{{ url('contract:contract_delete', args=[contract.id]) }}" target="popup" onclick="window.open('{{ url('contract:contract_delete', args=[contract.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                            {% if contract.id in dict.keys() %}
+                                <td><a href="{{ dict[contract.id].url }}"><i class="fas fa-file-pdf"></i></a></td>
+                            {% else %}
+                                <td><a href="{{ url('contract:upload_file', args=[contract.id]) }}"><i class="fas fa-upload"></i></a></td>
+                            {% endif %}                            
+                            <td>Contract {{ contract.id }}</td>
+                            <td>{{ contract.customer }}</td>
+                            <td>{{ contract.user }}</td>                            
+                            <td>{{ contract.contract_date }}</td>
+                            {% if contract.organization.all() %}
+                                <td>
+                                {% for organization in contract.organization.all() %}
+                                    {{ organization }}
+                                    {% if not loop.last %};{% endif %}
+                                {% endfor %}
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            {% if contract.order_set.all() %}
+                                <td>
+                                {% for order in contract.order_set.all() %}
+                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
+                                    {% if not loop.last %};{% endif %}
+                                {% endfor %}
+                                &nbsp;&nbsp;<a href="{{ url('contract:partial-order-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            {% if contract.receipt_set.all() %}
+                                <td>
+                                {% for receipt in contract.receipt_set.all() %}
+                                    <a href="{{ receipt.get_absolute_url() }}" target="popup" onclick="window.open('{{ receipt.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ receipt }}</a>
+                                    {% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                                &nbsp;&nbsp;<a href="{{ url('contract:partial-receipt-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
+                                </td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
+                            <td>{{ contract.memo }}</td>
+                        </tr> 
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <h4 class="custom_text">多筆查詢</h4>
+                <select id="multiquery"></select>
+                <textarea class="form-control" row="3" id="query"></textarea>            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#contract_table thead tr').clone(true).appendTo('#contract_table thead');
+		$('#contract_table thead tr:eq(1) th').each(function (i) {
+            var multiquery = document.getElementById('multiquery');
+            if (i>2){
+			    var title = $(this).text();
+			    $(this).html('<input size="7" type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (contract_table.column(i).search() !== this.value) {
+					    contract_table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+                // add options to multiquery
+                var option = new Option(title, i);
+                multiquery.options.add(option);
+            }
+		});
+		var contract_table = $('#contract_table').DataTable({
+			dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel'
+            ],
+			scrollX: true,
+			orderCellsTop: true,
+            exportOptions: {
+				rows: 'visible'
+			},
+		});
+        $('#query, #multiquery').on('keyup change', function () {
+            var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
+            var i = parseInt($('#multiquery :selected').val(), 10);
+            contract_table.column(i).search(querys.join('|'), true, false).draw();
+        });
+	});
+</script>
+{% endblock js %}

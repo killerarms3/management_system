@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+<br>
+    <div class="container">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>編輯 {{ order }}</h3>
+                <form action="" method="POST">
+                {{ csrf_input }}
+                    <table class="table table-hover">
+                        {% for fields in form %}
+                            {% if fields.label == '方案' %}
+                                <tr>
+                                    <th>{{ fields.label }}</th>                              
+                                    <td>{{ fields }}</td>
+                                </tr>
+                                <tr>
+                                    <th>採樣盒</th>
+                                    <td>
+                                    {% for box in box_list %}
+                                        <a href="{{ box.get_absolute_url() }}">{{ box }}</a>{% if not loop.last %};{% endif %}
+                                    {% endfor %}
+                                    {% if perms.contract.add_box %}
+                                    &nbsp;<a href="{{ url('contract:add_specify_box', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_box', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
+                                    {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>紀錄</th>
+                                    <td>
+                                        {% for serial_number in experiment_list %}
+                                        <a href="{{ url('experiment:view_specific_experiment', args=[serial_number]) }}">{{ serial_number }}</a>{% if not loop.last %};{% endif %}
+                                        {% endfor %}
+                                        {% if perms.experiment.add_experiment %}
+                                        &nbsp;<a href="{{ url('experiment:add_order_experiments', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('experiment:add_order_experiments', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% elif fields.label == '合約' %}
+                                <tr>
+                                    <th>{{ fields.label }}</th>
+                                    <td>{{ fields }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <th>{{ fields.label }}</th>
+                                    <td>{{ fields }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}                        
+                    </table>
+                    <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+      selectAll: false,
+      showClear: true
+    });
+</script>
+<script>
+    var today = new Date();
+    var day = today.getDate();
+    var month = today.getMonth()+1;
+    var year = today.getFullYear();
+    if(day<10){
+        day="0"+day;
+    }
+    if(month<10){
+        month="0"+month;
+    }
+    today=year+"-"+month+"-"+day;
+</script>
+<script>
+    function myFunction(){
+	<!-- 將 select 的值在印出 -->
+    var objS = document.getElementById("id_plan");
+    var grade = objS.options[objS.selectedIndex].text;
+    alert(grade);
+    }
+</script>
+{% endblock js %}

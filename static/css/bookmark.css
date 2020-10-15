@@ -1,0 +1,6 @@
+#tab-demo > ul{ display:block; margin:0;list-style:none;}
+.tab-title {list-style:none;}
+#tab-demo > ul > li{ display:inline-block; vertical-align:top;font-family:'微軟正黑體';border-radius: 15px 15px 0 0; margin:0 -1px -1px 0 ; border:1px solid #e4a6a6; height:25px; line-height:25px; background:#cdcdcd;padding:0 15px;list-style:none; box-sizing:border-box;}
+#tab-demo >  ul > li a{ color:#000; text-decoration:none;}
+#tab-demo > ul > li.active{ border-bottom:1px solid #fff; background:#fff;}
+#tab-demo > .tab-inner{ clear:both; color:#000; border-top:1px #e4a6a6 solid;}

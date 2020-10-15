@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">新增記錄</h3>
+            <form method="POST" action="{{ url('experiment:add_order_experiments', args=[order.id]) }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover" id="table">
+                    <tbody>
+                        <tr>
+                            <th scope="col" colspan="3">* 選擇完欲增加紀錄的採樣盒編號後，請點"+"</th>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #dee2e6">
+                            <th scopt="row">採樣盒</th>
+                            <td>
+                                <select multiple="multiple" class="multiple-select" id="box" name="box">
+                                    {% for box in boxes %}
+                                    <option id="{{ box.serial_number }}" value="{{ box.serial_number }}">{{ box.serial_number }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <button class="btn btn-link" onclick="addtr()"><i class="fas fa-plus"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+        $('select').multipleSelect({
+            filter: true,
+            placeholder: '',
+            showClear: true,
+        });
+</script>
+<script type="text/javascript">
+    function addtr(){
+        var option_all = $('#box').val();
+        if (option_all) {
+            var tableRef = document.getElementById('table').getElementsByTagName('tbody')[0];
+            var rowIndex = tableRef.rows.length;
+            var newRow = tableRef.insertRow(rowIndex);
+            newRow.style.borderBottom = "1px solid #dee2e6";
+            newRow.id = rowIndex;
+            var content = '<td><button class="btn btn-link" onclick="deletetr('+rowIndex+')"><i class="fas fa-minus"></i></button></td><td><textarea class="form-control" rows="5" id="serial_number'+rowIndex+'" name="serial_number'+rowIndex+'" readonly>'+option_all.toString()+'</textarea></td>';
+            content += `
+                            <td>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="organization${rowIndex}">* 單位</label>
+                                        <select class="form-control" id="organization${rowIndex}" name="organization${rowIndex}" required>
+                                            <option value="" selected></option>
+                                            {% for organization in organizations %}
+                                            <option value="{{ organization.id }}">{{ organization }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="receiving_date${rowIndex}">* 收到日</label>
+                                        <input class="form-control" type="date" id="receiving_date${rowIndex}" name="receiving_date${rowIndex}" min="2017-01-01" max="{{ now }}" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="complete_date${rowIndex}">完成日</label>
+                                        <input class="form-control" type="date" id="complete_date${rowIndex}" name="complete_date${rowIndex}" min="2017-01-01" max="{{ now }}">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="data_transfer_date${rowIndex}">移交日</label>
+                                        <input class="form-control" type="date" id="data_transfer_date${rowIndex}" name="data_transfer_date${rowIndex}" min="2017-01-01" max="{{ now }}">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="transfer_organization${rowIndex}">* 移交單位</label>
+                                        <select class="form-control" id="transfer_organization${rowIndex}" name="transfer_organization${rowIndex}" required>
+                                            <option value="" selected></option>
+                                            {% for organization in organizations %}
+                                            <option value="{{ organization.id }}">{{ organization }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </td>
+                        `;
+            newRow.innerHTML = content;
+            changeoptions(option_all, true);
+        }
+    }
+
+    function deletetr(rowIndex){
+        var serial_numbers = document.getElementById('serial_number'+rowIndex).value.split(',');
+        changeoptions(serial_numbers, false);
+        document.getElementById(rowIndex).remove();
+    }
+
+    function changeoptions(options, need_remove){
+        var selectRef = document.getElementById('box');
+        for (option of options) {
+            if (need_remove){
+                document.getElementById(option).remove();
+            } else {
+                var newOption = new Option(option, option);
+                newOption.id  = option;
+                selectRef.append(newOption);
+            }
+        }
+        $('#box').multipleSelect('refresh');
+    }
+</script>
+
+{% endblock js %}

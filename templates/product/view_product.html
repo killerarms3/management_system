@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">產品名單{% if perms.product.add_product %}(<a href="{{ url('product:add_product') }}">新增產品</a>){% endif %}</h3>
+            {% if messages %}
+            <ul class="fa-ul" style="margin-left: 0;">
+                {% for message in messages %}
+                <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <table id="table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>產品名稱</th>
+                        <th>產品前綴</th>
+                        <th>產品大表</th>
+                        <th>狀態</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><a href="{{ url('product:change_product', args=[product.id]) }}"><i class="fas fa-edit"></i></a></td>
+                        <td><a href="{{ product.get_absolute_url() }}">{{ product.name }}</a></td>
+                        <td>{{ product.prefix }}</td>
+                        <td>{% if product.project %}<a href="{{ url('project:view_project_table', args=[product.project]) }}">{{ product.project }}</a>{% endif %}</td>
+                        <td>{% if product.status == 1 %}Available{% else %}Unavilable{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>
+
+{% endblock content %}
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#table thead tr').clone(true).appendTo('#table thead');
+		$('#table thead tr:eq(1) th').each(function (i) {
+            if (i!==0){
+			    var title = $(this).text();
+			    $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+			    $('input', this).on('keyup change', function () {
+				    if (table.column(i).search() !== this.value) {
+					    table
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+
+		var table = $('#table').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+
+
+</script>
+
+{% endblock js %}
