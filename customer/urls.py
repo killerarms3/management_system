@@ -16,6 +16,7 @@ urlpatterns=[
     path('add_customers', customer_views.add_customers, name='add_customers'),
     path('view_customer', customer_views.view_customer, name='view_customer'),
     path('change_customer/<int:id>/', customer_views.change_customer, name='change_customer'),
+    path('update_options/<model>', customer_views.update_options, name='update_options'),
     ]
 
 

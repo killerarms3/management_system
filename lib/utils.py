@@ -1,6 +1,8 @@
 from django.apps import apps
-from language.models import Code
 from django.contrib.contenttypes.models import ContentType
+from django import forms
+from language.models import Code
+import datetime
 
 def getlabels(AppName, ModelName):
     field_tags = dict()
@@ -13,3 +15,18 @@ def getlabels(AppName, ModelName):
         if codes:
             field_tags[field_name] = codes[0].name
     return field_tags
+
+def GetCustomWidgets(Model):
+    widgets = dict()
+    for field in Model._meta.fields:
+        if field.get_internal_type() == 'DateField':
+            widgets[field.name] = forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date',
+                    'id': field.name,
+                    'min': '1820-01-01',
+                    'max': datetime.datetime.now().strftime('%Y-%m-%d')
+                },
+            )
+    return widgets
