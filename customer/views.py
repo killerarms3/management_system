@@ -11,6 +11,7 @@ from lib.multi_add import AddMultiData
 from lib.Validator import ValidateOrganization
 from django.core.exceptions import ValidationError
 from customer.models import Organization, Customer, Customer_Organization, Title, Job, Customer_Type, Customer_Introducer, Relationship
+from contract.models import Box, Examiner
 from django.template.defaulttags import register
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
@@ -162,7 +163,7 @@ def add_customers(request):
                 data[idx]['status'] = 'Failed'
                 is_failed = True
         if is_failed:
-            messages.info(request, '表格資料內容錯誤，請修正後重新上傳!')
+            messages.error(request, '表格資料內容錯誤，請修正後重新上傳!')
         else:
             for idx, customer in enumerate(customers):
                 pre_dict = {}
@@ -361,6 +362,27 @@ def change_job(request, id):
         log_addition(request.user, 'customer', 'job', job.id, '2', object_to_dict(job), pre_dict)
         return redirect(reverse('customer:view_job'))
     return render(request, 'customer/change_job.html', locals())
+
+@login_required
+@permission_required('customer.view_customer', raise_exception=True)
+def view_specific_customer(request, id):
+    form = CustomerCreateForm(auto_id='%s')
+    customer = Customer.objects.get(id=id)
+    organizations = Organization.objects.filter(id__in=Customer_Organization.objects.filter(customer=customer).values_list('organization', flat=True).distinct())
+    customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
+    if organizations:
+        customer.organization = ';'.join([str(organization) for organization in organizations])
+    else:
+        customer.organization = ''
+    if customer_introducer:
+        customer.customer_introducer = customer_introducer
+    else:
+        customer.customer_introducer = ''
+    field_names = list(form.fields.keys())
+    field_tags = utils.getlabels('customer', 'customer')
+    boxes = Box.objects.filter(pk__in=list(Examiner.objects.filter(customer=customer).values_list('id', flat=True))).order_by('-pk')
+    return render(request, 'customer/view_specific_customer.html', locals())
+
 
 @login_required
 def update_options(reuqest, model):

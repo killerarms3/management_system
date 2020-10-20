@@ -21,6 +21,7 @@ def GetCustomWidgets(Model):
     for field in Model._meta.fields:
         if field.get_internal_type() == 'DateField':
             widgets[field.name] = forms.DateInput(
+                format='%Y-%m-%d',
                 attrs={
                     'class': 'form-control',
                     'type': 'date',

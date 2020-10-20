@@ -8,68 +8,26 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">產品狀態{% if perms.experiment.add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆記錄</a>){% endif %}</h3>
+            <h3 class="custom_text">產品狀態{% if perms.experiment.add_experiment %}(<a href="{{ url('experiment:add_experiments') }}">新增多筆記錄</a>){% endif %}<a class="btn btn-info" type="button" href="{{ url('experiment:view_experiment') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
+            <ul class="fa-ul" style="margin-left: 0;">
+                <li><i class="fas fa-info-circle"> 系統會依據【編號】、【單位】、【收到日】來判斷是否為同一筆記錄</i></li>
+            </ul>
             <form method="POST" action="{{ url('experiment:add_experiment') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
-                <ul class="messages">
+                <ul class="fa-ul" style="margin-left: 0;">
                     {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                     {% endfor %}
                 </ul>
                 {% endif %}
                 <table class="table table-hover">
                     <tbody>
+                        {% for field in form %}
                         <tr>
-                            <th scope="col">* 編號</th>
-                                <td>
-                                    <select class="multiple-select" id="box" name="box" required>
-                                        <option value="" selected></option>
-                                        {% for box in boxes %}
-                                        <option value="{{ box.id }}">{{ box.serial_number }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}</th>
+                            <td>{{ field }}</td>
                         </tr>
-                        <tr>
-                            <th scope="col">* 單位</th>
-                            <td>
-                                <select class="multiple-select" id="organization" name="organization" required>
-                                    <option value="" selected></option>
-                                    {% for organization in organizations %}
-                                    <option value="{{ organization.id }}">{{ organization.name }} {{ organization.department }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 收到日</th>
-                            <td>
-                                <input class="form-control" type="date" id="receiving_date" name="receiving_date" min="2017-01-01" max="2020-01-01" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">完成日</th>
-                            <td>
-                                <input class="form-control" type="date" id="complete_date" name="complete_date" min="2017-01-01" max="2020-01-01">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">移交日</th>
-                            <td>
-                                <input class="form-control" type="date" id="data_transfer_date" name="data_transfer_date" min="2017-01-01" max="2020-01-01">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 移交單位</th>
-                            <td>
-                                <select class="multiple-select" id="transfer_organization" name="transfer_organization" required>
-                                    <option value="" selected></option>
-                                    {% for organization in organizations %}
-                                    <option value="{{ organization.id }}">{{ organization.name }} {{ organization.department }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
@@ -86,20 +44,10 @@
     });
 </script>
 <script>
-    var today = new Date();
-    var day = today.getDate();
-    var month = today.getMonth()+1;
-    var year = today.getFullYear();
-    if(day<10){
-        day="0"+day;
-    }
-    if(month<10){
-        month="0"+month;
-    }
-    today=year+"-"+month+"-"+day;
-    document.getElementById("receiving_date").setAttribute("max", today);
-    document.getElementById("complete_date").setAttribute("max", today);
-    document.getElementById("data_transfer_date").setAttribute("max", today);
+    $('form').submit(function(){
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
+    });
 </script>
 
 {% endblock js %}

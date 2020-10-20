@@ -14,6 +14,7 @@ class CustomerCreateForm(forms.ModelForm):
     customer_labels = utils.getlabels('customer', 'customer')
     birth_date = forms.DateField(label=customer_labels['birth_date'],
     widget=forms.DateInput(
+            format='%Y-%m-%d',
             attrs={
                 'class': 'form-control',
                 'type': 'date',

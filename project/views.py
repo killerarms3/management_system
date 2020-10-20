@@ -47,7 +47,7 @@ def view_project_table(request, model):
     contenttype = ContentType.objects.get(app_label='project', model=model)
     codes = Code.objects.filter(content_type=contenttype)
     field_tags = getlabels('project', model)
-    for data in Project_table.objects.all().values():
+    for data in Project_table.objects.all().order_by('-pk').values():
         record = {'id': data['id']}
         for field_name in field_names:
             # 一定會有box
@@ -89,7 +89,9 @@ def add_data(request, model):
                 messages.info(request, '已成功新增資料')
                 return redirect(reverse('project:add_data', kwargs={'model': model}))
         else:
-            messages.error(request, '新增失敗，表格含無法辨認的資料')
+            for key in form.errors:
+                for error in form.errors[key]:
+                    messages.error(request, '%s: %s' % (key, error))
             return redirect(reverse('project:add_data', kwargs={'model': model}))
     return render(request, 'project/add_data.html', locals())
 
@@ -117,9 +119,11 @@ def change_data(request, model, id):
             data.save()
             log_addition(request.user, 'project', model, data.id, '2', object_to_dict(data), pre_dict)
             messages.info(request, '已成功更新資料')
+            return redirect(reverse('project:view_project_table', kwargs={'model': model}))
         else:
-            messages.error(request, '更新失敗，表格含無法辨認的資料')
-        return redirect(reverse('project:view_project_table', kwargs={'model': model}))
+            for key in form.errors:
+                for error in form.errors[key]:
+                    messages.error(request, '%s: %s' % (key, error))
     return render(request, 'project/change_data.html', locals())
 
 def view_specific_data(request, model, serial_number):

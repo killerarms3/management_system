@@ -4,6 +4,7 @@ from product.models import Product
 import datetime
 from lib.Validator import ValidateTelNumber, ValidateMobileNumber, ValidateDate
 from django.core.validators import validate_email
+from django.urls import reverse
 # Create your models here.
 
 class Title(models.Model):
@@ -47,11 +48,9 @@ class Customer(models.Model):
         errors = list()
         # 若重複，則更新舊資料!?
         if not self.tel and not self.mobile:
-            errors.append({'tel': ['手機電話或市內電話只少要填一個']})
-            errors.append({'mobile': ['手機電話或市內電話只少要填一個']})
+            errors.extend([{'tel': ['手機電話或市內電話只少要填一個']}, {'mobile': ['手機電話或市內電話只少要填一個']}])
         if not self.birth_date:
             self.birth_date = None
-
         try:
             self.clean_fields()
         except ValidationError as err:
@@ -64,6 +63,9 @@ class Customer(models.Model):
                         error_dict[key] = list()
                     error_dict[key].extend(error[key])
             raise ValidationError(error_dict)
+
+    def get_absolute_url(self):
+        return reverse('customer:view_specific_customer', args=[str(self.id)])
 
 class Relationship(models.Model):
     name = models.CharField(max_length=32)

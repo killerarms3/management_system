@@ -9,13 +9,13 @@
     <div class="card mb-3">
         <div class="card-body">
             <h3 class="custom_text">{{ serial_number }}&nbsp;<a href="{{ url('project:change_data', args=[model, data['id']]) }}"><i class="fas fa-edit"></i></a></h3>
-                {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
+            {% if messages %}
+            <ul class="fa-ul" style="margin-left: 0;">
+                {% for message in messages %}
+                <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
                 <table class="table table-hover">
                     <tbody>
                         {% for field_name in field_names %}

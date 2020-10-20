@@ -96,3 +96,14 @@ def ValidateDate(value):
                 raise forms.ValidationError('不接受未來日期')
         except ValueError:
             raise forms.ValidationError('日期格式錯誤，只接受"YYYY-MM-DD')
+
+def ValidateAfterDate(before_date, after_date):
+    try:
+        before_date = datetime.datetime.strptime(str(before_date), '%Y-%m-%d')
+        after_date = datetime.datetime.strptime(str(after_date), '%Y-%m-%d')
+        if before_date > after_date:
+            return False
+        else:
+            return True
+    except ValueError:
+        return False
