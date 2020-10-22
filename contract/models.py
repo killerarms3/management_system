@@ -41,6 +41,10 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse('contract:order-detail', args=[str(self.pk)])
 
+    def get_order_name_exclude_contract_name(self):
+        name = self.order_name.split('-')
+        return name[1]
+
 # 目前沒用到，網頁上是用count來計算quantity
 class Order_quantity(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='訂單')

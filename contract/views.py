@@ -195,7 +195,7 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
             except:
                 num = 0
             contract_name = contract.contract_name
-            order.order_name = contract_name + ' -- 訂單 '+str(num+1)
+            order.order_name = contract_name + '-訂單 '+str(num+1)
             order.order_date=form.cleaned_data['order_date']
             order.contract=form.cleaned_data['contract']
             order.memo=form.cleaned_data['memo']
@@ -760,6 +760,13 @@ def AddSpecifyContracttoOrder(request, pk):
     if request.method == 'POST':
         form = SpecifyOrderCreateForm(request.POST)
         if form.is_valid():
+            Order2 = apps.get_model('contract', 'order')
+            try:
+                num = Order2.objects.filter(contract=contract).count()
+            except:
+                num = 0
+            contract_name = contract.contract_name
+            order.order_name = contract_name + '-訂單 '+str(num+1)
             order.contract = contract
             order.order_date = form.cleaned_data['order_date']
             order.memo = form.cleaned_data['memo']
