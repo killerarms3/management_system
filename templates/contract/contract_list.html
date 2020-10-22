@@ -70,8 +70,8 @@
                             {% if contract.order_set.all() %}
                                 <td>
                                 {% for order in contract.order_set.all() %}
-                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
-                                    {% if not loop.last %};{% endif %}
+                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order.get_order_name_exclude_contract_name() }}</a>
+                                    {% if not loop.last %}<br>{% endif %}
                                 {% endfor %}
                                 &nbsp;&nbsp;<a href="{{ url('contract:partial-order-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
                                 </td>
