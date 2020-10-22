@@ -31,3 +31,29 @@ def GetCustomWidgets(Model):
                 },
             )
     return widgets
+
+def GetHandsontableColumns(form):
+    colHeaders = list()
+    columns = list()
+    field_names = list()
+    for visible in form.visible_fields():
+        colHeaders.append(visible.label)
+        field_names.append(visible.name)
+        column = {
+            'data': visible.label,
+            'allowEmpty': 'false' if visible.field.required else 'true',
+        }
+        if visible.field.widget.__class__.__name__ in {'Select', 'SelectMultiple'}:
+            column['type'] = 'autocomplete'
+            column['source'] = [option[1] for option in visible.field.widget.choices]
+            column['allowInvalid'] = 'false'
+            column['strict'] = 'true'
+        elif visible.field.widget.__class__.__name__ == 'DateInput':
+            column['type'] = 'date'
+            column['dateFormat'] = 'YYYY-MM-DD'
+        elif visible.field.widget.__class__.__name__ == 'NumberInput':
+            column['type'] = 'numeric'
+        else:
+            column['type'] = 'text'
+        columns.append(column)
+    return field_names, colHeaders, columns

@@ -10,15 +10,18 @@ import datetime
 from django.contrib.contenttypes.models import ContentType
 from lib import utils
 
-def ProjectBox(ModelName):
+def ProjectBox(ModelName, exclude_exist=True):
     Model = apps.get_model('project', ModelName)
     contenttype = ContentType.objects.get(app_label='project', model=ModelName)
     products = Project.objects.filter(content_type=contenttype).values_list('product__id', flat=True)
     plans = Plan.objects.filter(product_id__in=list(products)).values_list('id', flat=True)
-    boxes = Box.objects.filter(plan_id__in=list(plans)).exclude(id__in=list(Model.objects.all().values_list('id', flat=True)))
+    if exclude_exist:
+        boxes = Box.objects.filter(plan_id__in=list(plans)).exclude(id__in=list(Model.objects.all().values_list('box_id', flat=True)))
+    else:
+        boxes = Box.objects.filter(plan_id__in=list(plans))
     return boxes
 
-def GetDataCreateForm(Model, Labels):
+def GetDataCreateForm(Model):
     class DataCreateForm(forms.ModelForm):
         box = forms.ModelChoiceField(queryset=ProjectBox(Model.__name__), required=True)
         def __init__(self, *args, **kwargs):
@@ -32,6 +35,6 @@ def GetDataCreateForm(Model, Labels):
         class Meta:
             model = Model
             fields = '__all__'
-            labels = Labels
+            labels = utils.getlabels('project', Model.__name__)
             widgets = utils.GetCustomWidgets(Model)
     return DataCreateForm

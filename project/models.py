@@ -7,7 +7,7 @@ from decimal import Decimal
 # Create your models here.
 class MicrobioRx(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     memo = models.TextField(blank=True, null=True)
 
@@ -24,9 +24,9 @@ class Next_Generation_Sequencing(models.Model):
 
 class GenoHealth(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True, validators=[MinValueValidator(Decimal('0.01'))])
-    od_260_230 = models.DecimalField(max_digits=7, decimal_places=2, null=True, validators=[MinValueValidator(Decimal('0.01'))])
-    od_260_280 = models.DecimalField(max_digits=7, decimal_places=2, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    od_260_230 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    od_260_280 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     memo = models.TextField(blank=True, null=True)
 
@@ -46,7 +46,7 @@ class Probiotics1(models.Model):
 
 class Probiotics2(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     report_delivery_date = models.DateField(blank=True, null=True)
     probiotics_delivery_date = models.DateField(blank=True, null=True)
