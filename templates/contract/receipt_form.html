@@ -10,6 +10,13 @@
                 <h3>新增發票</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                        <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                     <table class="table table-hover">
                         {% if specify_contract %}
                             <tr>
@@ -32,7 +39,7 @@
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                     {% if specify_contract %}
                         <input id="" style="background-color: #FF3B3B; border-color: #FF3B3B;" class="btn btn-primary btn-lg btn-block" type="submit" value="關閉" onclick="window.close()">
-                    {% endif %}   
+                    {% endif %}
                 </form>
             </div>
         </div>
@@ -59,5 +66,14 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+    document.getElementById("receipt_date").setAttribute("max", today);
+    document.getElementById("payment_date").setAttribute("max", today);
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
 </script>
 {% endblock js %}

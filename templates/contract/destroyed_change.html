@@ -50,4 +50,11 @@
     }
     today=year+"-"+month+"-"+day;
 </script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
+</script>
 {% endblock js %}

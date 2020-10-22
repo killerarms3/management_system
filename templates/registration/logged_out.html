@@ -1,6 +1,6 @@
-{% extends "base_generic.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-    <p>Logged out!</p>  
-    <a href="{{ url('login') }}">Click here to login again.</a>
+    <p>已登出!</p>  
+    <p>若要再次登入請<a href="{{ url('login') }}">點此</a>。</p>
 {% endblock %}

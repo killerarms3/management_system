@@ -3,24 +3,24 @@ from django.contrib.auth.models import User
 from customer.models import Customer, Organization
 from product.models import Plan
 from django.urls import reverse
+from django.db.models import Count
 from django.contrib.contenttypes.models import ContentType
 
 # Create your models here.
 class Contract(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='* 負責人') 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='* 負責人')
+    contract_name = models.CharField(max_length=12, unique=True, default='', verbose_name='* 合約名稱/代號')
     contract_date = models.DateField(verbose_name='* 簽約日期')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='* 客戶/聯絡人')
     organization = models.ManyToManyField(Organization, verbose_name='* 機構/單位')
     expected_quantity = models.PositiveIntegerField(blank=False, null=True, verbose_name='* 預期數量')
-    # order_id = models.CharField(max_length=256, blank=True, null=True)
-    # receipt_id = models.CharField(max_length=256, blank=True, null=True)
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
 
-    def __str__(self):
-        return 'Contract' + str(self.pk)
+    def __str__(self):  
+        return self.contract_name
 
     def get_absolute_url(self):
-        return reverse("contract-detail", kwargs={"pk": self.pk})
+        return reverse("contract-detail", kwargs={"pk": self.pk})    
 
 class Payment_method(models.Model):
     name = models.CharField(max_length=32, unique=True, error_messages={'unique':"該方法已經存在",}, verbose_name='名稱') # 設為unique不希望名稱重複
@@ -30,12 +30,13 @@ class Payment_method(models.Model):
 
 class Order(models.Model):
     order_date = models.DateField(blank=True, null=True, verbose_name='訂單日期')
+    order_name = models.CharField(max_length=64, default='', verbose_name='* 訂單代號')
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, verbose_name='* 合約')
     plan = models.ManyToManyField(Plan, verbose_name='* 方案') # 一個order可以擁有多個plan，一個plan也可以屬於多個order
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
-
+    
     def __str__(self):
-        return 'Order ' + str(self.pk)
+        return self.order_name
 
     def get_absolute_url(self):
         return reverse('contract:order-detail', args=[str(self.pk)])
@@ -80,7 +81,7 @@ class Box(models.Model):
     tracing_number = models.CharField(max_length=64, blank=True, null=True, verbose_name='宅配單號')
 
     def __str__(self):
-        return self.serial_number + ', ' + str(self.pk)
+        return self.serial_number
 
     def get_absolute_url(self):
         return reverse("contract:box-detail", args=[str(self.pk)])

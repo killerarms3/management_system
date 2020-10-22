@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block extra_head %}
-
 {% endblock extra_head %}
 
 {% block content %}
@@ -9,50 +8,52 @@
         <div class="card mb-3">
             <div class="card-body">
                 {% if user.is_authenticated %}
-                <h3>Profile
+                <h3>使用者資料
                 &nbsp;&nbsp;<a href="{{ url('profile-update', args=[user.id]) }}"><i class="fas fa-edit"></i></a>
                 <span style="float:right;"><a href="{{ url('history:user-history-list') }}"><i class="fas fa-history"></i></a></span>
                 </h3>
                 <table class="table table-hover">                    
                     <tr>
-                        <td><strong>User name: </strong><td><td>{{ user.username }}</td>
+                        <td><strong>使用者帳號: </strong><td><td>{{ user.username }}</td>
                     </tr>
                     <tr>
-                        <td><strong>First Name:</strong> <td><td>{{ user.first_name }}</td>
+                        <td><strong>姓:</strong> <td><td>{{ user.last_name }}</td>
                     </tr>
                     <tr>
-                        <td><strong>Last Name:</strong> <td><td>{{ user.last_name }}</td>
-                    </tr>                    
+                        <td><strong>名:</strong> <td><td>{{ user.first_name }}</td>
+                    </tr>              
                     <tr>
-                        <td><strong>Gender:</strong><td><td>{% if user.userprofile.gender %}{{ user.userprofile.gender }}{% endif %}</td>
+                        <td><strong>暱稱:</strong> <td><td>{{ user.userprofile.nick_name }}</td>
+                    </tr>      
+                    <tr>
+                        <td><strong>性別:</strong><td><td>{% if user.userprofile.gender %}{{ user.userprofile.gender }}{% endif %}</td>
                     </tr>
                     <tr>
                         <td><strong>E-mail:</strong><td><td>{{ user.email }}</td>
                     </tr>
                     <tr>
-                        <td><strong>Phone Number:</strong><td><td>{% if user.userprofile.phone_number %}{{ user.userprofile.phone_number }}{% endif %}</td>
+                        <td><strong>連絡電話:</strong><td><td>{% if user.userprofile.phone_number %}{{ user.userprofile.phone_number }}{% endif %}</td>
                     </tr>
                     <tr>
-                        <td><strong>Address:</strong><td><td>{% if user.userprofile.address %}{{ user.userprofile.address }}{% endif %}</td>
+                        <td><strong>住址:</strong><td><td>{% if user.userprofile.address %}{{ user.userprofile.address }}{% endif %}</td>
                     </tr>
                     <tr>
-                        <td><strong>Organization:</strong><td><td>{% if user.profile.organization %}{{ user.profile.organization }}{% endif %}</td>
+                        <td><strong>部門:</strong><td><td>{% if user.profile.organization %}{{ user.profile.organization }}{% endif %}</td>
                     </tr>      
                     <tr>
-                        <td><strong>Title:</strong><td><td>{% if user.profile.title %}{{ user.profile.title }}{% endif %}</td>
+                        <td><strong>職稱:</strong><td><td>{% if user.profile.title %}{{ user.profile.title }}{% endif %}</td>
                     </tr>
                     <tr>
-                        <td><strong>Date Joined:</strong><td><td>{{ user.date_joined }}</td>
+                        <td><strong>註冊日期:</strong><td><td>{{ user.date_joined }}</td>
                     </tr>
                     <tr>
-                        <td><strong>Last Login:</strong><td><td>{{ user.last_login }}</td>
+                        <td><strong>最後登入:</strong><td><td>{{ user.last_login }}</td>
                     </tr>                    
                 </table>
                 {% else %}
-                    <p>Please <a href = "{{ url('login') }}">login</a> first!</p>
+                    <p>請先<a href = "{{ url('login') }}">登入</a>!</p>
                 {% endif %}                
             </div>
         </div>
     </div>
 {% endblock %}
-

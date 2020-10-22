@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from django.apps import apps
+from django.db.models import Count
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, BoxUpdateForm, SpecifyFailedCreateForm,
@@ -73,6 +74,11 @@ class ContractCreate(PermissionRequiredMixin, CreateView_add_log):
     form_class = ContractCreateForm
     success_url = reverse_lazy('contract:view_contract')
 
+    def post(self, request, *args, **kwargs):
+        if Contract.objects.filter(contract_name=request.POST['contract_name']):
+            messages.error(request, '合約代號重複!')        
+        return super().post(request, *args, **kwargs)
+
 class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.change_contract'
     model = Contract
@@ -83,6 +89,9 @@ class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     def post(self, request, *args, **kwargs):
         contract_upload_file(request, self.kwargs['pk'])
         return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        return super().form_valid(form)
 
     # 傳入Order與Receipt給template並固定contract
     def get_context_data(self, **kwargs):
@@ -178,8 +187,15 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
     def post(self, request):
         form = self.form_class(request.POST)
         order = Order()
-        if form.is_valid():
-
+        if form.is_valid():            
+            Order2 = apps.get_model('contract', 'order')            
+            contract = form.cleaned_data['contract']
+            try:
+                num = Order2.objects.filter(contract=contract).count()
+            except:
+                num = 0
+            contract_name = contract.contract_name
+            order.order_name = contract_name + ' -- 訂單 '+str(num+1)
             order.order_date=form.cleaned_data['order_date']
             order.contract=form.cleaned_data['contract']
             order.memo=form.cleaned_data['memo']
@@ -187,23 +203,24 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
             for plan in form.cleaned_data['plan']:
                 order.plan.add(plan.id)
             order.save()
-            Product_Prefix = apps.get_model('product', 'product_prefix')
 
             # plan是ManytoMany關係，有可能有複數個，故利用迴圈逐個處理，以下皆考慮相同plan的狀況
             for plan in form.cleaned_data['plan']:
                 quantity_tag = plan.product.name+'-'+plan.name+'_quantity' # template上quantity欄位的name
-                #tracing_number_tag = plan.name+'_tracing_number' # template上tracing_number欄位的對應name
                 quantity = request.POST[quantity_tag] # 利用前面得到的name取得在template輸入的值
+                #tracing_number_tag = plan.name+'_tracing_number' # template上tracing_number欄位的對應name
                 #tracing_number = request.POST[tracing_number_tag] # 同上
-                new_serial_number_list = []            
-                target = Product_Prefix.objects.get(product=plan.product)
-                prefix = target.prefix.name                
+                new_serial_number_list = []
+
+                prefix = plan.product.prefix
                 box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+
                 if box_serial_number_list:
                     max_serial_number = box_serial_number_list[0][0]
                 else:
                     max_serial_number = prefix+'000000'
-                max_number = int(max_serial_number[3:]) #將前綴詞之外的轉成正整數數值
+                len_prefix = len(prefix)
+                max_number = int(max_serial_number[len_prefix:]) #將前綴詞之外的轉成正整數數值
                 for i in range(int(quantity)): # 先前取得的quantity即為本次新增的box數量
                     new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 從現存在於database中serial number的最大值之後產生新的serial number，並將數字部分補齊六個(ex: 36補成000036)
                 # 新增
@@ -379,16 +396,15 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         new_serial_number_list = []
         plan = form.cleaned_data['plan']
-        Product_Prefix = apps.get_model('product', 'product_prefix')
-        target = Product_Prefix.objects.get(product=plan.product)
-        prefix = target.prefix.name
+        prefix = plan.product.prefix
         quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
         box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
         if box_serial_number_list:
             max_serial_number = box_serial_number_list[0][0]
         else:
             max_serial_number = prefix+'000000'
-        max_number = int(max_serial_number[3:])
+        num = len(prefix)
+        max_number = int(max_serial_number[num:])
         for i in range(quantity):
             new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 創造新增的box的serial number，數字會補齊六位
         for list in new_serial_number_list:
@@ -776,17 +792,16 @@ def AddSpecifyOrdertoBox(request, pk):
         form = SpecifyBoxCreateForm(request.POST)
         if form.is_valid():
             new_serial_number_list = []
-            plan = form.cleaned_data['plan']            
-            Product_Prefix = apps.get_model('product', 'product_prefix')
-            target = Product_Prefix.objects.get(product=plan.product)
-            prefix = target.prefix.name
+            plan = form.cleaned_data['plan']
+            prefix = plan.product.prefix
             quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
             box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
             if box_serial_number_list:
                 max_serial_number = box_serial_number_list[0][0]
             else:
-                max_serial_number = prefix+'000000'            
-            max_number = int(max_serial_number[3:])
+                max_serial_number = prefix+'000000'
+            num = len(prefix)
+            max_number = int(max_serial_number[num:])
             for i in range(quantity):
                 new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6))
             for list in new_serial_number_list:
@@ -875,7 +890,7 @@ def Upload_file(request, pk):
         return render(request, 'contract/upload.html', locals())
     return render(request, 'contract/upload.html', locals())
 
-def receipt_upload_image(request, pk):    
+def receipt_upload_image(request, pk):
     if request.FILES.get('sheet'):
         content_type = ContentType.objects.get(app_label='contract', model='receipt')
         img = request.FILES.get('sheet')
@@ -890,7 +905,6 @@ def receipt_upload_image(request, pk):
             upload_image.object_id = pk
             upload_image.image = img
             upload_image.save()
-
 
 def contract_upload_file(request, pk):
     if request.FILES.get('sheet'):

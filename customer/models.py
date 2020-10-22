@@ -66,6 +66,9 @@ class Customer(models.Model):
     def __str__(self):
         return self.last_name + self.first_name
 
+    def get_name_and_org(self):
+        return self.last_name + self.first_name + ' ('+ self.title.name +')' 
+
 class Feedback(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
     product = models.ForeignKey(Product, on_delete='CASCADE')

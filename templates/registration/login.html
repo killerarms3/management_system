@@ -8,34 +8,32 @@
         <div class="card mb-3">
             <div class="card-body">
                 {% if form.errors %}
-                    <p>Your username and password didn't match. Please try again.</p>
-                {% endif %}
-            
+                    <p>帳號或密碼輸入錯誤，請重試。</p>
+                {% endif %}            
                 {% if next %}
                     {% if user.is_authenticated %}
-                        <p>Your account doesn't have access to this page. To proceed, please login with an account that has access.</p>
+                        <p>您的帳戶無權訪問此頁面。 要繼續，請使用具有訪問權限的帳戶登錄。</p>
                     {% else %}
-                        <p>Please login to see this page.</p>
+                        <p>請登錄以查看此頁面。</p>
                     {% endif %}
-                {% endif %}
-            
+                {% endif %}            
                 <form method="post" action="{{ url('login') }}">
                     {{ csrf_input }}
                     <table>
                         <tr>
-                            <td>{{ form.username.label }}</td>
+                            <td>帳號</td>
                             <td>{{ form.username }}</td>
                         </tr>
                         <tr>
-                            <td>{{ form.password.label }}</td>
+                            <td>密碼</td>
                             <td>{{ form.password }}</td>
                         </tr>
                         <tr>
-                            <td><a href="{{ url('password_reset') }}">Lost password?</a></td>
-                            <td align="right"><a href="{{ url('register') }}">Register</td>
+                            <td><a href="{{ url('password_reset') }}">忘記/重設密碼?</a></td>
+                            <td align="right"><a href="{{ url('register') }}">註冊</td>
                         </tr>
                     </table>
-                    <input type="submit" value="login" />
+                    <input type="submit" value="登入" />
                     <input type="hidden" name="next" value="{{ next }}" />        
                 </form>
             </div>
