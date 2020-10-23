@@ -41,3 +41,11 @@
         </div>
     </div>
 {% endblock  %}
+{% block js %}
+<script>
+    $('form').submit(function(){
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
+    });
+</script>
+{% endblock js %}
