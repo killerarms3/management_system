@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">編輯{{ app_label }}-{{ model }}欄位名</h3>
+            <form method="POST" action="{{ url('language:change_code', args=[app_label, model]) }}" enctype="multipart/form-data">{{ csrf_input }}
+                {% if messages %}
+                <ul class="fa-ul" style="margin-left: 0;">
+                    {% for message in messages %}
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>代碼</th>
+                            <th>欄位名</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for field_name in field_names %}
+                        <tr>
+                            <th scope="col">{{ field_name }}</th>
+                            <td><input class="form-control" type="text" name="{{ field_name }}" maxlength="32" value="{{ label_dict[field_name] }}"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script>
+    $('select').multipleSelect({
+      filter: true,
+    });
+</script>
+{% endblock js %}

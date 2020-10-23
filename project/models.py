@@ -1,11 +1,13 @@
 from django.db import models
 from contract.models import Box
 from django.urls import reverse
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 # project
 # Create your models here.
 class MicrobioRx(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     memo = models.TextField(blank=True, null=True)
 
@@ -22,9 +24,9 @@ class Next_Generation_Sequencing(models.Model):
 
 class GenoHealth(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True)
-    od_260_230 = models.DecimalField(max_digits=7, decimal_places=2, null=True)
-    od_260_280 = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    od_260_230 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
+    od_260_280 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     memo = models.TextField(blank=True, null=True)
 
@@ -33,7 +35,7 @@ class GenoHealth(models.Model):
 
 class Probiotics1(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    pathway = models.CharField(max_length=16, blank=True, null=True)
+    pathway = models.CharField(max_length=16, choices=[('',''),('IL-4','IL-4'), ('IFNr','IFNr'), ('IL-10','IL-10')], blank=True, null=True)
     report_complete_date = models.DateField(blank=True, null=True)
     report_delivery_date = models.DateField(blank=True, null=True)
     probiotics_delivery_date = models.DateField(blank=True, null=True)
@@ -44,7 +46,7 @@ class Probiotics1(models.Model):
 
 class Probiotics2(models.Model):
     box = models.ForeignKey(Box, on_delete='CASCADE')
-    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+    dna_concentration = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0.01'))])
     report_complete_date = models.DateField(blank=True, null=True)
     report_delivery_date = models.DateField(blank=True, null=True)
     probiotics_delivery_date = models.DateField(blank=True, null=True)

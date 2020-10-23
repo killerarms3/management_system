@@ -6,50 +6,34 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
-from product.models import Product, Prefix, Product_Prefix, Project, Plan
+from product.models import Product, Project, Plan
+from contract.models import Box
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
+from product.forms import PlanCreateForm, ProductCreateForm
+from lib import utils
 
 # Create your views here.
 @login_required
 @permission_required('product.add_product', raise_exception=True)
 @csrf_protect
 def add_product(request):
-    project_contents = ContentType.objects.filter(app_label='project')
+    form = ProductCreateForm()
     if request.method == 'POST':
-        # (name)必為unique
-        exist_product = Product.objects.filter(name=request.POST['name'])
-        if exist_product:
-            messages.error(request, '此產品名稱已存在')
-            return HttpResponseRedirect('/product/add_product')
-        product = Product()
-        # 產品
-        product.name = request.POST['name']
-        product.save()
-        log_addition(request.user, 'product', 'product', product.id, '1', object_to_dict(product), {})
-        # 產品前綴
-        if request.POST['prefix']:
-            exist_prefix = Prefix.objects.filter(name=request.POST['prefix'])
-            if exist_prefix:
-                prefix = exist_prefix[0]
+        form = ProductCreateForm(request.POST)
+        if form.is_valid():
+            if Product.objects.filter(name=form.cleaned_data['name']):
+                messages.error(request, '此產品已存在')
             else:
-                prefix = Prefix()
-                prefix.name = request.POST['prefix']
-                prefix.save()
-                log_addition(request.user, 'product', 'prefix', prefix.id, '1', object_to_dict(prefix), {})
-            product_prefix = Product_Prefix()
-            product_prefix.product = product
-            product_prefix.prefix = prefix
-            product_prefix.save()
-            log_addition(request.user, 'product', 'product_prefix', product_prefix.id, '1', object_to_dict(product_prefix), {})
-        if request.POST['project_content']:
-            content_type = ContentType.objects.get(id=request.POST['project_content'])
-            project = Project()
-            project.product = product
-            project.content_type = content_type
-            project.save()
-            log_addition(request.user, 'product', 'project', project.id, '1', object_to_dict(project), {})
-        messages.info(request, '已成功新增產品')
+                product = form.save()
+                if form.cleaned_data['project']:
+                    project = Project(product=product, content_type=form.cleaned_data['project'])
+                    project.save()
+                    log_addition(request.user, 'product', 'project', project.id, '1', object_to_dict(project), {})
+                messages.info(request, '已成功新增產品')
+                log_addition(request.user, 'product', 'product', product.id, '1', object_to_dict(product), {})
+        else:
+            messages.error(request, '資料格式錯誤')
         return redirect(reverse('product:add_product'))
     return render(request, 'product/add_product.html', locals())
 
@@ -57,13 +41,8 @@ def add_product(request):
 @permission_required('product.view_product', raise_exception=True)
 @csrf_protect
 def view_product(request):
-    products = Product.objects.all()
+    products = Product.objects.all().order_by('-pk')
     for product in products:
-        has_prefix = Product_Prefix.objects.filter(product=product)
-        if has_prefix:
-            product.prefix = has_prefix[0].prefix.name
-        else:
-            product.prefix = ''
         has_project = Project.objects.filter(product=product)
         if has_project:
             product.project = has_project[0].content_type.model
@@ -75,74 +54,40 @@ def view_product(request):
 @permission_required('product.change_product', raise_exception=True)
 @csrf_protect
 def change_product(request, id):
-    project_contents = ContentType.objects.filter(app_label='project')
     product = Product.objects.get(id=id)
-    has_prefix = Product_Prefix.objects.filter(product=product)
-    if has_prefix:
-        product.prefix = has_prefix[0].prefix.name
-    else:
-        product.prefix = ''
-    has_project = Project.objects.filter(product=product)
-    if has_project:
-        content_id = has_project[0].content_type.id
-    else:
-        content_id = ''
+    project = Project.objects.filter(product=product).first()
+    initial_dict = {'status': int(product.status == True)}
+    if project:
+        initial_dict['project'] = project.content_type
+    form = ProductCreateForm(instance=product, initial=initial_dict)
     if request.method == 'POST':
-        # 產品資料更新
-        # (name)必為unique
-        exist_products = Product.objects.filter(name=request.POST['name'])
-        if exist_products and exist_products[0].id != id:
-            messages.error(request, '此產品已存在')
-            return redirect(reverse('product:view_product'))
-        pre_dict = object_to_dict(product)
-        product.name = request.POST['name']
-        product.status = request.POST['status']
-        product.save()
-        log_addition(request.user, 'product', 'product', product.id, '2', object_to_dict(product), pre_dict)
-        if product.prefix != request.POST['prefix']:
-            if request.POST['prefix']:
-                exist_prefix = Prefix.objects.filter(name=request.POST['prefix'])
-                if exist_prefix:
-                    prefix = exist_prefix[0]
-                else:
-                    prefix = Prefix()
-                    prefix.name = request.POST['prefix']
-                    prefix.save()
-                    log_addition(request.user, 'product', 'prefix', prefix.id, '1', object_to_dict(prefix), {})
-                if has_prefix:
-                    pre_dict = object_to_dict(has_prefix[0])
-                    product_prefix = has_prefix[0]
-                    product_prefix.prefix = prefix
-                    product_prefix.save()
-                    log_addition(request.user, 'product', 'product_prefix', product_prefix.id, '2', object_to_dict(product_prefix), pre_dict)
-                else:
-                    product_prefix = Product_Prefix()
-                    product_prefix.product = product
-                    product_prefix.prefix = prefix
-                    product_prefix.save()
-                    log_addition(request.user, 'product', 'product_prefix', product_prefix.id, '1', object_to_dict(product_prefix), {})
+        form = ProductCreateForm(request.POST)
+        if form.is_valid():
+            products = Product.objects.filter(name=form.cleaned_data['name'])
+            if products and products[0].id != id:
+                messages.error(request, '此產品已存在')
             else:
-                log_addition(request.user, 'product', 'product_prefix', has_prefix[0].id, '3', {}, object_to_dict(has_prefix[0]))
-                has_prefix[0].delete()
-        if content_id != request.POST['project_content']:
-            if request.POST['project_content']:
-                content_type = ContentType.objects.get(id=request.POST['project_content'])
-                if has_project:
-                    pre_dict = object_to_dict(has_project[0])
-                    project = has_project[0]
-                    project.content_type = content_type
-                    project.save()
-                    log_addition(request.user, 'product', 'project', project.id, '2', object_to_dict(project), pre_dict)
-                else:
-                    project = Project()
-                    project.product = product
-                    project.content_type = content_type
+                pre_dict = object_to_dict(product)
+                product.__dict__.update(**form.cleaned_data)
+                product.status = request.POST['status']
+                product.save()
+                log_addition(request.user, 'product', 'product', product.id, '2', object_to_dict(product), pre_dict)
+                if project and project.content_type != form.cleaned_data['project']:
+                    if form.cleaned_data['project']:
+                        pre_dict = object_to_dict(project)
+                        project.content_type = form.cleaned_data['project']
+                        project.save()
+                        log_addition(request.user, 'product', 'project', project.id, '2', object_to_dict(project), pre_dict)
+                    else:
+                        log_addition(request.user, 'product', 'project', project.id, '3', {}, object_to_dict(project))
+                        project.delete()
+                elif form.cleaned_data['project']:
+                    project = Project(product=product, content_type=form.cleaned_data['project'])
                     project.save()
                     log_addition(request.user, 'product', 'project', project.id, '1', object_to_dict(project), {})
-            else:
-                log_addition(request.user, 'product', 'project', has_project[0].id, '3', {}, object_to_dict(has_project[0]))
-                has_project[0].delete()
-        messages.info(request, '已成功更新產品')
+                messages.info(request, '已成功更新產品')
+        else:
+            messages.error(request, '資料格式錯誤')
         return HttpResponseRedirect('/product/view_product')
     return render(request, 'product/change_product.html', locals())
 
@@ -150,23 +95,18 @@ def change_product(request, id):
 @permission_required('product.add_plan', raise_exception=True)
 @csrf_protect
 def add_plan(request):
-    products = Product.objects.all()
+    form = PlanCreateForm()
     if request.method == 'POST':
-        # (product.id, name)必為unique
-        product = Product.objects.get(id=request.POST['product'])
-        exist_plan = Plan.objects.filter(product=product, name=request.POST['name'])
-        if exist_plan:
-            messages.error(request, '此方案已存在')
-            return HttpResponseRedirect('/product/add_plan')
-        plan = Plan()
-        product = Product.objects.get(id=request.POST['product'])
-        plan.product = product
-        plan.name = request.POST['name']
-        plan.price = request.POST['price']
-        plan.description = request.POST['description']
-        plan.save()
-        log_addition(request.user, 'product', 'plan', plan.id, '1', object_to_dict(plan), {})
-        messages.info(request, '已成功新增方案')
+        form = PlanCreateForm(request.POST)
+        if form.is_valid():
+            if Plan.objects.filter(product=form.cleaned_data['product'], name=form.cleaned_data['name']):
+                messages.error(request, '此方案已存在')
+            else:
+                plan = form.save()
+                messages.info(request, '已成功新增方案')
+                log_addition(request.user, 'product', 'plan', plan.id, '1', object_to_dict(plan), {})
+        else:
+            messages.error(request, '資料格式錯誤')
         return redirect(reverse('product:add_plan'))
     return render(request, 'product/add_plan.html', locals())
 
@@ -174,7 +114,7 @@ def add_plan(request):
 @permission_required('product.view_plan', raise_exception=True)
 @csrf_protect
 def view_plan(request):
-    plans = Plan.objects.all()
+    plans = Plan.objects.all().order_by('-pk')
     return render(request, 'product/view_plan.html', locals())
 
 @login_required
@@ -187,23 +127,30 @@ def view_product_plan(request, id):
 @permission_required('product.change_plan', raise_exception=True)
 @csrf_protect
 def change_plan(request, id):
-    products = Product.objects.all()
     plan = Plan.objects.get(id=id)
+    form = PlanCreateForm(instance=plan, initial={'status': int(plan.status == True)})
     if request.method == 'POST':
-        # (product.id, name)必為unique
-        product = Product.objects.get(id=request.POST['product'])
-        exist_plan = Plan.objects.filter(product=product, name=request.POST['name'])
-        if exist_plan and exist_plan[0].id != id:
-            messages.error(request, '此方案已存在')
-            return redirect(reverse('product:view_plan'))
-        pre_dict = object_to_dict(plan)
-        plan.product = product
-        plan.name = request.POST['name']
-        plan.price = request.POST['price']
-        plan.description = request.POST['description']
-        plan.status = request.POST['status']
-        plan.save()
-        log_addition(request.user, 'product', 'plan', plan.id, '2', object_to_dict(plan), pre_dict)
-        messages.info(request, '已成功更新方案')
+        form = PlanCreateForm(request.POST)
+        if form.is_valid():
+            plans = Plan.objects.filter(product=form.cleaned_data['product'], name=form.cleaned_data['name'])
+            if plans and plans[0].id != id:
+                messages.error(request, '此方案已存在')
+            else:
+                pre_dict = object_to_dict(plan)
+                plan.__dict__.update(**form.cleaned_data)
+                plan.product = form.cleaned_data['product']
+                plan.status = request.POST['status']
+                plan.save()
+                messages.info(request, '已成功更新方案')
+                log_addition(request.user, 'product', 'plan', plan.id, '2', object_to_dict(plan), pre_dict)
         return HttpResponseRedirect('/product/view_plan')
     return render(request, 'product/change_plan.html', locals())
+
+@login_required
+@permission_required('product.view_plan', raise_exception=True)
+def view_specific_plan(request, id):
+    plan = Plan.objects.get(id=id)
+    field_names = [field.name for field in Plan._meta.fields if field.name != 'id']
+    field_tags = utils.getlabels('product', 'plan')
+    boxes = Box.objects.filter(plan=plan).order_by('-pk')
+    return render(request, 'product/view_specific_plan.html', locals())

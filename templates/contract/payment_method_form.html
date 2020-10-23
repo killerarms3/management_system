@@ -7,7 +7,7 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>Add Payment Method</h3>                
+                <h3>Add Payment Method</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
                     <table class="table table-hover">
@@ -45,5 +45,12 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
 </script>
 {% endblock js %}

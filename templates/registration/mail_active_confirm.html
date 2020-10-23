@@ -10,11 +10,11 @@
                 <form action="" method="POST">
                     {{ csrf_input }}
                         <p>Welcome, {{ user.username }}</p>
-                        <p>If you don't get the mail, please enter the new email address and send it.</p>
+                        <p>若是沒有收到郵件，請再次輸入郵件地址並再次發送。</p>
                         {% for field in mailForm %}
                             <p>{{ field.label }} {{ field }}</p>
                         {% endfor %}
-                    <input type="submit" class="" value="Resend Email" />
+                    <input type="submit" class="" value="重寄Email" />
                 </form>
             </div>
         </div>

@@ -35,6 +35,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url = 'accounts/', permanent = True)),
     path('history/',include('history.urls', namespace='history')),
     path('download/<filename>/', download, name='download'),
+    path('language/',include('language.urls', namespace='language')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)

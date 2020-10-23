@@ -23,12 +23,12 @@
             <div class="col-sm-2">
             {% block sidebar %}
                 <ul class="sidebar-nav">
-                <li><a href="{{ url('index') }}">Home</a></li>                 
+                <li><a href="{{ url('index') }}">首頁</a></li>
                 {% if user.is_authenticated %}
-                    <li>Hello <a href = "{{ url('profile') }}">{{ user.username }}</a></li>
-                    <li><a href="{{ url('logout') }}">Logout</a></li>
-                {% else %}                    
-                    <li><a href="{{ url('login') }}">Login</a></li>
+                    <li>Hello <a href = "{{ url('profile') }}">{{ user.userprofile.nick_name }}</a></li>
+                    <li><a href="{{ url('logout') }}">登出</a></li>
+                {% else %}
+                    <li><a href="{{ url('login') }}">登入</a></li>
                 {% endif %}
                 </ul>
                 <ul class="sidebar-nav">
@@ -49,28 +49,34 @@
                   {% if perms.contract.view_box %}
                     <li><a href="{{ url('contract:box-list') }}">採樣盒</a></li>
                   {% endif %}
-                  <!-- {% if perms.contract.view_failed %}
-                    <li><a href="{{ url('contract:failed-list') }}">All Failed Box</a></li>
-                  {% endif %} -->
-                  <!-- {% if perms.contract.view_destroyed %}
-                    <li><a href="{{ url('contract:destroyed-list') }}">All destroyed Box</a></li>
+                  {% if perms.experiment.view_experiment %}
+                    <li><a href="{{ url('experiment:view_experiment') }}">產品狀態</a></li>
                   {% endif %}
-                  {% if perms.contract.view_examiner %}
-                    <li><a href="{{ url('contract:examiner-list') }}">All examiner</a></li>
+                    <li>
+                      <a class="dropdown-toggle" href="#" id="dropdownProduct" data-toggle="dropdown">產品</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdownProduct">
+                          {% if perms.product.view_product %}
+                            <a class="dropdown-item" href="{{ url('product:view_product') }}">產品名單</a>
+                          {% endif %}
+                          {% if perms.product.view_plan %}
+                            <a class="dropdown-item" href="{{ url('product:view_plan') }}">方案</a>
+                          {% endif %}
+                          <a class="dropdown-item dropdown-toggle" id="dropdownProject" data-toggle="dropdown">產品大表</a>
+                          <div class="dropdown-menu" aria-labelledby="dropdownProject">
+                            <a class="dropdown-item" href="{{ url('project:view_project_table', args=['microbiorx']) }}">MicrobioRx</a>
+                            <a class="dropdown-item" href="{{ url('project:view_project_table', args=['probiotics1']) }}">精準化益生菌1.0</a>
+                            <a class="dropdown-item" href="{{ url('project:view_project_table', args=['probiotics2']) }}">精準化益生菌2.0</a>
+                            <a class="dropdown-item" href="{{ url('project:view_project_table', args=['next_generation_sequencing']) }}">NGS定序服務</a>
+                            <a class="dropdown-item" href="{{ url('project:view_project_table', args=['genohealth']) }}">GenoHealth</a>
+                          </div>
+                        </div>
+                  {% if perms.product.view_plan %}
+                    <li><a href="{{ url('product:view_plan') }}"></a></li>
                   {% endif %}
-                  {% if perms.contract.view_payment_method %}
-                    <li><a href="{{ url('contract:payment_method-list') }}">All Payment method</a></li>
-                  {% endif %}
-                  {% if perms.contract.view_failed_reason %}
-                    <li><a href="{{ url('contract:failed_reason-list') }}">All Failed reason</a></li>
-                  {% endif %} -->
+                    <!-- <li><a href="{{ url('contract:search') }}">Search</a></li> -->
                   {% if perms.history.view_history %}
                     <li><a href="{{ url('history:history-list') }}">歷史記錄</a></li>
                   {% endif %}
-                    <li><a href="{{ url('experiment:view_experiment') }}">產品狀態</a></li>
-                    <li><a href="{{ url('product:view_product') }}">產品</a></li>
-                    <li><a href="{{ url('product:view_plan') }}">方案</a></li>
-                    <!-- <li><a href="{{ url('contract:search') }}">Search</a></li> -->
                 {% endif %}
                     <!-- insert default text for every page -->
                 </ul>

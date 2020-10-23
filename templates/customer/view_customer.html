@@ -10,9 +10,9 @@
         <div class="card-body">
             <h3 class="custom_text">客戶名單{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_customer') }}">新增客戶</a>){% endif %}</h3>
             {% if messages %}
-            <ul class="messages">
+            <ul class="fa-ul" style="margin-left: 0;">
                 {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                 {% endfor %}
             </ul>
             {% endif %}
@@ -21,6 +21,7 @@
                     <tr>
                         <th></th>
                         <th>姓名</th>
+                        <th>生日</th>
                         <th>機構</th>
                         <th>職業</th>
                         <th>職稱</th>
@@ -29,25 +30,30 @@
                         <th>手機電話</th>
                         <th>市內電話</th>
                         <th>通訊地址</th>
-                        <th>客戶種類</th>
+                        <!-- <th>客戶類別</th>
                         <th>備註</th>
+                        <th>推薦人</th>
+                        <th>關係</th> -->
                     </tr>
                 </thead>
                 <tbody>
                     {% for customer in customers %}
                     <tr>
                         <td>{% if perms.customer.change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
-                        <td>{{ customer.last_name }}{{ customer.first_name }}</td>
+                        <td><a href="{{ customer.get_absolute_url() }}" target="popup" onclick="window.open('{{ customer.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ customer }}</a></td>
+                        <td>{{ customer.birth_date }}</td>
                         <td>{{ customer.organization }}</td>
-                        <td>{{ customer.job.name }}</td>
-                        <td>{{ customer.title.name }}</td>
+                        <td>{{ customer.job }}</td>
+                        <td>{{ customer.title }}</td>
                         <td>{{ customer.line_id }}</td>
                         <td>{{ customer.email }}</td>
                         <td>{{ customer.mobile }}</td>
                         <td>{{ customer.tel }}</td>
                         <td>{{ customer.address }}</td>
-                        <td>{{ customer.customer_type.name }}</td>
+                        <!-- <td>{{ customer.customer_type }}</td>
                         <td>{{ customer.memo }}</td>
+                        <td>{% if customer.customer_introducer %}{{ customer.customer_introducer.introducer }}{% endif %}</td>
+                        <td>{% if customer.customer_introducer %}{{ customer.customer_introducer.relationship }}{% endif %}</td> -->
                     </tr>
                     {% endfor %}
                 </tbody>
