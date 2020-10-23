@@ -10,11 +10,18 @@
                 <h3>編輯 {{ order }}</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                        <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                     <table class="table table-hover">
                         {% for fields in form %}
                             {% if fields.label == '方案' %}
                                 <tr>
-                                    <th>{{ fields.label }}</th>                              
+                                    <th>{{ fields.label }}</th>
                                     <td>{{ fields }}</td>
                                 </tr>
                                 <tr>
@@ -50,7 +57,7 @@
                                     <td>{{ fields }}</td>
                                 </tr>
                             {% endif %}
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>
@@ -79,6 +86,7 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+    document.getElementById("order_date").setAttribute("max", today);
 </script>
 <script>
     function myFunction(){
@@ -87,5 +95,12 @@
     var grade = objS.options[objS.selectedIndex].text;
     alert(grade);
     }
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
 </script>
 {% endblock js %}

@@ -7,7 +7,18 @@ from customer.models import Customer, Organization
 from django.contrib.auth.models import User
 from django.apps import apps
 
+class CustomModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.get_name_and_org()
+
+class CustomUserModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        UserProfile = apps.get_model('accounts', 'UserProfile')
+        userprofile = UserProfile.objects.get(user=obj)
+        return userprofile.nick_name
+
 class ContractCreateForm(forms.ModelForm):
+    user = CustomUserModelChoiceField(label='* 負責人', queryset=User.objects.all(), required=True)
     contract_date = forms.DateField(
         label='* 簽約日期',
         widget=forms.DateInput(
@@ -21,14 +32,15 @@ class ContractCreateForm(forms.ModelForm):
             }),
         required=True
         )
+    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
     class Meta:
         model = Contract
         fields = '__all__'
 
 class ContractUpdateForm(forms.ModelForm):
-    user = forms.ModelChoiceField(label='負責人', queryset=User.objects.all(), required=True)
+    user = CustomUserModelChoiceField(label='* 負責人', queryset=User.objects.all(), required=True)
     contract_date = forms.DateField(
-        label='訂購日期',
+        label='* 簽約日期',
         widget=forms.DateInput(
             attrs={
                 'class': 'form-control',
@@ -39,7 +51,7 @@ class ContractUpdateForm(forms.ModelForm):
             }),
         required=False
     )
-    customer = forms.ModelChoiceField(label='客戶', queryset=Customer.objects.all(), required=True)
+    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
     organization = forms.ModelMultipleChoiceField(label='機構/單位', queryset=Organization.objects.all(), required=False)
     memo = forms.CharField(
         label='備註',
@@ -106,7 +118,7 @@ class OrderCreateForm(OrderUpdateForm):
                 }))
     class Meta:
         model = Order
-        fields = '__all__'
+        exclude = ('order_name',)
 
 class SpecifyOrderCreateForm(OrderUpdateForm):
     class Meta:
@@ -184,14 +196,6 @@ class SpecifyExaminerCreateForm(forms.ModelForm):
         fields = ('customer',) # 因指定了box所以不顯示
 
 class BoxUpdateForm(forms.Form):
-    serial_number = forms.CharField(
-        label='流水號',
-        widget=forms.TextInput(
-            attrs={
-                'class':'form-control',
-            }),
-        required = True
-        )
     order = forms.ModelChoiceField(label='訂單', queryset=Order.objects.all(), required=True)
     plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
     failed_reason = forms.ModelChoiceField(label='失敗原因', queryset=Failed_reason.objects.all(), required=False)
@@ -230,7 +234,6 @@ class BoxUpdateForm(forms.Form):
         required = True
     )
     fields = (
-        'serial_number',
         'order',
         'plan',
         'failed_reason',

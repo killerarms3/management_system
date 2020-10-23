@@ -67,6 +67,9 @@ class Customer(models.Model):
     def get_absolute_url(self):
         return reverse('customer:view_specific_customer', args=[str(self.id)])
 
+    def get_name_and_org(self):
+        return self.last_name + self.first_name + ' ('+ self.title.name +')'
+
 class Relationship(models.Model):
     name = models.CharField(max_length=32)
 

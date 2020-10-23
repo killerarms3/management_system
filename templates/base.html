@@ -23,12 +23,12 @@
             <div class="col-sm-2">
             {% block sidebar %}
                 <ul class="sidebar-nav">
-                <li><a href="{{ url('index') }}">Home</a></li>
+                <li><a href="{{ url('index') }}">首頁</a></li>
                 {% if user.is_authenticated %}
-                    <li>Hello <a href = "{{ url('profile') }}">{{ user.username }}</a></li>
-                    <li><a href="{{ url('logout') }}">Logout</a></li>
+                    <li>Hello <a href = "{{ url('profile') }}">{{ user.userprofile.nick_name }}</a></li>
+                    <li><a href="{{ url('logout') }}">登出</a></li>
                 {% else %}
-                    <li><a href="{{ url('login') }}">Login</a></li>
+                    <li><a href="{{ url('login') }}">登入</a></li>
                 {% endif %}
                 </ul>
                 <ul class="sidebar-nav">

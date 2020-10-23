@@ -22,7 +22,8 @@ from django import forms
 from django.conf import settings
 from django.template import Context
 from django.template.loader import get_template, render_to_string
-
+from django.apps import apps
+from django.contrib import messages
 
 token_confirm = Token(settings.SECRET_KEY)
 
@@ -39,15 +40,31 @@ def profile(request):
 def register(request):
 	if request.method == 'POST':
 		form = RegisterForm(request.POST)
+		userprofile = apps.get_model('accounts', 'UserProfile')
+		if userprofile.objects.filter(nick_name = request.POST['nick_name']):
+			messages.error(request, '一個相同的暱稱已存在。')
+			context = {'form': form, 'messages': messages}
+			return render(request, 'registration/register.html', context)
 		if form.is_valid():
 			username = form.cleaned_data['username']
 			form.save()
+			nuck_name = form.cleaned_data['nick_name']
+			last_name = form.cleaned_data['last_name']
+			first_name = form.cleaned_data['first_name']
 			user = User.objects.get(username=username)
+			user.last_name = last_name
+			user.first_name = first_name
 			user.is_active = False
 			user.save()
-			active_mail(request, username)			
-			
-			context = {				
+			user_profile = UserProfile()
+			user_profile.user = user
+			user_profile.nick_name = nuck_name
+			user_profile.save()
+			profile = Profile()
+			profile.user = user
+			profile.save()
+			active_mail(request, username)
+			context = {
 				'user':user
 			}
 			return HttpResponseRedirect(reverse('send_again', args=[user.username]), context)
@@ -80,10 +97,10 @@ def profile_update(request, pk):
 	if user.username != request.user.username:
 		return HttpResponseNotFound('NOT FOUND')
 	try:
-		user_profile = UserProfile.objects.get(user=user)	
+		user_profile = UserProfile.objects.get(user=user)
 	except UserProfile.DoesNotExist:
 		user_profile = UserProfile.objects.create(
-			user=user, 
+			user=user,
 			phone_number='',
 			address='',
 			gender=''
@@ -96,9 +113,9 @@ def profile_update(request, pk):
 			organization=Organization.objects.get(id=2),
 			title=Title.objects.get(id=2)
 		)
-	
 	if request.method == 'POST':
 		form = Profile_updateFrom(request.POST)
+
 		if form.is_valid():
 			user.first_name = form.cleaned_data['first_name']
 			user.last_name = form.cleaned_data['last_name']
@@ -107,6 +124,7 @@ def profile_update(request, pk):
 			user_profile.phone_number = form.cleaned_data['phone_number']
 			user_profile.address = form.cleaned_data['address']
 			user_profile.gender = form.cleaned_data['gender']
+			user_profile.nick_name = form.cleaned_data['nick_name']
 			user_profile.save()
 
 			profile.organization = form.cleaned_data['org']
@@ -118,6 +136,7 @@ def profile_update(request, pk):
 		default_data = {
 			'first_name':user.first_name,
 			'last_name':user.last_name,
+			'nick_name':user_profile.nick_name,
 			'phone_number':user_profile.phone_number,
 			'address':user_profile.address,
 			'gender':user_profile.gender,
@@ -131,28 +150,21 @@ def active_user(request, token):
 	try:
 		username = token_confirm.confirm_validate_token(token)
 	except:
-	 	return HttpResponse('The url is expired.')
+	 	return HttpResponse('連結已過期。')
 	try:
 		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		return HttpResponse('The user is not exist.')
-	user_profile = UserProfile()
-	user_profile.user = user
-	user_profile.save()
-	profile = Profile()
-	profile.user = user
-	profile.save()	
+	except:
+		return HttpResponse('使用者不存在。')
 	user.is_active = True
 	user.save()
-	confirm = 'Verification is success, please login again.'
+	confirm = '驗證成功，請重新登入。'
 	return HttpResponseRedirect('/accounts/login', {'confirm': confirm})
 
 def email_send_again(request, username):
 	user = User.objects.get(username=username)
 	if user.is_active:
-		return HttpResponseNotFound('Your account is already active.')
-	
-	if request.method == 'POST':		
+		return HttpResponseNotFound('該帳戶已激活。')
+	if request.method == 'POST':
 		mailForm = Email_resetFrom(request.POST)
 		if mailForm.is_valid():
 			user.email = mailForm.cleaned_data['email']

@@ -10,9 +10,9 @@
                 <h3>新增失敗原因</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
-                    <table class="table table-hover">                        
+                    <table class="table table-hover">
                         {% for fields in form %}
-                            <tr>                                
+                            <tr>
                                 <th>{{ fields.label }}</th>
                                 <td>{{ fields }}</td>
                             </tr>
@@ -45,5 +45,12 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
 </script>
 {% endblock js %}

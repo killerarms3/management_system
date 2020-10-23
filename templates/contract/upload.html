@@ -45,4 +45,11 @@ $('#sheet').change(function() {
     $(this).next('label').text(file);
 });
 </script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
+</script>
 {% endblock js %}

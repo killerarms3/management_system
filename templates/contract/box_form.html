@@ -10,6 +10,13 @@
                 <h3>新增採樣盒</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                            <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                     <table class="table table-hover">
                     {% if specify_order %}
                         <tr>
@@ -46,6 +53,13 @@
       filter: true,
       selectAll: false,
       showClear: true
+    });
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
     });
 </script>
 {% endblock js %}

@@ -74,7 +74,11 @@
                                                                 </td>
                                                             {% else %}
                                                                 <!-- 用id找出foreignKey的具體名稱 -->
-                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=diff_dict_list[history.id][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+diff_dict_list[history.id][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <!-- 不是foreignKey的attribute -->
@@ -101,7 +105,11 @@
                                                                 </td>
                                                             {% else %}
                                                                 <!-- 用id找出foreignKey的具體名稱 -->
-                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <!-- 不是foreignKey的attribute -->
@@ -157,7 +165,7 @@
                                                     <!-- recover by attribute -->
                                                         <th>
                                                         {% if action_flag[history.action_flag] == 'change' or action_flag[history.action_flag] == 'recovery' %}
-                                                        <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
+                                                            <a href="{{ url('history:recover_by_attr-confirm', args=[history.id, key]) }}">{{ key }}</a>
                                                         {% else %}
                                                         {{ key }}
                                                         {% endif %}
@@ -181,7 +189,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=diff_dict_list[history.id][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+diff_dict_list[history.id][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ diff_dict_list[history.id][key] }}</td>
@@ -206,7 +218,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
@@ -284,7 +300,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=diff_dict_list[history.id][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+diff_dict_list[history.id][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ diff_dict_list[history.id][key] }}</td>
@@ -309,7 +329,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
@@ -386,7 +410,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=diff_dict_list[history.id][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+diff_dict_list[history.id][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ diff_dict_list[history.id][key] }}</td>
@@ -411,7 +439,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>{{ dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
@@ -488,7 +520,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=diff_dict_list[history.id][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=diff_dict_list[history.id][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+diff_dict_list[history.id][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>
@@ -519,7 +555,11 @@
                                                                 {% endif %}
                                                                 </td>
                                                             {% else %}
-                                                                <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% if model_dict[key].objects.filter(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) %}
+                                                                    <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
+                                                                {% else %}
+                                                                    <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <td>
