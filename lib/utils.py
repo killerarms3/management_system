@@ -1,5 +1,7 @@
 from django.apps import apps
+from django.db import ProgrammingError
 from django.contrib.contenttypes.models import ContentType
+from django.db import connection
 from django import forms
 from language.models import Code
 import datetime
@@ -8,12 +10,16 @@ def getlabels(AppName, ModelName):
     field_tags = dict()
     Model = apps.get_model(AppName, ModelName)
     field_names = [field.name for field in Model._meta.fields]
-    contenttype = ContentType.objects.get(app_label=AppName, model=ModelName)
+    try:
+        contenttype = ContentType.objects.get(app_label=AppName, model=ModelName)
+    except ProgrammingError:
+        contenttype = None
     for field_name in field_names:
         field_tags[field_name] = field_name
-        codes = Code.objects.filter(content_type=contenttype, code=field_name)
-        if codes:
-            field_tags[field_name] = codes[0].name
+        if contenttype is not None:
+            codes = Code.objects.filter(content_type=contenttype, code=field_name)
+            if codes:
+                field_tags[field_name] = codes[0].name
     return field_tags
 
 def GetCustomWidgets(Model):
