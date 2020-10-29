@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增客戶{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_customers') }}">新增多筆客戶</a>){% endif %}<a class="btn btn-info" type="button" href="{{ url('customer:view_customer') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
+            <h3 class="custom_text">新增客戶{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_multiple') }}">新增多筆客戶</a>){% endif %}<a class="btn btn-info" type="button" href="{{ url('customer:view_customer') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
             <ul class="fa-ul" style="margin-left: 0;">
                 <li><i class="fas fa-info-circle"> 系統會依據【姓】、【名】、【手機電話】、【市內電話】來判斷客戶是否為同一人</i></li>
                 <li><i class="fas fa-info-circle"> 建議先確認目標【機構】、【職業】、【職稱】有在選單後，再開始填寫資料</i></li>

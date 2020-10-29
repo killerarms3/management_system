@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_protect
 from django.apps import apps
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from contract.models import Box, Failed, Order
 from accounts.models import Organization
@@ -15,6 +15,9 @@ import datetime
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from experiment.forms import ExperimentCreateForm
+from lib import utils
+import json
+from decimal import Decimal
 
 # Create your views here.
 @login_required
@@ -98,6 +101,66 @@ def add_experiments(request):
         back_url = reverse('experiment:add_experiments')
         return render(request, 'add_data_status.html', locals())
     return add_data.view_upload(request, header='新增多筆記錄', sheet_template='add_experiments_template.xlsx', action_url=reverse('experiment:add_experiments'))
+
+@login_required
+@permission_required('experiment.add_experiment', raise_exception=True)
+@csrf_protect
+def add_multiple(request):
+    now = datetime.datetime.now().strftime('%Y-%m-%d')
+    form = ExperimentCreateForm(auto_id='%s', initial={'receiving_date': now})
+    AddMultiple = utils.AddMultiple(request=request, form=form)
+    AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆紀錄', view_url=reverse('experiment:view_experiment'), add_multiple_url=reverse('experiment:add_multiple'))
+    if request.method == 'POST':
+        response = {'response': False, 'messages': list()}
+        if request.POST.get('table_content'):
+            label_dict = utils.getlabels('experiment', 'experiment')
+            contents = json.loads(request.POST.get('table_content'), parse_float=Decimal)
+            experiment_list = list()
+            errors = list()
+            for idx, content in enumerate(contents):
+                if all(x is None or str(x).strip() == '' for x in content):
+                    # check if all elements of the content is None
+                    continue
+                else:
+                    content_dict = dict(zip(AddMultiple.field_names, content))
+                    try:
+                        experiment = Experiment()
+                        experiment.__dict__.update(content_dict)
+                        experiment.box = Box.objects.get(serial_number=content_dict['box'])
+                        experiment.organization = next(o for o in Organization.objects.all() if str(o) == content_dict['organization'])
+                        experiment.transfer_organization = next(o for o in Organization.objects.all() if str(o) == content_dict['transfer_organization'])
+                        try:
+                            experiment.full_clean()
+                        except ValidationError as err:
+                            for key in err.message_dict:
+                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                        experiment_list.append(experiment)
+                    except Box.DoesNotExist:
+                        errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['box'], idx+1))
+                    except StopIteration:
+                        if not content_dict['organization']:
+                            errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['organization'], idx+1))
+                        if not content_dict['transfer_organization']:
+                            errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['transfer_organization'], idx+1))
+            if not errors:
+                # 全部對才存
+                for experiment in experiment_list:
+                    exist_experiment = Experiment.objects.filter(box=experiment.box, organization=experiment.organization, receiving_date=experiment.receiving_date).first()
+                    if not exist_experiment:
+                        action_flag = '1'
+                        pre_dict = {}
+                    else:
+                        action_flag = '2'
+                        pre_dict = object_to_dict(exist_experiment)
+                        experiment.id = exist_experiment.id
+                    experiment.save()
+                    log_addition(request.user, 'experiment', 'experiment', experiment.id, action_flag, object_to_dict(experiment), pre_dict)
+                response['response'] = True
+                response['messages'].append('已成功新增/更新資料')
+            else:
+                response['messages'].extend(errors)
+        return JsonResponse(response)
+    return AddMultipleView
 
 @login_required
 @permission_required('experiment.view_experiment', raise_exception=True)
