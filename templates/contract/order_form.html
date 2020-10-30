@@ -7,7 +7,7 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>新增訂單</h3>
+                <h3>新增訂單<a class="btn btn-info" type="button" href="{{ url('contract:order-list') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
                 {% if messages %}

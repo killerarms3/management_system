@@ -18,7 +18,7 @@ from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, 
                     ContractCreateForm, ContractUpdateForm, ReceiptUpdateForm, SpecifyReceiptCreateForm, SpecifyOrderCreateForm,
                     SpecifyBoxCreateForm, ReceiptCreateForm, MultipleBoxCreateForm, MultipleSerialNumberCreateForm)
 from django.urls import reverse_lazy, reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 
 # customize class
 # 繼承CreateView並自定義form_valid
@@ -89,9 +89,6 @@ class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     def post(self, request, *args, **kwargs):
         contract_upload_file(request, self.kwargs['pk'])
         return super().post(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        return super().form_valid(form)
 
     # 傳入Order與Receipt給template並固定contract
     def get_context_data(self, **kwargs):
@@ -548,8 +545,7 @@ def BoxUpdateView(request, pk):
     if request.method == 'POST':
         form = BoxUpdateForm(request.POST)
         if form.is_valid():
-            pre_dict = object_to_dict(box) # history
-            box.serial_number = form.cleaned_data['serial_number']
+            pre_dict = object_to_dict(box) # history            
             box.plan = form.cleaned_data['plan']
             box.order = form.cleaned_data['order']
             box.tracing_number = form.cleaned_data['tracing_number']
@@ -925,3 +921,27 @@ def contract_upload_file(request, pk):
         upload_file.object_id = pk
         upload_file.file_upload = file
         upload_file.save()
+
+@login_required
+def update_element(reuqest, model, pk):
+    if model == 'box':
+        app = 'contract'
+        try:
+            Model = apps.get_model(app, model)
+            id_model = apps.get_model(app, 'order')
+            order = id_model.objects.get(pk=pk)
+            objects = [[obj.id, obj.get_absolute_url(), str(obj)] for obj in Model.objects.filter(order=order)]
+        except LookupError:
+            objects = []
+    elif model == 'experiment':
+        app = 'experiment'
+        try:
+            Model = apps.get_model(app, model)
+            id_model = apps.get_model('contract', 'order')
+            Box = apps.get_model('contract', 'box')
+            order = id_model.objects.get(pk=pk)
+            box_list = Box.objects.filter(order=order)
+            objects = [[obj.id, obj.get_absolute_url(), str(obj.box)] for obj in Model.objects.filter(box__in=box_list)]
+        except LookupError:
+            objects = []
+    return JsonResponse({'objects': objects})

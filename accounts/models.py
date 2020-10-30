@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 class Organization(models.Model):
     name = models.CharField(max_length = 50)
     department = models.CharField(max_length = 50)
+    contact_person = models.ManyToManyField(User)
     is_active = models.BooleanField(default = True)
 
     def __str__(self):
