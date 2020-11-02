@@ -936,12 +936,22 @@ def update_element(reuqest, model, pk):
     elif model == 'experiment':
         app = 'experiment'
         try:
+            distinct = []
+            obj_distinct_list = []
             Model = apps.get_model(app, model)
             id_model = apps.get_model('contract', 'order')
             Box = apps.get_model('contract', 'box')
             order = id_model.objects.get(pk=pk)
-            box_list = Box.objects.filter(order=order)
-            objects = [[obj.id, obj.get_absolute_url(), str(obj.box)] for obj in Model.objects.filter(box__in=box_list)]
+            box = Box.objects.filter(order=order)
+            obj_list = Model.objects.filter(box__in=box)
+            for obj_distinct in obj_list:
+                if obj_distinct.box.serial_number in distinct:
+                    continue
+                else:
+                    obj_distinct_list.append(obj_distinct)
+                    distinct.append(obj_distinct.box.serial_number)
+            print(obj_distinct_list)
+            objects = [[obj.id, obj.get_absolute_url(), str(obj.box)] for obj in obj_distinct_list]
         except LookupError:
             objects = []
     return JsonResponse({'objects': objects})

@@ -111,8 +111,7 @@
         $.ajax({
             type: 'GET',
             url: '/contract/update_element/' + Obj+'/'+id,
-            success: function(data) {
-                alert('123')
+            success: function(data) {                             
                 var str = '';
                 var list = new Array()
                 for (object of data.objects) {
