@@ -87,19 +87,14 @@ def add_data(request, model):
 @login_required
 @csrf_protect
 def change_data(request, model, id):
-    try:
-        contenttype = ContentType.objects.get(app_label='project', model=model)
-    except ContentType.DoesNotExist:
-        return HttpResponseRedirect('/project/view_project')
     if not request.user.has_perm('project.add_' + model):
         return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
-    FormClass = GetDataCreateForm(ProjectModel)
+    FormClass = GetDataCreateForm(ProjectModel, False)
     data = ProjectModel.objects.get(id=id)
-    form = FormClass(instance=data)
-    form.fields['box'].widget.attrs['disabled'] = True
+    form = FormClass(instance=data, auto_id='%s')
     if request.method == 'POST':
-        form = FormClass(request.POST)
+        form = FormClass(request.POST, auto_id='%s')
         if form.is_valid():
             pre_dict = object_to_dict(data)
             data.__dict__.update(**form.cleaned_data)
@@ -112,6 +107,7 @@ def change_data(request, model, id):
             for key in form.errors:
                 for error in form.errors[key]:
                     messages.error(request, '%s: %s' % (key, error))
+    form.fields['box'].widget.attrs['disabled'] = True
     return render(request, 'project/change_data.html', locals())
 
 @login_required
@@ -141,22 +137,18 @@ def view_specific_data(request, model, serial_number):
 
 @login_required
 def add_multiple(request, model):
-    # check if model is available
-    try:
-        contenttype = ContentType.objects.get(app_label='project', model=model)
-    except ContentType.DoesNotExist:
-        return HttpResponseRedirect('/project/view_project')
     if not request.user.has_perm('project.add_' + model):
         return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
-    FormClass = GetDataCreateForm(ProjectModel)
-    form = FormClass(instance=ProjectModel())
-    field_names, colHeaders, columns = utils.GetHandsontableColumns(form)
-    # first row is box
-    columns[0]['source'] = list(ProjectBox(model, exclude_exist=False).values_list('serial_number', flat=True))
+    FormClass = GetDataCreateForm(ProjectModel, False)
+    form = FormClass(auto_id='%s', instance=ProjectModel())
+    # update box options (exclude false)
+    AddMultiple = utils.AddMultiple(request=request, form=form)
+    AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆資料', view_url=reverse('project:view_project_table', args=[model]), add_multiple_url=reverse('project:add_multiple', args=[model]))
     if request.method == 'POST':
         response = {'response': False, 'messages': list()}
         if request.POST.get('table_content'):
+            label_dict = utils.getlabels('project', model)
             contents = json.loads(request.POST.get('table_content'), parse_float=Decimal)
             data_list = list()
             errors = list()
@@ -165,7 +157,7 @@ def add_multiple(request, model):
                     # check if all elements of the content is None
                     continue
                 else:
-                    content_dict = dict(zip(field_names, content))
+                    content_dict = dict(zip(AddMultiple.field_names, [None if not cont else cont for cont in content]))
                     try:
                         box = Box.objects.get(serial_number=content_dict['box'])
                         data = ProjectModel()
@@ -175,10 +167,10 @@ def add_multiple(request, model):
                             data.full_clean()
                         except ValidationError as err:
                             for key in err.message_dict:
-                                errors.append('%s: %s (第%d行)' % (key, ';'.join(err.message_dict[key]), idx+1))
+                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
                         data_list.append(data)
                     except Box.DoesNotExist:
-                        errors.append('box: 此欄位必填 (第%d行)' % (idx+1))
+                        errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['box'], idx+1))
             if not errors:
                 # 全部對才存
                 for data in data_list:
@@ -197,4 +189,4 @@ def add_multiple(request, model):
             else:
                 response['messages'].extend(errors)
         return JsonResponse(response)
-    return render(request, 'project/add_multiple.html', locals())
+    return AddMultipleView

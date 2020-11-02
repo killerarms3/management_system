@@ -21,9 +21,9 @@ def ProjectBox(ModelName, exclude_exist=True):
         boxes = Box.objects.filter(plan_id__in=list(plans))
     return boxes
 
-def GetDataCreateForm(Model):
+def GetDataCreateForm(Model, exclude_exist=True):
     class DataCreateForm(forms.ModelForm):
-        box = forms.ModelChoiceField(queryset=ProjectBox(Model.__name__), required=True)
+        box = forms.ModelChoiceField(label='採樣盒', queryset=ProjectBox(Model.__name__, exclude_exist), required=True)
         def __init__(self, *args, **kwargs):
             super(DataCreateForm, self).__init__(*args, **kwargs)
             for visible in self.visible_fields():
