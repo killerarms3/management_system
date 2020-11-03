@@ -21,9 +21,9 @@
                 {% endif %}
                 <table id="box_table" class="display" style="width:100%">
                     <thead>
-                        <tr>
-                            <th></th>
-                            <th></th>
+                        <tr>                            
+                            <th></th>                            
+                            <th></th>                            
                             <th>採樣盒流水號</th>
                             <th>訂單</th>
                             <th>方案</th>
@@ -41,8 +41,6 @@
                         <tr>
                         {% if perms.contract.change_box %}
                             <td><a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a></td>
-                        {% else %}
-                            <td></td>
                         {% endif %}
                         {% if perms.contract.delete_box %}
                             <td><a href="{{ url('contract:box_delete', args=[box.id]) }}" target="popup" onclick="window.open('{{ url('contract:box_delete', args=[box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>

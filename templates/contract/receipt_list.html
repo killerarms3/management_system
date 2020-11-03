@@ -9,7 +9,7 @@
         <div class="card-body">
                 <h3>發票清單
                 {% if perms.contract.add_receipt %}
-                    (<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                    (<a href="{{ url('contract:receipt_create') }}">新增</a>)
                 {% endif %}
                 </h3>
                 {% if messages %}
