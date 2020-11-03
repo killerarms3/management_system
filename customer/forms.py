@@ -2,7 +2,7 @@ from django import forms
 from django.forms import widgets
 from django.forms import ModelChoiceField
 from language.models import Code
-from customer.models import Organization, Customer, Customer_Organization, Title, Job, Customer_Type, Relationship
+from customer.models import Organization, Customer, Title, Job, Customer_Type, Relationship
 from django.apps import apps
 import datetime
 from lib import utils

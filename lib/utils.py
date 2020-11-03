@@ -5,6 +5,7 @@ from django.db import connection
 from django import forms
 from language.models import Code
 import datetime
+from django.shortcuts import render
 
 def getlabels(AppName, ModelName):
     field_tags = dict()
@@ -43,7 +44,7 @@ def GetHandsontableColumns(form):
     columns = list()
     field_names = list()
     for visible in form.visible_fields():
-        colHeaders.append(visible.label)
+        colHeaders.append('* ' + visible.label if visible.field.required else visible.label)
         field_names.append(visible.name)
         column = {
             'data': visible.label,
@@ -63,3 +64,15 @@ def GetHandsontableColumns(form):
             column['type'] = 'text'
         columns.append(column)
     return field_names, colHeaders, columns
+
+class AddMultiple():
+    def __init__(self, request, form):
+        self.request = request
+        self.form = form
+        self.field_names = None
+
+    def AddMultipleView(self, header, view_url, add_multiple_url):
+        field_names, colHeaders, columns = GetHandsontableColumns(self.form)
+        self.field_names = field_names
+        return render(self.request, 'add_multiple.html', locals())
+

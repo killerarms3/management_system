@@ -92,3 +92,7 @@ urlpatterns += [
     path('upload/image/<int:pk>', views.Upload_image, name = 'upload_image'),
     path('upload/file/<int:pk>', views.Upload_file, name = 'upload_file'),
 ]
+
+urlpatterns += [
+    path('update_element/<model>/<int:pk>', views.update_element, name='update_element'),
+]

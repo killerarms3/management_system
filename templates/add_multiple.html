@@ -8,8 +8,8 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增多筆資料<a class="btn btn-info" type="button" href="{{ url('project:view_project_table', args=[model]) }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
-            <form method="POST" action="{{ url('project:add_multiple', args=[model]) }}" enctype="multipart/form-data">{{ csrf_input }}
+            <h3 class="custom_text">{{ header }}<a class="btn btn-info" type="button" href="{{ view_url }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
+            <form method="POST" action="{{ add_multiple_url }}" enctype="multipart/form-data">{{ csrf_input }}
                 <ul id="errors" class="fa-ul" style="margin-left: 0;">
                     {% if messages %}
                     {% for message in messages %}
@@ -43,6 +43,8 @@
         allowInsertColumn: false,
         allowRemoveColumn: false,
         startRows: 15,
+        width: '100%',
+        height: 320,
         contextMenu: [
             'copy',
             'cut',
@@ -61,7 +63,7 @@
         $.ajax({
             type: 'POST',
             // dataType: 'json',
-            url: "{{ url('project:add_multiple', args=[model]) }}",
+            url: "{{ add_multiple_url }}",
             data: {
                 'csrfmiddlewaretoken': csrftoken,
                 'table_content': JSON.stringify(hot.getData()),
@@ -69,7 +71,7 @@
             success: function(data) {
                 if (data['response']) {
                     alert('已成功新增/更新資料');
-                    window.location.replace("{{ url('project:view_project_table', args=[model]) }}");
+                    window.location.replace("{{ view_url }}");
                 } else {
                     $('#errors').empty();
                     var ObjRef = document.getElementById('errors')

@@ -55,6 +55,8 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+    document.getElementById("return_date").setAttribute("max", today);
+    document.getElementById("sample_destroyed_date").setAttribute("max", today);
 </script>
 <script>
     $('form').submit(function () {

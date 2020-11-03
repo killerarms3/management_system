@@ -7,7 +7,7 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>編輯 Box: {{ box }}</h3>
+                <h3>編輯 Box: {{ box }}<a class="btn btn-info" type="button" href="{{ url('contract:box-list') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
                 {% if messages %}
@@ -25,7 +25,7 @@
                                         <th>{{ fields.label }}</th>
                                         <td>{{ fields }}</td>
                                     {% else %}
-                                        <th>Add into Failed Box</th>
+                                        <th>失敗註記</th>
                                         <td><a href="{{ url('contract:add_specify_failed', args=[box.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_failed', args=[box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a></td>
                                     {% endif %}
                                 {% elif fields.label == '受測者' %}
