@@ -9,14 +9,14 @@
             <div class="card-body">
                 {% if form.errors %}
                     <p>帳號或密碼輸入錯誤，請重試。</p>
-                {% endif %}            
+                {% endif %}
                 {% if next %}
                     {% if user.is_authenticated %}
                         <p>您的帳戶無權訪問此頁面。 要繼續，請使用具有訪問權限的帳戶登錄。</p>
                     {% else %}
                         <p>請登錄以查看此頁面。</p>
                     {% endif %}
-                {% endif %}            
+                {% endif %}
                 <form method="post" action="{{ url('login') }}">
                     {{ csrf_input }}
                     <table>
@@ -34,10 +34,10 @@
                         </tr>
                     </table>
                     <input type="submit" value="登入" />
-                    <input type="hidden" name="next" value="{{ next }}" />        
+                    <input type="hidden" name="next" value="{{ next }}" />
                 </form>
             </div>
         </div>
-    </div> 
+    </div>
     {# Assumes you setup the password_reset view in your URLconf #}
 {% endblock %}

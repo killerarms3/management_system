@@ -109,7 +109,7 @@
                                                                     <td>{{ model_dict[key].objects.get(pk=dict[history.id][action_flag[history.action_flag]]['previous'][key]) }}</td>
                                                                 {% else %}
                                                                     <td>{{ key+' '+dict[history.id][action_flag[history.action_flag]]['previous'][key] }}</td>
-                                                                {% endif %}    
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             <!-- 不是foreignKey的attribute -->

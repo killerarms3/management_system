@@ -23,11 +23,11 @@
                             {% endif %}
                         {% endfor %}
                     </ul>
-                {% endif %}                
+                {% endif %}
                 <form action="" method="POST">
                 {{ csrf_input }}
                     <table class="table table-hover">
-                        {% for fields in form %}                            
+                        {% for fields in form %}
                             <tr>
                                 <th>{{fields.label}}</th>
                                 <td>{{fields}}</td>
@@ -41,3 +41,11 @@
         </div>
     </div>
 {% endblock  %}
+{% block js %}
+<script>
+    $('form').submit(function(){
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
+    });
+</script>
+{% endblock js %}

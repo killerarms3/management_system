@@ -76,7 +76,7 @@ class ContractCreate(PermissionRequiredMixin, CreateView_add_log):
 
     def post(self, request, *args, **kwargs):
         if Contract.objects.filter(contract_name=request.POST['contract_name']):
-            messages.error(request, '合約代號重複!')        
+            messages.error(request, '合約代號重複!')
         return super().post(request, *args, **kwargs)
 
 class ContractUpdateView(PermissionRequiredMixin, UpdateView_add_log):
@@ -184,8 +184,8 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
     def post(self, request):
         form = self.form_class(request.POST)
         order = Order()
-        if form.is_valid():            
-            Order2 = apps.get_model('contract', 'order')            
+        if form.is_valid():
+            Order2 = apps.get_model('contract', 'order')
             contract = form.cleaned_data['contract']
             try:
                 num = Order2.objects.filter(contract=contract).count()

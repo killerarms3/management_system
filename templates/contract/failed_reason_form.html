@@ -10,9 +10,9 @@
                 <h3>新增失敗原因</h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
-                    <table class="table table-hover">                        
+                    <table class="table table-hover">
                         {% for fields in form %}
-                            <tr>                                
+                            <tr>
                                 <th>{{ fields.label }}</th>
                                 <td>{{ fields }}</td>
                             </tr>

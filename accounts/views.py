@@ -42,7 +42,7 @@ def register(request):
 		form = RegisterForm(request.POST)
 		userprofile = apps.get_model('accounts', 'UserProfile')
 		if userprofile.objects.filter(nick_name = request.POST['nick_name']):
-			messages.error(request, '一個相同的暱稱已存在。')			
+			messages.error(request, '一個相同的暱稱已存在。')
 			context = {'form': form, 'messages': messages}
 			return render(request, 'registration/register.html', context)
 		if form.is_valid():

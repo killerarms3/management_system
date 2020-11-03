@@ -16,11 +16,11 @@ class Contract(models.Model):
     expected_quantity = models.PositiveIntegerField(blank=False, null=True, verbose_name='* 預期數量')
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
 
-    def __str__(self):  
+    def __str__(self):
         return self.contract_name
 
     def get_absolute_url(self):
-        return reverse("contract-detail", kwargs={"pk": self.pk})    
+        return reverse("contract-detail", kwargs={"pk": self.pk})
 
 class Payment_method(models.Model):
     name = models.CharField(max_length=32, unique=True, error_messages={'unique':"該方法已經存在",}, verbose_name='名稱') # 設為unique不希望名稱重複
@@ -34,7 +34,7 @@ class Order(models.Model):
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, verbose_name='* 合約')
     plan = models.ManyToManyField(Plan, verbose_name='* 方案') # 一個order可以擁有多個plan，一個plan也可以屬於多個order
     memo = models.TextField(blank=True, null=True, verbose_name='備註')
-    
+
     def __str__(self):
         return self.order_name
 

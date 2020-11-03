@@ -12,3 +12,6 @@ urlpatterns=[
     path('change_plan/<int:id>/', product_views.change_plan, name='change_plan'),
     path('view_plan/<int:id>', product_views.view_specific_plan, name='view_specific_plan')
     ]
+
+
+

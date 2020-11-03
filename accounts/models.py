@@ -11,7 +11,7 @@ class Organization(models.Model):
     is_active = models.BooleanField(default = True)
 
     def __str__(self):
-        return self.name + ', ' + self.department
+        return self.name + '-' + self.department
 
 class Title(models.Model):
     name = models.CharField(max_length = 10)
@@ -22,7 +22,7 @@ class Title(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null = True)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True)
-    title = models.ForeignKey(Title, on_delete=models.SET_NULL, null=True)    
+    title = models.ForeignKey(Title, on_delete=models.SET_NULL, null=True)
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)

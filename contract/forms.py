@@ -199,7 +199,7 @@ class SpecifyExaminerCreateForm(forms.ModelForm):
         model = Examiner
         fields = ('customer',) # 因指定了box所以不顯示
 
-class BoxUpdateForm(forms.Form):    
+class BoxUpdateForm(forms.Form):
     order = forms.ModelChoiceField(label='訂單', queryset=Order.objects.all(), required=True)
     plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
     failed_reason = forms.ModelChoiceField(label='失敗原因', queryset=Failed_reason.objects.all(), required=False)

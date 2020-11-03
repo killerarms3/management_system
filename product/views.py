@@ -41,7 +41,7 @@ def add_product(request):
 @permission_required('product.view_product', raise_exception=True)
 @csrf_protect
 def view_product(request):
-    products = Product.objects.all()
+    products = Product.objects.all().order_by('-pk')
     for product in products:
         has_project = Project.objects.filter(product=product)
         if has_project:
@@ -114,7 +114,7 @@ def add_plan(request):
 @permission_required('product.view_plan', raise_exception=True)
 @csrf_protect
 def view_plan(request):
-    plans = Plan.objects.all()
+    plans = Plan.objects.all().order_by('-pk')
     return render(request, 'product/view_plan.html', locals())
 
 @login_required
@@ -152,5 +152,5 @@ def view_specific_plan(request, id):
     plan = Plan.objects.get(id=id)
     field_names = [field.name for field in Plan._meta.fields if field.name != 'id']
     field_tags = utils.getlabels('product', 'plan')
-    boxes = Box.objects.filter(plan=plan)
+    boxes = Box.objects.filter(plan=plan).order_by('-pk')
     return render(request, 'product/view_specific_plan.html', locals())
