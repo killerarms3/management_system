@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="custom_text">{{ header }}<a class="btn btn-info" type="button" href="{{ view_url }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
+            <form method="POST" action="{{ add_multiple_url }}" enctype="multipart/form-data">{{ csrf_input }}
+                <ul id="errors" class="fa-ul" style="margin-left: 0;">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                    {% endfor %}
+                    {% endif %}
+                </ul>
+                <div id="table" style="width:100%"></div>
+                <br>
+                <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+<script src="{{ static('js/get_cookie.js') }}"></script>
+<script>
+    var container = document.querySelector('#table');
+    var hot = new Handsontable(container, {
+        columns: {{ columns|safe }},
+        rowHeaders: true,
+        colHeaders: {{ colHeaders|safe }},
+        stretchH: 'all',
+        autoRowSize: true,
+        filters: true,
+        dropdownMenu: true,
+        allowInsertRow: true,
+        allowInsertColumn: false,
+        allowRemoveColumn: false,
+        startRows: 15,
+        width: '100%',
+        height: 320,
+        contextMenu: [
+            'copy',
+            'cut',
+            '---------',
+            'undo',
+            'redo',
+            '---------',
+            'row_above',
+            'row_below'
+        ],
+        licenseKey: 'non-commercial-and-evaluation'
+    });
+
+    var csrftoken = getCookie('csrftoken');
+    $('#submit_form').click(function (event) {
+        $.ajax({
+            type: 'POST',
+            // dataType: 'json',
+            url: "{{ add_multiple_url }}",
+            data: {
+                'csrfmiddlewaretoken': csrftoken,
+                'table_content': JSON.stringify(hot.getData()),
+            },
+            success: function(data) {
+                if (data['response']) {
+                    alert('已成功新增/更新資料');
+                    window.location.replace("{{ view_url }}");
+                } else {
+                    $('#errors').empty();
+                    var ObjRef = document.getElementById('errors')
+                    for (idx in data['messages']) {
+                        var entry = document.createElement('li');
+                        var icon = document.createElement('i');
+                        icon.appendChild(document.createTextNode(' '+data['messages'][idx]));
+                        icon.className = 'fas fa-times';
+                        icon.style.color = 'red';
+                        entry.appendChild(icon);
+                        ObjRef.appendChild(entry);
+                    }
+                }
+                $('#submit_form').val('送出')
+                    .prop('disabled',false);
+            },
+        });
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
+    });
+</script>
+{% endblock js %}

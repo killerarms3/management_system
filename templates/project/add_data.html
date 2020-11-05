@@ -8,12 +8,12 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">新增資料</h3>
+            <h3 class="custom_text">新增資料(<a href="{{ url('project:add_multiple', args=[model]) }}">新增多筆資料</a>)<a class="btn btn-info" type="button" href="{{ url('project:view_project_table', args=[model]) }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
             <form method="POST" action="{{ url('project:add_data', args=[model]) }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
-                <ul class="messages">
+                <ul class="fa-ul" style="margin-left: 0;">
                     {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                     {% endfor %}
                 </ul>
                 {% endif %}
@@ -21,7 +21,7 @@
                     <tbody>
                         {% for field in form %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}</th>
                             <td>{{ field }}</td>
                         </tr>
                         {% endfor %}
@@ -41,6 +41,10 @@
     });
     $('input[type="text"]').change(function() {
         this.value = $.trim(this.value);
+    });
+    $('form').submit(function(){
+        $('#submit_form').val('處理中 ...')
+        .attr('disabled','disabled');
     });
 </script>
 

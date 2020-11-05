@@ -7,50 +7,61 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>編輯 {{ order }}</h3>
+                <h3>編輯 {{ order }}<a class="btn btn-info" type="button" href="{{ url('contract:order-list') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
                 <form action="" method="POST">
                 {{ csrf_input }}
-                    <table class="table table-hover">
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                        <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                    <table class="table table-hover" style="table-layout:fixed;">
                         {% for fields in form %}
                             {% if fields.label == '方案' %}
                                 <tr>
-                                    <th>{{ fields.label }}</th>                              
-                                    <td>{{ fields }}</td>
+                                    <th width="15%">{{ fields.label }}</th>
+                                    <td colspan="2">{{ fields }}</td>
                                 </tr>
                                 <tr>
-                                    <th>採樣盒</th>
-                                    <td>
+                                    <th width="15%">採樣盒&nbsp;<button type="button" class="btn btn-link" onclick="RefreshTD('box', {{ order.id }})"><i class="fas fa-redo"></i></button></th>
+                                    <td id="td_box" style="word-wrap:break-word;">
                                     {% for box in box_list %}
                                         <a href="{{ box.get_absolute_url() }}">{{ box }}</a>{% if not loop.last %};{% endif %}
                                     {% endfor %}
+                                    </td>
+                                    <td width="15%">
                                     {% if perms.contract.add_box %}
-                                    &nbsp;<a href="{{ url('contract:add_specify_box', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_box', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
+                                        <a href="{{ url('contract:add_specify_box', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_box', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus" style="float: right;"></i></a>
                                     {% endif %}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>紀錄</th>
-                                    <td>
+                                    <th width="15%">紀錄&nbsp;<button type="button" class="btn btn-link" onclick="RefreshTD('experiment', {{ order.id }})"><i class="fas fa-redo"></i></button></th>
+                                    <td id="td_experiment" style="word-wrap:break-word;">
                                         {% for serial_number in experiment_list %}
                                         <a href="{{ url('experiment:view_specific_experiment', args=[serial_number]) }}">{{ serial_number }}</a>{% if not loop.last %};{% endif %}
                                         {% endfor %}
-                                        {% if perms.experiment.add_experiment %}
-                                        &nbsp;<a href="{{ url('experiment:add_order_experiments', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('experiment:add_order_experiments', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus"></i></a>
-                                        {% endif %}
+                                    </td>
+                                    <td width="15%">
+                                    {% if perms.experiment.add_experiment %}
+                                        <a href="{{ url('experiment:add_order_experiments', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('experiment:add_order_experiments', args=[order.id]) }}', 'popup', 'width=700', height='800'); return false"><i class="fas fa-plus" style="float: right;"></i></a>
+                                    {% endif %}
                                     </td>
                                 </tr>
                             {% elif fields.label == '合約' %}
                                 <tr>
-                                    <th>{{ fields.label }}</th>
-                                    <td>{{ fields }}</td>
+                                    <th width="15%">{{ fields.label }}</th>
+                                    <td colspan="2">{{ fields }}</td>
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <th>{{ fields.label }}</th>
-                                    <td>{{ fields }}</td>
+                                    <th width="15%">{{ fields.label }}</th>
+                                    <td colspan="2">{{ fields }}</td>
                                 </tr>
                             {% endif %}
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>
@@ -79,13 +90,38 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+    document.getElementById("order_date").setAttribute("max", today);
 </script>
 <script>
     function myFunction(){
 	<!-- 將 select 的值在印出 -->
     var objS = document.getElementById("id_plan");
     var grade = objS.options[objS.selectedIndex].text;
-    alert(grade);
+    }
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
+</script>
+<script>   
+    function RefreshTD(Obj, id){               
+        $.ajax({
+            type: 'GET',
+            url: '/contract/update_element/' + Obj+'/'+id,
+            success: function(data) {                             
+                var str = '';
+                var list = new Array()
+                for (object of data.objects) {
+                    str = '<a href="'+object[1]+'">'+object[2]+'</a>'
+                    list.push(str)
+                }
+                var result = list.join(';')
+                $('#td_'+Obj).html(result);
+            }
+        });
     }
 </script>
 {% endblock js %}

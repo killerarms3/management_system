@@ -9,9 +9,16 @@
         <div class="card-body">
                 <h3>發票清單
                 {% if perms.contract.add_receipt %}
-                    (<a href="{{ url('contract:receipt_create') }}" target="popup" onclick="window.open('{{ url('contract:receipt_create') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                    (<a href="{{ url('contract:receipt_create') }}">新增</a>)
                 {% endif %}
                 </h3>
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                        <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                 <table id="receipt_table" class="display" style="width:100%">
                     <thead>
                         <tr>

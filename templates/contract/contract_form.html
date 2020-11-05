@@ -7,16 +7,27 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>新增合約</h3>
+                <h3>新增合約<a class="btn btn-info" type="button" href="{{ url('contract:view_contract') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
+                <ul class="fa-ul" style="margin-left: 0;">
+                    <li><i class="fas fa-info-circle">【預期數量】填入此合約預期的採樣盒數量</i></li>
+                </ul>
                 <form action="" method="POST">
                 {{ csrf_input }}
+                {% if messages %}
+                    <ul class="fa-ul" style="margin-left: 0;">
+                        {% for message in messages %}
+                            <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                     <table class="table table-hover">
                         {% for fields in form %}
                             <tr>
-                            {% if fields.label == '機構/單位' %}
+                            {% if fields.label == '* 機構/單位' %}
                                 <th>{{ fields.label }}
-                                {% if perms.customer.can_add_organization %}
-                                (<a href="{{ url('contract:add_organization') }}">新增</a>)
+                                {% if perms.customer.add_organization %}
+                                (<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}', 'popup', 'width=800', height='600'); return false">新增</a>)
+                                <button type="button" class="btn btn-link" onclick="RefreshOptions('organization')"><i class="fas fa-redo"></i></button>
                                 {% endif %}
                                 </th>
                                 <td>{{ fields }}</td>
@@ -54,5 +65,37 @@
         month="0"+month;
     }
     today=year+"-"+month+"-"+day;
+    document.getElementById("contract_date").setAttribute("max", today);
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
+    });
+</script>
+<script>
+    $('input[type="text"]').change(function() {
+        this.value = $.trim(this.value);
+    });
+    function RefreshOptions(ObjID) {
+        var selectRef = document.getElementById('id_' + ObjID);
+        $.ajax({
+            type: 'GET',
+            url: '/customer/update_options/' + ObjID,
+            success: function(data) {
+                $('#id_'+ObjID+' option').remove();
+                if (!selectRef.multiple) {
+                    var newOption = new Option('---------', '');
+                    selectRef.append(newOption);
+                }
+                for (object of data.objects) {
+                    var newOption = new Option(object[1], object[0]);
+                    selectRef.append(newOption);
+                }
+                $('#id_'+ObjID).multipleSelect('refresh');
+            }
+        });
+    }
 </script>
 {% endblock js %}

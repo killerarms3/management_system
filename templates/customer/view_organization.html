@@ -8,15 +8,14 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">機構名單(<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}','popup','width=600, height=600'); return false;">新增機構</a>)</h3>
+            <h3 class="custom_text">機構名單{% if perms.customer.add_organization %}(<a href="{{ url('customer:add_organization') }}">新增機構</a>){% endif %}</h3>
             {% if messages %}
-            <ul class="messages">
+            <ul class="fa-ul" style="margin-left: 0;">
                 {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                 {% endfor %}
             </ul>
             {% endif %}
-            <p>{{ organizations.objects.get(id=1) }}</p>
             <table id="organization_table" class="display" style="width:100%">
                 <thead>
                     <tr>
@@ -28,7 +27,7 @@
                 <tbody>
                     {% for organization in organizations %}
                     <tr>
-                        <td><a href="{{ url('customer:change_organization', args=[organization.id]) }}"><i class="fas fa-edit"></i></a></td>
+                        <td>{% if perms.customer.change_organization %}<a href="{{ url('customer:change_organization', args=[organization.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
                         <td>{{ organization.name }}</td>
                         <td>{{ organization.department }}</td>
                     </tr>
@@ -72,8 +71,6 @@
 			orderCellsTop: true,
 		});
 	});
-
-
 </script>
 
 {% endblock js %}

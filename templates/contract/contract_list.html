@@ -11,14 +11,21 @@
             {% if perms.contract.add_contract %}
                 (<a href="{{ url('contract:contract_create') }}">新增</a>)
             {% endif %}
-            </h3>            
+            </h3>
+            {% if messages %}
+                <ul class="fa-ul" style="margin-left: 0;">
+                    {% for message in messages %}
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
                 <table id="contract_table" class="display" style="width:100%">
                     <thead>
                         <tr>
+                            <th></th>                            
+                            <th></th>                            
                             <th></th>
-                            <th></th>
-                            <th></th>
-                            <th>ID</th>
+                            <th>合約名稱/代號</th>
                             <th>客戶</th>
                             <th>負責人</th>
                             <th>日期</th>
@@ -45,10 +52,10 @@
                                 <td><a href="{{ dict[contract.id].url }}"><i class="fas fa-file-pdf"></i></a></td>
                             {% else %}
                                 <td><a href="{{ url('contract:upload_file', args=[contract.id]) }}"><i class="fas fa-upload"></i></a></td>
-                            {% endif %}                            
-                            <td>Contract {{ contract.id }}</td>
+                            {% endif %}
+                            <td> {{ contract.contract_name }}</td>
                             <td>{{ contract.customer }}</td>
-                            <td>{{ contract.user }}</td>                            
+                            <td>{{ contract.user }}</td>
                             <td>{{ contract.contract_date }}</td>
                             {% if contract.organization.all() %}
                                 <td>
@@ -63,8 +70,8 @@
                             {% if contract.order_set.all() %}
                                 <td>
                                 {% for order in contract.order_set.all() %}
-                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order }}</a>
-                                    {% if not loop.last %};{% endif %}
+                                    <a href="{{ order.get_absolute_url() }}" target="popup" onclick="window.open('{{ order.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ order.get_order_name_exclude_contract_name() }}</a>
+                                    {% if not loop.last %}<br>{% endif %}
                                 {% endfor %}
                                 &nbsp;&nbsp;<a href="{{ url('contract:partial-order-list', args=[contract.id]) }}"><i class="fas fa-list"></i></a>
                                 </td>
@@ -83,13 +90,13 @@
                                 <td>None</td>
                             {% endif %}
                             <td>{{ contract.memo }}</td>
-                        </tr> 
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
                 <h4 class="custom_text">多筆查詢</h4>
                 <select id="multiquery"></select>
-                <textarea class="form-control" row="3" id="query"></textarea>            
+                <textarea class="form-control" row="3" id="query"></textarea>
         </div>
     </div>
 </div>

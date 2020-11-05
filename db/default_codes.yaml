@@ -1,0 +1,215 @@
+accounts:
+  Organization:
+    id: id
+    name: 名稱
+    department: 部門/單位
+    is_active: 有效
+  Title:
+    id: id
+    name: 職稱
+  Profile:
+    id: id
+    user: 使用者
+    organization: 機構
+    title: 職稱
+  UserProfile:
+    id: id
+    user: 使用者
+    nick_name: 暱稱
+    phone_number: 連絡電話
+    address: 住址
+    gender: 性別
+product:
+  Product:
+    id: id
+    name: 產品名稱
+    prefix: 產品代號
+    status: 狀態
+  Plan:
+    id: id
+    product: 產品
+    name: 方案名稱
+    price: 價格
+    status: 狀態
+    description: 說明
+  Project:
+    id: id
+    product: 產品
+    content_type: 產品大表
+project:
+  MicrobioRx:
+    id: id
+    box: 採樣盒
+    dna_concentration: DNA濃度
+    report_complete_date: 報告完成日
+    memo: 備註
+  Next_Generation_Sequencing:
+    id: id
+    box: 採樣盒
+    report_complete_date: 報告完成日
+    memo: 備註
+  GenoHealth:
+    id: id
+    box: 採樣盒
+    dna_concentration: DNA濃度
+    od_260_230: OD 260/230
+    od_260_280: OD 260/280
+    report_complete_date: 報告完成日
+    memo: 備註
+  Probiotics1:
+    id: id
+    box: 採樣盒
+    pathway: 篩選途徑
+    report_complete_date: 報告完成日
+    report_delivery_date: 報告寄出日
+    probiotics_delivery_date: 益生菌寄出日
+    memo: 備註
+  Probiotics2:
+    id: id
+    box: 採樣盒
+    dna_concentration: DNA濃度
+    report_complete_date: 報告完成日
+    report_delivery_date: 報告寄出日
+    probiotics_delivery_date: 益生菌寄出日
+    memo: 備註
+customer:
+  Title:
+    id: id
+    name: 職稱
+    is_other: 其他
+  Job:
+    id: id
+    name: 職業
+    is_other: 其他
+  Customer_Type:
+    id: id
+    name: 客戶類別
+  Customer:
+    id: id
+    last_name: 姓
+    first_name: 名
+    birth_date: 生日
+    title: 職稱
+    job: 職業
+    line_id: LINE ID
+    email: Email
+    tel: 市內電話
+    mobile: 手機電話
+    address: 通訊地址
+    memo: 備註
+    customer_type: 客戶類別
+  Relationship:
+    id: id
+    name: 關係
+  Customer_Introducer:
+    id: id
+    customer: 客戶
+    introducer: 推薦人
+    relationship: 關係
+  Feedback:
+    id: id
+    customer: 客戶
+    product: 產品
+    feedback: 回饋
+    feedback_date: 回饋日
+  Organization:
+    id: id
+    name: 機構名稱
+    department: 部門/單位
+    is_other: 其他
+  Customer_Organization:
+    id: id
+    customer: 客戶
+    organization: 機構
+contract:
+  Contract:
+    id: id
+    user: 負責人
+    contract_name: 合約名稱/代號
+    contract_date: 簽約日期
+    customer: 客戶
+    expected_quantity: 預期數量
+    memo: 備註
+  Payment_method:
+    id: id
+    name: 付款方式
+  Order:
+    id: id
+    order_date: 訂單日期
+    order_name: 訂單名稱/代號
+    contract: 合約
+    memo: 備註
+  Order_quantity:
+    id: id
+    order: 訂單
+    plan: 方案
+    quantity: 數量
+  Receipt:
+    id: id
+    contract: 合約
+    receipt_date: 開立發票日期
+    receipt_number: 發票號碼
+    receipt_amount: 發票金額
+    payment_date: 入帳日期
+    receipt_org: 單位
+    payment_method: 付款方式
+    receipt_content: 發票內容
+    memo: 備註
+  Failed_reason:
+    id: id
+    failed_reason: 失敗原因
+    memo: memo
+  Box:
+    id: id
+    serial_number: 採樣盒編號
+    order: 訂單
+    plan: 方案
+    tracing_number: 宅配單號
+  Failed:
+    id: id
+    box: 採樣盒
+    failed_reason: 失敗原因
+  Destroyed:
+    id: id
+    box: 採樣盒
+    is_sample_destroyed: 銷毀註記
+    sample_destroyed_date: 銷毀日期
+    return_date: DNA取回日期
+  Examiner:
+    id: id
+    box: 採樣盒
+    customer: 受測者
+  Upload_Image:
+    id: id
+    content_type: content_type
+    object_id: object_id
+    image: image
+  Upload_File:
+    id: id
+    content_type: content_type
+    object_id: object_id
+    file_upload: file_upload
+experiment:
+  Experiment:
+    id: id
+    box: 採樣盒
+    organization: 單位
+    receiving_date: 收到日
+    complete_date: 完成日
+    data_transfer_date: 移交日
+    transfer_organization: 移交單位
+language:
+  Code:
+    id: id
+    content_type: content_type
+    code: code
+    name: name
+history:
+  History:
+    id: id
+    user: user
+    content_type: content_type
+    object_id: object_id
+    action_flag: action_flag
+    change_message: change_message
+    date: date

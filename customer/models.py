@@ -2,54 +2,55 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from product.models import Product
 import datetime
-
+from lib.Validator import ValidateTelNumber, ValidateMobileNumber, ValidateDate
+from django.core.validators import validate_email
+from django.urls import reverse
 # Create your models here.
 
 class Title(models.Model):
     name = models.CharField(max_length=32)
     is_other = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name
+
 class Job(models.Model):
     name = models.CharField(max_length=32)
     is_other = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name
+
 class Customer_Type(models.Model):
     name = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.name
 
 class Customer(models.Model):
     last_name = models.CharField(max_length=32)
     first_name = models.CharField(max_length=32)
-    birth_date = models.DateField(blank=True, null=True)
-    title = models.ForeignKey(Title, on_delete='CASCADE')
-    job = models.ForeignKey(Job, on_delete='CASCADE')
+    birth_date = models.DateField(blank=True, null=True, validators=[ValidateDate])
+    title = models.ForeignKey(Title, on_delete='CASCADE', blank=True, null=True)
+    job = models.ForeignKey(Job, on_delete='CASCADE', blank=True, null=True)
     line_id = models.CharField(max_length=32, blank=True, null=True)
-    email = models.CharField(max_length=320, blank=True, null=True)
-    tel = models.CharField(max_length=32, blank=True, null=True)
-    mobile = models.CharField(max_length=32, blank=True, null=True)
-    address = models.CharField(max_length=320, blank=True, null=True)
+    email = models.CharField(max_length=320, blank=True, null=True, validators=[validate_email])
+    tel = models.CharField(max_length=32, blank=True, null=True, validators=[ValidateTelNumber])
+    mobile = models.CharField(max_length=32, blank=True, null=True, validators=[ValidateMobileNumber])
+    address = models.CharField(max_length=320)
     memo = models.TextField(blank=True, null=True)
     customer_type = models.ForeignKey(Customer_Type, on_delete='CASCADE')
 
     def __str__(self):
-        return self.first_name + ', ' + self.last_name
+        return self.last_name + self.first_name
 
     def clean(self):
         errors = list()
         # 若重複，則更新舊資料!?
         if not self.tel and not self.mobile:
-            errors.append({'phone_number': ['手機電話或市內電話只少要填一個']})
-        if self.birth_date:
-            try:
-                if isinstance(self.birth_date, datetime.date):
-                #     date = self.birth_date.strftime('%Y-%m-%d')
-                    self.birth_date = datetime.datetime(self.birth_date.year, self.birth_date.month, self.birth_date.day)
-                else:
-                    self.birth_date = datetime.datetime.strptime(self.birth_date, '%Y-%m-%d')
-                now = datetime.datetime.now()
-                if self.birth_date > now:
-                    errors.append({'birth_date': ['不接受未來日期']})
-            except ValueError:
-                errors.append({'birth_date': ['日期格式錯誤，只接受"YYYY-MM-DD']})
+            errors.extend([{'tel': ['手機電話或市內電話只少要填一個']}, {'mobile': ['手機電話或市內電話只少要填一個']}])
+        if not self.birth_date:
+            self.birth_date = None
         try:
             self.clean_fields()
         except ValidationError as err:
@@ -63,8 +64,25 @@ class Customer(models.Model):
                     error_dict[key].extend(error[key])
             raise ValidationError(error_dict)
 
+    def get_absolute_url(self):
+        return reverse('customer:view_specific_customer', args=[str(self.id)])
+
+    def get_name_and_org(self):
+        return self.last_name + self.first_name + ' ('+ self.title.name +')'
+
+class Relationship(models.Model):
+    name = models.CharField(max_length=32)
+
     def __str__(self):
-        return self.last_name + self.first_name
+        return self.name
+
+class Customer_Introducer(models.Model):
+    customer = models.ForeignKey(Customer, on_delete='CASCADE', related_name='customer')
+    introducer = models.ForeignKey(Customer, on_delete='CASCADE', related_name='introducer')
+    relationship = models.ForeignKey(Relationship, on_delete='CASCADE')
+
+    def __str__(self):
+        return self.introducer.last_name + self.introducer.first_name
 
 class Feedback(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
@@ -82,3 +100,4 @@ class Organization(models.Model):
 class Customer_Organization(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
     organization = models.ForeignKey(Organization, on_delete='CASCADE')
+

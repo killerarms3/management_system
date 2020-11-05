@@ -7,7 +7,18 @@ from customer.models import Customer, Organization
 from django.contrib.auth.models import User
 from django.apps import apps
 
+class CustomModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.get_name_and_org()
+
+class CustomUserModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        UserProfile = apps.get_model('accounts', 'UserProfile')
+        userprofile = UserProfile.objects.get(user=obj)
+        return userprofile.nick_name
+
 class ContractCreateForm(forms.ModelForm):
+    user = CustomUserModelChoiceField(label='* 負責人', queryset=User.objects.exclude(username='admin'), required=True)
     contract_date = forms.DateField(
         label='* 簽約日期',
         widget=forms.DateInput(
@@ -16,31 +27,35 @@ class ContractCreateForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date',
                 'id': 'contract_date',
+                'name': 'contract_date',
                 'min': '1820-01-01',
                 'max': '2100-01-01'
             }),
         required=True
         )
+    organization = forms.ModelMultipleChoiceField(label='* 機構/單位', queryset=Organization.objects.all(), required=False)
+    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
     class Meta:
         model = Contract
         fields = '__all__'
 
 class ContractUpdateForm(forms.ModelForm):
-    user = forms.ModelChoiceField(label='負責人', queryset=User.objects.all(), required=True)
+    user = CustomUserModelChoiceField(label='* 負責人', queryset=User.objects.exclude(username='admin'), required=True)
     contract_date = forms.DateField(
-        label='訂購日期',
-        widget=forms.DateInput(
+        label='* 簽約日期',
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
                 'id': 'contract_date',
+                'name': 'contract_date',
                 'min': '1820-01-01',
                 'max': '2100-01-01'
             }),
-        required=False
+        required=True
     )
-    customer = forms.ModelChoiceField(label='客戶', queryset=Customer.objects.all(), required=True)
-    organization = forms.ModelMultipleChoiceField(label='機構/單位', queryset=Organization.objects.all(), required=False)
+    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
+    organization = forms.ModelMultipleChoiceField(label='* 機構/單位', queryset=Organization.objects.all(), required=False)
     memo = forms.CharField(
         label='備註',
         # 定義memo textarea屬性
@@ -60,16 +75,17 @@ class ContractUpdateForm(forms.ModelForm):
 class OrderUpdateForm(forms.ModelForm):
     order_date = forms.DateField(
         label='訂單日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
                 'id': 'order_date',
+                'name': 'order_date',
                 'min': '1820-01-01',
                 'max': '2100-01-01'
             }
         ),
-        required=False
+        required=True
     )
     plan = forms.ModelMultipleChoiceField(
         label='方案',
@@ -106,7 +122,7 @@ class OrderCreateForm(OrderUpdateForm):
                 }))
     class Meta:
         model = Order
-        fields = '__all__'
+        exclude = ('order_name',)
 
 class SpecifyOrderCreateForm(OrderUpdateForm):
     class Meta:
@@ -118,7 +134,7 @@ class DestroyedUpdateForm(forms.ModelForm):
     is_sample_destroyed = forms.BooleanField(label='銷毀註記', help_text='Is destroyed or not', required=False) # 因其為布林值，required=False以表現其狀態
     sample_destroyed_date = forms.DateField(
         label='銷毀日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
@@ -130,7 +146,7 @@ class DestroyedUpdateForm(forms.ModelForm):
         )
     return_date = forms.DateField(
         label='DNA取回日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
@@ -184,14 +200,6 @@ class SpecifyExaminerCreateForm(forms.ModelForm):
         fields = ('customer',) # 因指定了box所以不顯示
 
 class BoxUpdateForm(forms.Form):
-    serial_number = forms.CharField(
-        label='流水號',
-        widget=forms.TextInput(
-            attrs={
-                'class':'form-control',
-            }),
-        required = True
-        )
     order = forms.ModelChoiceField(label='訂單', queryset=Order.objects.all(), required=True)
     plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
     failed_reason = forms.ModelChoiceField(label='失敗原因', queryset=Failed_reason.objects.all(), required=False)
@@ -199,7 +207,7 @@ class BoxUpdateForm(forms.Form):
     is_sample_destroyed = forms.BooleanField(label='銷毀註記', help_text='Is destroyed or not', required=False)
     sample_destroyed_date = forms.DateField(
         label='銷毀日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
@@ -211,7 +219,7 @@ class BoxUpdateForm(forms.Form):
         )
     return_date = forms.DateField(
         label='DNA取回日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
@@ -230,7 +238,6 @@ class BoxUpdateForm(forms.Form):
         required = True
     )
     fields = (
-        'serial_number',
         'order',
         'plan',
         'failed_reason',
@@ -244,7 +251,7 @@ class BoxUpdateForm(forms.Form):
 class ReceiptUpdateForm(forms.ModelForm):
     receipt_date = forms.DateField(
         label='* 開立發票日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',
@@ -256,7 +263,7 @@ class ReceiptUpdateForm(forms.ModelForm):
         )
     payment_date = forms.DateField(
         label='入賬日期',
-        widget=forms.DateInput(
+        widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'type': 'date',

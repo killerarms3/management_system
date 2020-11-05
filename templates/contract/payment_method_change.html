@@ -12,11 +12,11 @@
                 {{ csrf_input }}
                     <table class="table table-hover">
                         {% for fields in form %}
-                            <tr>                                
+                            <tr>
                                 <th>{{ fields.label }}</th>
-                                <td>{{ fields }}</td>                                
+                                <td>{{ fields }}</td>
                             </tr>
-                        {% endfor %}                        
+                        {% endfor %}
                     </table>
                     <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
                 </form>
@@ -25,13 +25,19 @@
     </div>
 {% endblock content %}
 
-
 {% block js %}
 <script>
     $('select').multipleSelect({
       filter: true,
       selectAll: false,
       showClear: true
+    });
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
     });
 </script>
 {% endblock %}

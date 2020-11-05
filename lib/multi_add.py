@@ -24,7 +24,7 @@ class AddMultiData():
         # self.action_url = action_url
 
     def view_upload(self, request, header, sheet_template, action_url):
-        return render(request, 'add_multiple_data.html', locals())
+        return render(request, 'add_from_excel.html', locals())
 
     def read_upload(self, file_contents):
         wb = xlrd.open_workbook(filename=None, file_contents=file_contents)

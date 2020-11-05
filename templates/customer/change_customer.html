@@ -9,110 +9,47 @@
     <div class="card mb-3">
         <div class="card-body">
             <h3 class="custom_text">編輯客戶</h3>
+            <ul class="fa-ul" style="margin-left: 0;">
+                <li><i class="fas fa-info-circle"> 系統會依據【姓】、【名】、【手機電話】、【市內電話】來判斷客戶是否為同一人</i></li>
+                <li><i class="fas fa-info-circle"> 建議先確認目標【機構】、【職業】、【職稱】有在選單後，再開始填寫資料</i></li>
+                <li><i class="fas fa-info-circle"> 【手機電話】與【市內電話】至少要填一個</i></li>
+                <li><i class="fas fa-info-circle"> 【手機電話】只接受國內手機格式: [09][開放電話號碼]，如: 0912345678，10位數</i></li>
+                <li><i class="fas fa-info-circle"> 【市內電話】國內電話只接受此格式: [國內電話區號][開放電話號碼]，如: 0212345678，9、10位數</i></li>
+                <li><i class="fas fa-info-circle"> 【市內電話】國外電話只接受此格式: [國際電話區號]-[國內電話區號][開放電話號碼]，如: 1-1231231234</i></li>
+            </ul>
             <form method="POST" action="{{ url('customer:change_customer', args=[customer.id]) }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
-                <ul class="messages">
+                <ul class="fa-ul" style="margin-left: 0;">
                     {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li><i {% if message.tags != 'info' %}class="fas fa-times" style="color: red;"{% else %}class="fas fa-check-circle" style="color: green;"{% endif %}> {{ message }}</i></li>
                     {% endfor %}
                 </ul>
                 {% endif %}
                 <table class="table table-hover">
                     <tbody>
+                        {% for field in form %}
                         <tr>
-                            <th scope="col">* 姓</th>
-                                <td>
-                                    <input class="form-control" type="text" name="last_name" maxlength="32" value="{{ customer.last_name }}" required>
-                                </td>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}
+                                {% if field.name == 'organization' %}
+                                    {% if perms.customer.add_organization %}(<a href="{{ url('customer:add_organization') }}" target="popup" onclick="window.open('{{ url('customer:add_organization') }}', 'popup', 'width=700', height='800'); return false">新增機構</a>)
+                                    <button type="button" class="btn btn-link" onclick="RefreshOptions('organization')"><i class="fas fa-redo"></i></button>
+                                    {% endif %}
+                                {% endif %}
+                                {% if field.name == 'job' %}
+                                    {% if perms.customer.add_job %}(<a href="{{ url('customer:add_job') }}" target="popup" onclick="window.open('{{ url('customer:add_job') }}', 'popup', 'width=700', height='800'); return false">新增職業</a>)
+                                    <button type="button" class="btn btn-link" onclick="RefreshOptions('job')"><i class="fas fa-redo"></i></button>
+                                    {% endif %}
+                                {% endif %}
+                                {% if field.name == 'title' %}
+                                    {% if perms.customer.add_title %}(<a href="{{ url('customer:add_title') }}" target="popup" onclick="window.open('{{ url('customer:add_title') }}', 'popup', 'width=700', height='800'); return false">新增職稱</a>)
+                                    <button type="button" class="btn btn-link" onclick="RefreshOptions('title')"><i class="fas fa-redo"></i></button>
+                                    {% endif %}
+                                {% endif %}
+
+                            </th>
+                            <td>{{ field }}</td>
                         </tr>
-                        <tr>
-                            <th scope="col">* 名</th>
-                            <td>
-                                <input class="form-control" type="text" name="first_name" maxlength="32" value="{{ customer.first_name }}" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">生日</th>
-                            <td>
-                                <input class="form-control" type="date" id="birth_date" name="birth_date" min="1820-01-01" max="2020-01-01" value="{{ customer.birth_date }}">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">機構{% if perms.customer.can_add_organization %}(<a href="{{ url('customer:add_organization') }}">新增機構</a>){% endif %}</th>
-                            <td>
-                                <select multiple="multiple" class="multiple-select" id="organization" name="organization">
-                                    {% for organization in organizations %}
-                                    <option value="{{ organization.id }}" {% if organization.id in organization_ids %} selected {% endif %}>{{ organization.name }} {{ organization.department }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 職業{% if perms.customer.can_add_job %}(<a href="{{ url('customer:add_job') }}">新增職業</a>){% endif %}</th>
-                            <td>
-                                <select class="multiple-select" id="job" name="job" required>
-                                    {% for job in jobs %}
-                                    <option value="{{ job.id }}" {% if job.id == customer.job.id %} selected {% endif %}>{{ job.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 職稱{% if perms.customer.can_add_title %}(<a href="{{ url('customer:add_title') }}">新增職稱</a>){% endif %}</th>
-                            <td>
-                                <select class="multiple-select" id="title" name="title" required>
-                                    {% for title in titles %}
-                                    <option value="{{ title.id }}" {% if title.id == customer.title.id %} selected {% endif %}>{{ title.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">LINE ID</th>
-                            <td>
-                                <input class="form-control" type="text" id="line_id" name="line_id" maxlength="32" value="{{ customer.line_id }}">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">Email</th>
-                            <td>
-                                <input class="form-control" type="email" id="email" name="email" maxlength="320" value="{{ customer.email }}">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">手機電話</th>
-                            <td>
-                                <input class="form-control" type="text" id="mobile" name="mobile" maxlength="32" value="{{ customer.mobile }}">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">市內電話</th>
-                            <td>
-                                <input class="form-control" type="text" id="tel" name="tel" maxlength="32" value="{{ customer.tel }}">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 通訊地址</th>
-                            <td>
-                                <input class="form-control" type="text" id="address" name="address" maxlength="320" value="{{ customer.address }}" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">* 客戶類別</th>
-                            <td>
-                                <select class="multiple-select" id="customer_type" name="customer_type" required>
-                                    {% for customer_type in customer_types %}
-                                    <option value="{{ customer_type.id }}">{{ customer_type.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col">備註</th>
-                            <td>
-                                <textarea cols="40" rows="10"id="memo" name="memo">{{ customer.memo }}</textarea>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">
@@ -147,12 +84,36 @@
         if (!$('#tel').val() && !$('#mobile').val()) {
             alert("手機電話或市內電話只少要填一個");
             return false;
+        } else if (($('#introducer').val() && !$('#relationship').val()) || (!$('#introducer').val() && $('#relationship').val())) {
+            alert("推薦人與關係必須兩個都填或都不填");
+            return false;
         } else {
+            $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
             return;
         }
     });
     $('input[type="text"]').change(function() {
         this.value = $.trim(this.value);
     });
+    function RefreshOptions(ObjID) {
+        var selectRef = document.getElementById(ObjID);
+        $.ajax({
+            type: 'GET',
+            url: '/customer/update_options/' + ObjID,
+            success: function(data) {
+                $('#'+ObjID+' option').remove();
+                if (!selectRef.multiple) {
+                    var newOption = new Option('---------', '');
+                    selectRef.append(newOption);
+                }
+                for (object of data.objects) {
+                    var newOption = new Option(object[1], object[0]);
+                    selectRef.append(newOption);
+                }
+                $('#'+ObjID).multipleSelect('refresh');
+            }
+        });
+    }
 </script>
 {% endblock js %}
