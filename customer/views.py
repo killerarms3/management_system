@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_protect
 from django.apps import apps
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 import datetime
 from lib.multi_add import AddMultiData
@@ -333,3 +333,12 @@ def change_job(request, id):
         log_addition(request.user, 'customer', 'job', job.id, '2', object_to_dict(job), pre_dict)
         return redirect(reverse('customer:view_job'))
     return render(request, 'customer/change_job.html', locals())
+
+@login_required
+def update_options(reuqest, model):
+    try:
+        Model = apps.get_model('customer', model)
+        objects = [[obj.id, str(obj)] for obj in Model.objects.all()]
+    except LookupError:
+        objects = []
+    return JsonResponse({'objects': objects})
