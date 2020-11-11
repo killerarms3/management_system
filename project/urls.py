@@ -3,12 +3,12 @@ import project.views as project_views
 
 app_name = 'project'
 urlpatterns=[
-    path('view_project', project_views.view_project, name='view_project'),
-    path('view_project/<model>/', project_views.view_project_table, name='view_project_table'),
-    path('view_project/<model>/<serial_number>', project_views.view_specific_data, name='view_specific_data'),
-    path('add_data/<model>/', project_views.add_data, name='add_data'),
-    path('add_multiple/<model>/', project_views.add_multiple, name='add_multiple'),
-    path('change_data/<model>/<int:id>/', project_views.change_data, name='change_data'),
+    path('project', project_views.view_project, name='view_project'),
+    path('<model>', project_views.view_project_table, name='view_project_table'),
+    path('<model>/contract/box/<serial_number>', project_views.view_specific_data, name='view_specific_data'),
+    path('<model>/add', project_views.add_data, name='add_data'),
+    path('<model>/add/sheet', project_views.add_multiple, name='add_multiple'),
+    path('<model>/edit/<int:id>', project_views.change_data, name='change_data'),
     ]
 
 
