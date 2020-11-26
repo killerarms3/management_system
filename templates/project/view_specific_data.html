@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">{{ serial_number }}&nbsp;<a href="{{ url('project:change_data', args=[model, data['id']]) }}"><i class="fas fa-edit"></i></a></h3>
+            <h3 class="custom_text">{{ data.box.serial_number }}&nbsp;<a href="{{ url('project:change_data', args=[model, pk]) }}"><i class="fas fa-edit"></i></a></h3>
             {% if messages %}
             <ul class="fa-ul" style="margin-left: 0;">
                 {% for message in messages %}
@@ -22,7 +22,7 @@
                         <tr>
                             {% if field_name == 'box' %}
                             <th>{{ field_tags[field_name] }}</th>
-                            <td><a href="{{ data.box.get_absolute_url() }}">{{ serial_number }}</a></td>
+                            <td><a href="{{ data.box.get_absolute_url() }}">{{ data.box.serial_number }}</a></td>
                             {% else %}
                             <th>{{ field_tags[field_name] }}</th>
                             <td>{{ data.__dict__[field_name] }}</td>

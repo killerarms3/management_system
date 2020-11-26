@@ -22,18 +22,12 @@
                 {% endif %}
                 <table class="table table-hover">
                     <tbody>
+                        {% for field in form %}
                         <tr>
-                            <th scope="col">* 機構名稱</th>
-                                <td>
-                                    <input class="form-control" type="text" name="name" maxlength="256" required>
-                                </td>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}</th>
+                            <td>{{ field }}</td>
                         </tr>
-                        <tr>
-                            <th scope="col">* 部門/單位</th>
-                            <td>
-                                <input class="form-control" type="text" name="department" maxlength="256" required>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">

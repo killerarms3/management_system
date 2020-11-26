@@ -88,16 +88,12 @@
                             </td>
                             <td>{{ box.tracing_number }}</td>
                             <td>
-                            {% if experiment.objects.filter(box=box) %}
-                                {% if perms.experiment.view_experiment %}
+                            {% if experiment.objects.filter(box=box) and perms.experiment.view_experiment %}
                                 <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                    {% if experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().data_transfer_date %}
-                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().transfer_organization }}
-                                    {% else %}
-                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().organization }}
-                                    {% endif %}
+                                {{ get_status(box.id) }}
                                 </a>
-                                {% endif %}
+                            {% else %}
+                            {{ get_status(box.id) }}
                             {% endif %}
                             </td>
                             <td>

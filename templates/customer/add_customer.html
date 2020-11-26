@@ -10,12 +10,11 @@
         <div class="card-body">
             <h3 class="custom_text">新增客戶{% if perms.customer.add_customer %}(<a href="{{ url('customer:add_multiple') }}">新增多筆客戶</a>){% endif %}<a class="btn btn-info" type="button" href="{{ url('customer:view_customer') }}" style="float: right;background-color: #FF3B3B; border-color: #FF3B3B;">返回資料列表</a></h3>
             <ul class="fa-ul" style="margin-left: 0;">
-                <li><i class="fas fa-info-circle"> 系統會依據【姓】、【名】、【手機電話】、【市內電話】來判斷客戶是否為同一人</i></li>
-                <li><i class="fas fa-info-circle"> 建議先確認目標【機構】、【職業】、【職稱】有在選單後，再開始填寫資料</i></li>
+                <li><i class="fas fa-info-circle"> 系統會依據【姓】、【名】、【職業】來判斷客戶是否為同一人</i></li>
                 <li><i class="fas fa-info-circle"> 【手機電話】與【市內電話】至少要填一個</i></li>
                 <li><i class="fas fa-info-circle"> 【手機電話】只接受國內手機格式: [09][開放電話號碼]，如: 0912345678，10位數</i></li>
-                <li><i class="fas fa-info-circle"> 【市內電話】國內電話只接受此格式: [國內電話區號][開放電話號碼]，如: 0212345678，9、10位數</i></li>
-                <li><i class="fas fa-info-circle"> 【市內電話】國外電話只接受此格式: [國際電話區號]-[國內電話區號][開放電話號碼]，如: 1-1231231234</i></li>
+                <li><i class="fas fa-info-circle"> 【市內電話】國內電話接受格式: [國內電話區號]-[開放電話號碼]，如: 02-12345678，9、10位數</i></li>
+                <li><i class="fas fa-info-circle"> 【市內電話】國外電話接受格式: [國際電話區號]-[國內電話區號][開放電話號碼]，如: 1-1231231234</i></li>
             </ul>
             <form method="POST" action="{{ url('customer:add_customer') }}" enctype="multipart/form-data">{{ csrf_input }}
                 {% if messages %}
@@ -100,7 +99,7 @@
         var selectRef = document.getElementById(ObjID);
         $.ajax({
             type: 'GET',
-            url: '/customer/update_options/' + ObjID,
+            url: '/customer/get/' + ObjID,
             success: function(data) {
                 $('#'+ObjID+' option').remove();
                 if (!selectRef.multiple) {

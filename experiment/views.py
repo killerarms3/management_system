@@ -31,76 +31,18 @@ def add_experiment(request):
         # (box, organization, receiving_date)必為unique
         form = ExperimentCreateForm(request.POST, auto_id='%s')
         if form.is_valid():
-            exist_experiment = Experiment.objects.filter(box=form.cleaned_data['box'], organization=form.cleaned_data['organization'], receiving_date=form.cleaned_data['receiving_date'])
-            if exist_experiment:
-                messages.error(request, '此紀錄已存在')
-            else:
-                experiment = form.save()
-                log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
-                messages.info(request, '已成功新增紀錄')
-                return redirect(reverse('experiment:add_experiment'))
+            experiment = form.save()
+            log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
+            messages.info(request, '已成功新增紀錄')
+            return redirect(reverse('experiment:add_experiment'))
         else:
-            messages.error(request, '資料格式錯誤')
             for key in form.errors:
                 for error in form.errors[key]:
-                    messages.error(request, '%s: %s' % (key, error))
+                    try:
+                        messages.error(request, '%s: %s' % (key, error))
+                    except KeyError:
+                        messages.error(request, '此紀錄已存在')
     return render(request, 'experiment/add_experiment.html', locals())
-
-@login_required
-@permission_required('experiment.add_experiment', raise_exception=True)
-@csrf_protect
-def add_experiments(request):
-    add_data = AddMultiData(field_number=6)
-    if request.method == 'POST':
-        column_codes, column_dict, data = add_data.read_upload(file_contents=request.FILES['sheet'].read())
-        is_failed = False
-        experiments = list()
-        for idx, experiment_data in enumerate(data):
-            # 之後改寫
-            status, mess, organization = ValidateOrganization(Organization, 'organization', experiment_data['organization'])
-            if mess:
-                data[idx]['messages'].extend(mess)
-            status, mess, transfer_organization = ValidateOrganization(Organization, 'transfer_organization', experiment_data['transfer_organization'])
-            if mess:
-                data[idx]['messages'].extend(mess)
-            boxs = Box.objects.filter(serial_number=experiment_data['serial_number'])
-            if not boxs:
-                data[idx]['messages'].append('serial_number: 找不到此流水號')
-            elif organization and transfer_organization:
-                # experiment
-                experiment = Experiment()
-                experiment.__dict__.update(**experiment_data)
-                experiment.box = boxs[0]
-                experiment.organization = organization
-                experiment.transfer_organization = transfer_organization
-                experiments.append(experiment)
-                try:
-                    experiment.full_clean()
-                except ValidationError as err:
-                    data[idx]['status'] = 'Failed'
-                    data[idx]['messages'].extend(['%s: %s' % (key, ';'.join(err.message_dict[key])) for key in err.message_dict])
-            if data[idx]['messages']:
-                data[idx]['status'] = 'Falied'
-                is_failed = True
-        if is_failed:
-            messages.error(request, '表格資料內容錯誤，請修正後重新上傳!')
-        else:
-            for idx, experiment in enumerate(experiments):
-                exist_experiments = Experiment.objects.filter(box=experiment.box, organization=experiment.organization, receiving_date=experiment.receiving_date)
-                if exist_experiments:
-                    pre_dict = object_to_dict(exist_experiments[0])
-                    experiment.id = exist_experiments[0].id
-                    experiment.save()
-                    log_addition(request.user, 'experiment', 'experiment', experiment.id, '2', object_to_dict(experiment), pre_dict)
-                else:
-                    experiment.save()
-                    log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
-                data[idx]['status'] = 'success'
-            messages.info(request, '已成功新增資料')
-        action_url = reverse('experiment:view_experiment')
-        back_url = reverse('experiment:add_experiments')
-        return render(request, 'add_data_status.html', locals())
-    return add_data.view_upload(request, header='新增多筆記錄', sheet_template='add_experiments_template.xlsx', action_url=reverse('experiment:add_experiments'))
 
 @login_required
 @permission_required('experiment.add_experiment', raise_exception=True)
@@ -133,7 +75,10 @@ def add_multiple(request):
                             experiment.full_clean()
                         except ValidationError as err:
                             for key in err.message_dict:
-                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                try:
+                                    errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                except KeyError:
+                                    errors.append('此紀錄已存在 (第%d行)' % (idx+1))
                         experiment_list.append(experiment)
                     except Box.DoesNotExist:
                         errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['box'], idx+1))
@@ -143,20 +88,12 @@ def add_multiple(request):
                         if not content_dict['transfer_organization']:
                             errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['transfer_organization'], idx+1))
             if not errors:
-                # 全部對才存
+                # 全部對才存，只新增不更新
                 for experiment in experiment_list:
-                    exist_experiment = Experiment.objects.filter(box=experiment.box, organization=experiment.organization, receiving_date=experiment.receiving_date).first()
-                    if not exist_experiment:
-                        action_flag = '1'
-                        pre_dict = {}
-                    else:
-                        action_flag = '2'
-                        pre_dict = object_to_dict(exist_experiment)
-                        experiment.id = exist_experiment.id
                     experiment.save()
-                    log_addition(request.user, 'experiment', 'experiment', experiment.id, action_flag, object_to_dict(experiment), pre_dict)
+                    log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
                 response['response'] = True
-                response['messages'].append('已成功新增/更新資料')
+                response['messages'].append('已成功新增資料')
             else:
                 response['messages'].extend(errors)
         return JsonResponse(response)
@@ -170,42 +107,48 @@ def view_experiment(request):
     experiment_records = dict()
     for experiment in experiments:
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = list()
+            experiment_records[experiment.box.serial_number] = {
+                'status': utils.get_status(experiment.box.id),
+                'record': list()
+            }
         record = {
             'id': str(experiment.id),
             'box_id': str(experiment.box.id),
-            'change_experiment':reverse('experiment:change_experiment', kwargs={'id': experiment.id}),
+            'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
             'receiving_date': str(experiment.receiving_date) if experiment.receiving_date else '',
             'complete_date': str(experiment.complete_date) if experiment.complete_date else '',
             'data_transfer_date': str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
             'transfer_organization': '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-            'failed_id': str()
+            'failed_id': str(),
         }
         faileds = Failed.objects.filter(box=experiment.box)
         if faileds:
             record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number].append(record)
+        experiment_records[experiment.box.serial_number]['record'].append(record)
+        # add get_status to first record
     return render(request, 'experiment/view_experiment.html', locals())
 
 @login_required
 @permission_required('experiment.view_experiment', raise_exception=True)
-@csrf_protect
-def view_specific_experiment(request, serial_number):
+def view_specific_experiment(request, pk):
     try:
-        box = Box.objects.get(serial_number=serial_number)
+        box = Box.objects.get(id=pk)
     except Box.DoesNotExist:
         return redirect(reverse('experiment:view_experiment'))
     experiments = Experiment.objects.filter(box=box).order_by('-box__id', '-receiving_date','-pk')
     experiment_records = dict()
     for experiment in experiments:
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = list()
+            experiment_records[experiment.box.serial_number] = {
+                'status': utils.get_status(experiment.box.id),
+                'record': list()
+            }
         record = {
             'id': str(experiment.id),
             'box_id': str(experiment.box.id),
-            'change_experiment':reverse('experiment:change_experiment', kwargs={'id': experiment.id}),
+            'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
             'receiving_date': str(experiment.receiving_date) if experiment.receiving_date else '',
@@ -217,15 +160,14 @@ def view_specific_experiment(request, serial_number):
         faileds = Failed.objects.filter(box=experiment.box)
         if faileds:
             record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number].append(record)
+        experiment_records[experiment.box.serial_number]['record'].append(record)
     return render(request, 'experiment/view_experiment.html', locals())
 
 @login_required
 @permission_required('experiment.view_experiment', raise_exception=True)
-@csrf_protect
-def view_experiment_list(request, order_id):
+def view_experiment_list(request, pk):
     try:
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=pk)
     except Order.DoesNotExist:
         return redirect(reverse('contract:order-list'))
     boxes = Box.objects.filter(order=order)
@@ -233,11 +175,14 @@ def view_experiment_list(request, order_id):
     experiment_records = dict()
     for experiment in experiments:
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = list()
+            experiment_records[experiment.box.serial_number] = {
+                'status': utils.get_status(experiment.box.id),
+                'record': list()
+            }
         record = {
             'id': str(experiment.id),
             'box_id': str(experiment.box.id),
-            'change_experiment':reverse('experiment:change_experiment', kwargs={'id': experiment.id}),
+            'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
             'receiving_date': str(experiment.receiving_date) if experiment.receiving_date else '',
@@ -249,47 +194,47 @@ def view_experiment_list(request, order_id):
         faileds = Failed.objects.filter(box=experiment.box)
         if faileds:
             record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number].append(record)
+        experiment_records[experiment.box.serial_number]['record'].append(record)
     return render(request, 'experiment/view_experiment.html', locals())
 
 
 @login_required
 @permission_required('experiment.change_experiment', raise_exception=True)
 @csrf_protect
-def change_experiment(request, id):
-    experiment = Experiment.objects.get(id=id)
+def change_experiment(request, pk):
+    experiment = Experiment.objects.get(id=pk)
     form = ExperimentCreateForm(instance=experiment, auto_id='%s',)
     if request.method == 'POST':
-        form = ExperimentCreateForm(request.POST, auto_id='%s')
+        form = ExperimentCreateForm(request.POST, instance=experiment, auto_id='%s')
         if form.is_valid():
-            exist_experiment = Experiment.objects.filter(box=form.cleaned_data['box'], organization=form.cleaned_data['organization'], receiving_date=form.cleaned_data['receiving_date'])
-            if exist_experiment:
-                messages.error(request, '此紀錄已存在')
-            else:
-                pre_dict = object_to_dict(experiment)
-                experiment = form.save(commit=False)
-                experiment.id = id
-                experiment.save()
-                log_addition(request.user, 'experiment', 'experiment', experiment.id, '2', object_to_dict(experiment), pre_dict)
-                messages.info(request, '已成功更新紀錄')
-                return redirect(reverse('experiment:view_experiment'))
+            pre_dict = object_to_dict(experiment)
+            experiment = form.save(commit=False)
+            experiment.id = pk
+            experiment.save()
+            log_addition(request.user, 'experiment', 'experiment', experiment.id, '2', object_to_dict(experiment), pre_dict)
+            messages.info(request, '已成功更新紀錄')
+            return redirect(reverse('experiment:view_experiment'))
         else:
-            messages.error(request, '資料格式錯誤')
+            field_tags = utils.getlabels('experiment', 'experiment')
             for key in form.errors:
                 for error in form.errors[key]:
-                    messages.error(request, '%s: %s' % (key, error))
+                    try:
+                        messages.error(request, '%s: %s' % (field_tags[key], error))
+                    except KeyError:
+                        messages.error(request, '此紀錄已存在')
+    form.fields['box'].widget.attrs['disabled'] = True
     return render(request, 'experiment/change_experiment.html', locals())
 
 @login_required
 @permission_required('experiment.add_experiment', raise_exception=True)
 @csrf_protect
-def add_order_experiments(request, order_id):
+def add_order_experiments(request, pk):
     try:
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=pk)
     except Order.DoesNotExist:
         return redirect(reverse('contract:order-list'))
     organizations = Organization.objects.filter(is_active=True)
-    boxes = Box.objects.filter(order_id=order_id)
+    boxes = Box.objects.filter(order_id=pk)
     now = datetime.datetime.now().strftime('%Y-%m-%d')
     if request.method == 'POST':
         keys = [key for key in request.POST.keys() if 'serial_number' in key]
@@ -329,6 +274,6 @@ def add_order_experiments(request, order_id):
             for experiment in experiments:
                 experiment.save()
                 log_addition(request.user, 'experiment', 'experiment', experiment.id, '1', object_to_dict(experiment), {})
-            messages.info(request, '已成功更新紀錄')
-            return redirect(reverse('experiment:view_experiment_list', args=[order_id]))
+            messages.info(request, '已成功新增紀錄')
+            return redirect(reverse('experiment:view_experiment_list', args=[order.id]))
     return render(request, 'experiment/add_order_experiments.html', locals())

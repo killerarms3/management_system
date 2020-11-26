@@ -10,12 +10,12 @@ import datetime
 from lib.multi_add import AddMultiData
 from lib.Validator import ValidateOrganization
 from django.core.exceptions import ValidationError
-from customer.models import Organization, Customer, Title, Job, Customer_Type, Customer_Organization, Customer_Introducer, Relationship
+from customer.models import Organization, Customer, Title, Job, Customer_Type, Relationship
 from contract.models import Box, Examiner
 from django.template.defaulttags import register
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
-from customer.forms import CustomerCreateForm
+from customer.forms import CustomerCreateForm, GetCreateForm
 from lib import utils
 import json
 from decimal import Decimal
@@ -26,35 +26,38 @@ from decimal import Decimal
 @permission_required('customer.add_organization', raise_exception=True)
 @csrf_protect
 def add_organization(request):
+    FormClass = GetCreateForm(Organization)
+    form = FormClass(instance=Organization(), auto_id='%s')
     if request.method == 'POST':
-        # (name, department)必為unique
-        organization, created = Organization.objects.get_or_create(name=request.POST['name'], department=request.POST['department'])
-        if not created:
-            messages.error(request, '此機構已存在')
-        else:
-            messages.info(request, '已成功新增機構')
+        form = FormClass(request.POST, auto_id='%s')
+        if form.is_valid():
+            organization = form.save()
             log_addition(request.user, 'customer', 'organization', organization.id, '1', object_to_dict(organization), {})
+            messages.info(request, '已成功新增機構')
+            return redirect(reverse('customer:add_organization'))
+        else:
+            messages.error(request, '此機構已存在')
     return render(request, 'customer/add_organization.html', locals())
 
 @login_required
 @permission_required('customer.change_organization', raise_exception=True)
 @csrf_protect
-def change_organization(request, id):
-    organization = Organization.objects.get(id=id)
+def change_organization(request, pk):
+    FormClass = GetCreateForm(Organization)
+    organization = Organization.objects.get(id=pk)
+    form = FormClass(instance=organization, auto_id='%s')
     if request.method == 'POST':
-        # (name, department)必為unique
-        # 確認更改後，是否會有重複機構
-        exist_organization = Organization.objects.filter(name=request.POST['name'], department=request.POST['department'])
-        if exist_organization and exist_organization[0].id != id:
-            messages.error(request, '此機構已存在')
+        form = FormClass(request.POST, instance=organization, auto_id='%s')
+        if form.is_valid():
+            pre_dict = object_to_dict(organization)
+            organization = form.save(commit=False)
+            organization.id = pk
+            organization.save()
+            log_addition(request.user, 'customer', 'organization', organization.id, '2', object_to_dict(organization), pre_dict)
+            messages.info(request, '已成功更新機構')
             return redirect(reverse('customer:view_organization'))
-        pre_dict = object_to_dict(organization)
-        organization.name = request.POST['name']
-        organization.department = request.POST['department']
-        organization.is_other = request.POST['is_other']
-        organization.save()
-        log_addition(request.user, 'customer', 'organization', organization.id, '2', object_to_dict(organization), pre_dict)
-        return redirect(reverse('customer:view_organization'))
+        else:
+            messages.error(request, '此機構已存在')
     return render(request, 'customer/change_organization.html', locals())
 
 @login_required
@@ -70,140 +73,21 @@ def add_customer(request):
     field_tags = utils.getlabels('customer', 'customer')
     form = CustomerCreateForm(auto_id='%s')
     if request.method == 'POST':
-        # (last_name, first_name, mobile, tel)必為unique
+        # (last_name, first_name, job)必為unique
         form = CustomerCreateForm(request.POST, auto_id='%s')
         if form.is_valid():
-            is_exist = False
-            for exist_customer in Customer.objects.filter(last_name=form.cleaned_data['last_name'], first_name=form.cleaned_data['first_name']):
-                if {exist_customer.mobile, exist_customer.tel}.intersection({form.cleaned_data['mobile'], form.cleaned_data['tel']}) - {None, ''}:
-                    messages.error(request, '此客戶已存在')
-                    is_exist = True
-                    break
-            if not is_exist:
-                customer = form.save()
-                log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), {})
-                if form.cleaned_data['organization']:
-                    for organization in form.cleaned_data['organization']:
-                        customer_organization = Customer_Organization(customer=customer, organization=organization)
-                        customer_organization.save()
-                        log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
-                if form.cleaned_data['introducer']:
-                    customer_introducer = Customer_Introducer(customer=customer, introducer=form.cleaned_data['introducer'], relationship=form.cleaned_data['relationship'])
-                    customer_introducer.save()
-                    log_addition(request.user, 'customer', 'customer_introducer', customer_introducer.id, '1', object_to_dict(customer_introducer), {})
-                messages.info(request, '已成功新增客戶')
-                return redirect(reverse('customer:add_customer'))
+            customer = form.save()
+            log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), {})
+            messages.info(request, '已成功新增客戶')
+            return redirect(reverse('customer:add_customer'))
         else:
-            messages.error(request, '資料格式錯誤')
             for key in form.errors:
                 for error in form.errors[key]:
-                    messages.error(request, '%s: %s' % (field_tags[key], error))
+                    try:
+                        messages.error(request, '%s: %s' % (field_tags[key], error))
+                    except KeyError:
+                        messages.error(request, '此客戶已存在')
     return render(request, 'customer/add_customer.html', locals())
-
-@login_required
-@permission_required('customer.add_customer', raise_exception=True)
-@csrf_protect
-def add_customers(request):
-    add_data = AddMultiData(field_number=14)
-    if request.method == 'POST':
-        column_codes, column_dict, data = add_data.read_upload(file_contents=request.FILES['sheet'].read())
-        is_failed = False
-        customers = list()
-        customer_organizations = dict()
-        customer_introducers = dict()
-        for idx, customer_data in enumerate(data):
-            # 之後改寫
-            # 若機構、職業、職稱不存在，則是否要直接創立，還是要只接受已有的機構?
-            # 改不直接創立，避免出現一堆簡稱
-            customer = Customer()
-            customer.__dict__.update(**customer_data)
-            try:
-                job = Job.objects.get(name=customer_data['job'])
-                customer.job = job
-            except Job.DoesNotExist:
-                data[idx]['messages'].append('job: 不存在的職業')
-            try:
-                title = Title.objects.get(name=customer_data['title'])
-                customer.title = title
-            except Title.DoesNotExist:
-                data[idx]['messages'].append('title: 不存在的職稱')
-            try:
-                customer_type = Customer_Type.objects.get(name=customer_data['customer_type'])
-                customer.customer_type = customer_type
-            except Customer_Type.DoesNotExist:
-                data[idx]['messages'].append('customer_type: 不存在的客戶類別')
-            try:
-                customer.clean()
-            except ValidationError as err:
-                data[idx]['messages'].extend(['%s: %s' % (key, ';'.join(err.message_dict[key])) for key in err.message_dict])
-            customers.append(customer)
-            # organization非必填
-            if customer_data['organization']:
-                status, mess, organization = ValidateOrganization(Organization, 'organization', customer_data['organization'])
-                if mess:
-                    data[idx]['messages'].extend(mess)
-                if organization:
-                    customer_organizations[len(customers)-1] = Customer_Organization(organization=organization)
-            # introducter非必填
-            if (customer_data['introducer'] and not customer_data['relationship']) or (not customer_data['introducer'] and customer_data['relationship']):
-                data[idx]['messages'].extend(['introducer: 推薦人與關係必須兩個都填或都不填', 'relationship: 推薦人與關係必須兩個都填或都不填'])
-            if customer_data['introducer'] and customer_data['relationship']:
-                try:
-                    relationship = Relationship.objects.get(name=customer_data['relationship'])
-                    introducers = [customer for customer in Customer.objects.all() if str(customer) == customer_data['introducer']]
-                    if not introducers:
-                        data[idx]['messages'].append('introducer: 不存在的推薦人')
-                    elif len(introducers) > 1:
-                        data[idx]['messages'].append('introducer: 有多個同名客戶，請使用【新增客戶】新增此客戶')
-                    else:
-                        customer_introducers[len(customers)-1] = Customer_Introducer(introducer=introducers[0], relationship=relationship)
-                except Relationship.DoesNotExist:
-                    data[idx]['messages'].append('relationship: 不存在的關係')
-
-            if data[idx]['messages']:
-                data[idx]['status'] = 'Failed'
-                is_failed = True
-        if is_failed:
-            messages.error(request, '表格資料內容錯誤，請修正後重新上傳!')
-        else:
-            for idx, customer in enumerate(customers):
-                pre_dict = {}
-                for exist_customer in Customer.objects.filter(last_name=customer.last_name, first_name=customer.first_name):
-                    if {exist_customer.mobile, exist_customer.tel}.intersection({customer.mobile, customer.tel}) - {None, ''}:
-                        pre_dict = object_to_dict(exist_customer)
-                        customer.id = exist_customer.id
-                        break
-                customer.save()
-                if pre_dict:
-                    log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
-                else:
-                    log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), pre_dict)
-                # customer_organization
-                if idx in customer_organizations:
-                    customer_organization, created = Customer_Organization.objects.get_or_create(customer=customer, organization=customer_organizations[idx].organization)
-                    if created:
-                        log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
-                if idx in customer_introducers:
-                    # 只新增、更新、不刪除
-                    # 如果表格留空，暫時不刪除原本的關聯
-                    customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
-                    if not customer_introducer:
-                        action_flag = '1'
-                        pre_dict = dict()
-                        customer_introducer = Customer_Introducer(customer=customer)
-                    else:
-                        action_flag = '2'
-                        pre_dict = object_to_dict(customer_introducer)
-                    customer_introducer.introducer = customer_introducers[idx].introducer
-                    customer_introducer.relationship = customer_introducers[idx].relationship
-                    customer_introducer.save()
-                    log_addition(request.user, 'customer', 'customer_introducer', customer_introducer.id, action_flag, object_to_dict(customer_introducer), pre_dict)
-                data[idx]['status'] = 'success'
-            messages.info(request, '已成功新增資料')
-        action_url = reverse('customer:view_customer')
-        back_url = reverse('customer:add_customers')
-        return render(request, 'add_data_status.html', locals())
-    return add_data.view_upload(request, header='新增多筆客戶', sheet_template='add_customers_template.xlsx', action_url=reverse('customer:add_customers'))
 
 @login_required
 @permission_required('customer.add_customer', raise_exception=True)
@@ -218,8 +102,6 @@ def add_multiple(request):
             label_dict = utils.getlabels('customer', 'customer')
             contents = json.loads(request.POST.get('table_content'), parse_float=Decimal)
             customer_list = list()
-            customer_organizations = dict()
-            customer_introducers = dict()
             errors = list()
             for idx, content in enumerate(contents):
                 if all(x is None or str(x).strip() == '' for x in content):
@@ -231,13 +113,30 @@ def add_multiple(request):
                         customer = Customer()
                         customer.__dict__.update(content_dict)
                         customer.job = Job.objects.get(name=content_dict['job'])
-                        customer.title = Title.objects.get(name=content_dict['title'])
                         customer.customer_type = Customer_Type.objects.get(name=content_dict['customer_type'])
+                        if content_dict['organization']:
+                            try:
+                                customer.organization = next(o for o in Organization.objects.all() if str(o) == content_dict['organization'])
+                            except StopIteration:
+                                errors.append('%s: 找不到此機構 (第%d行)' % (label_dict['organization'], idx+1))
+                        if content_dict['title']:
+                            customer.title = Title.objects.get(name=content_dict['title'])
+                        # introducter非必填
+                        if content_dict['introducer']:
+                            try:
+                                customer.introducer = next(c for c in Customer.objects.all() if str(c) == content_dict['introducer'])
+                            except StopIteration:
+                                errors.append('%s: 找不到此推薦人 (第%d行)' % (label_dict['introducer'], idx+1))
+                        if content_dict['relationship']:
+                            customer.relationship = Relationship.objects.get(name=content_dict['relationship'])
                         try:
-                            customer.clean()
+                            customer.full_clean()
                         except ValidationError as err:
                             for key in err.message_dict:
-                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                try:
+                                    errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                except KeyError:
+                                    errors.append('此客戶已存在 (第%d行)' % (idx+1))
                         customer_list.append(customer)
                     except Job.DoesNotExist:
                         errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['job'], idx+1))
@@ -245,61 +144,15 @@ def add_multiple(request):
                         errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['title'], idx+1))
                     except Customer_Type.DoesNotExist:
                         errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['customer_type'], idx+1))
-                    # organization非必填
-                    if content_dict['organization']:
-                        try:
-                            organization = next(o for o in Organization.objects.all() if str(o) == content_dict['organization'])
-                            customer_organizations[len(customer_list)-1] = Customer_Organization(organization=organization)
-                        except StopIteration:
-                            errors.append('%s: 找不到此機構 (第%d行)' % (label_dict['organization'], idx+1))
-                    # introducter非必填
-                    if (content_dict['introducer'] and not content_dict['relationship']) or (not content_dict['introducer'] and content_dict['relationship']):
-                        errors.append('推薦人與關係必須兩個都填或都不填 (第%d行)' % (idx+1))
-                    if content_dict['introducer'] and content_dict['relationship']:
-                        try:
-                            relationship = Relationship.objects.get(name=content_dict['relationship'])
-                            introducer = next(c for c in Customer.objects.all() if str(c) == content_dict['introducer'])
-                            customer_introducers[len(customer_list)-1] = Customer_Introducer(introducer=introducer, relationship=relationship)
-                        except Relationship.DoesNotExist:
-                            errors.append('關係: 找不到此關係 (第%d行)' % (idx+1))
-                        except StopIteration:
-                            errors.append('推薦人: 找不到此推薦人 (第%d行)' % (idx+1))
+                    except Relationship.DoesNotExist:
+                        errors.append('%s: 找不到此關係 (第%d行)' % (label_dict['relationship'], idx+1))
             if not errors:
-                # 全部對才存
-                for idx, customer in enumerate(customer_list):
-                    pre_dict = {}
-                    for exist_customer in Customer.objects.filter(last_name=customer.last_name, first_name=customer.first_name):
-                        if {exist_customer.mobile, exist_customer.tel}.intersection({customer.mobile, customer.tel}) - {None, ''}:
-                            pre_dict = object_to_dict(exist_customer)
-                            customer.id = exist_customer.id
-                            break
+                # 全部對才存，只新增不更新
+                for customer in customer_list:
                     customer.save()
-                    if pre_dict:
-                        log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
-                    else:
-                        log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), pre_dict)
-                    # customer_organization
-                    if idx in customer_organizations:
-                        customer_organization, created = Customer_Organization.objects.get_or_create(customer=customer, organization=customer_organizations[idx].organization)
-                        if created:
-                            log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
-                    if idx in customer_introducers:
-                        # 只新增、更新、不刪除
-                        # 如果表格留空，暫時不刪除原本的關聯
-                        customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
-                        if not customer_introducer:
-                            action_flag = '1'
-                            pre_dict = dict()
-                            customer_introducer = Customer_Introducer(customer=customer)
-                        else:
-                            action_flag = '2'
-                            pre_dict = object_to_dict(customer_introducer)
-                        customer_introducer.introducer = customer_introducers[idx].introducer
-                        customer_introducer.relationship = customer_introducers[idx].relationship
-                        customer_introducer.save()
-                        log_addition(request.user, 'customer', 'customer_introducer', customer_introducer.id, action_flag, object_to_dict(customer_introducer), pre_dict)
+                    log_addition(request.user, 'customer', 'customer', customer.id, '1', object_to_dict(customer), {})
                 response['response'] = True
-                response['messages'].append('已成功新增/更新資料')
+                response['messages'].append('已成功新增資料')
             else:
                 response['messages'].extend(errors)
         return JsonResponse(response)
@@ -308,70 +161,27 @@ def add_multiple(request):
 @login_required
 @permission_required('customer.change_customer', raise_exception=True)
 @csrf_protect
-def change_customer(request, id):
+def change_customer(request, pk):
     field_tags = utils.getlabels('customer', 'customer')
-    customer = Customer.objects.get(id=id)
-    organizations = Organization.objects.filter(id__in=Customer_Organization.objects.filter(customer=customer).values_list('organization', flat=True).distinct())
-    customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
-    initial_dict = dict()
-    if organizations:
-        initial_dict['organization'] = organizations
-    if customer_introducer:
-        initial_dict['introducer'] = customer_introducer.introducer
-        initial_dict['relationship'] = customer_introducer.relationship
-    form = CustomerCreateForm(instance=customer, initial=initial_dict, auto_id='%s')
+    customer = Customer.objects.get(id=pk)
+    form = CustomerCreateForm(instance=customer, auto_id='%s')
     if request.method == 'POST':
-        form = CustomerCreateForm(request.POST, auto_id='%s')
+        form = CustomerCreateForm(request.POST, instance=customer, auto_id='%s')
         if form.is_valid():
-            # 客戶資料更新
-            # (last_name, first_name, mobile, tel)必為unique
-            # 確認更改後，是否會有重複客戶
-            is_exist = False
-            for exist_customer in Customer.objects.filter(last_name=form.cleaned_data['last_name'], first_name=form.cleaned_data['first_name']):
-                if exist_customer.id != id and {exist_customer.mobile, exist_customer.tel}.intersection({form.cleaned_data['mobile'], form.cleaned_data['tel']}) - {None, ''}:
-                    messages.error(request, '此客戶已存在')
-                    is_exist = True
-                    break
-            if not is_exist:
-                pre_dict = object_to_dict(customer)
-                customer = form.save(commit=False)
-                customer.id = id
-                customer.save()
-                log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
-                new_add = set(form.cleaned_data['organization']) - set(organizations)
-                need_remove = set(organizations) - set(form.cleaned_data['organization'])
-                for organization in need_remove:
-                    customer_organization = Customer_Organization.objects.get(customer=customer, organization=organization)
-                    log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '3', {}, object_to_dict(customer_organization))
-                    customer_organization.delete()
-                for organization in new_add:
-                    customer_organization = Customer_Organization(customer=customer, organization=organization)
-                    customer_organization.save()
-                    log_addition(request.user, 'customer', 'customer_organization', customer_organization.id, '1', object_to_dict(customer_organization), {})
-                if form.cleaned_data['introducer']:
-                    if not customer_introducer:
-                        action_flag = '1'
-                        pre_dict = dict()
-                        customer_introducer = Customer_Introducer(customer=customer)
-                    else:
-                        action_flag = '2'
-                        pre_dict = object_to_dict(customer_introducer)
-                    customer_introducer.introducer = form.cleaned_data['introducer']
-                    customer_introducer.relationship = form.cleaned_data['relationship']
-                    customer_introducer.save()
-                    log_addition(request.user, 'customer', 'customer_introducer', customer_introducer.id, action_flag, object_to_dict(customer_introducer), pre_dict)
-                elif customer_introducer:
-                    log_addition(request.user, 'customer', 'customer_introducer', customer_introducer.id, '3', {}, object_to_dict(customer_introducer))
-                    customer_introducer.delete()
-
+            pre_dict = object_to_dict(customer)
+            customer = form.save(commit=False)
+            customer.id = pk
+            customer.save()
+            log_addition(request.user, 'customer', 'customer', customer.id, '2', object_to_dict(customer), pre_dict)
             messages.info(request, '已成功更新客戶')
             return redirect(reverse('customer:view_customer'))
         else:
-            messages.error(request, '資料格式錯誤')
-            if 'mobile' in form.errors:
-                messages.error(request, '%s: %s' % (field_tags['mobile'], form.errors['mobile'][0]))
-            if 'tel' in form.errors:
-                messages.error(request, '%s: %s' % (field_tags['tel'], form.errors['tel'][0]))
+            for key in form.errors:
+                for error in form.errors[key]:
+                    try:
+                        messages.error(request, '%s: %s' % (field_tags[key], error))
+                    except KeyError:
+                        messages.error(request, '此客戶已存在')
     return render(request, 'customer/change_customer.html', locals())
 
 @login_required
@@ -379,30 +189,23 @@ def change_customer(request, id):
 def view_customer(request):
     # get models
     customers = Customer.objects.all().order_by('-pk')
-    # 之後或許能用select_related或prefetch_related改善
-    for customer in customers:
-        organizations = Organization.objects.filter(id__in=Customer_Organization.objects.filter(customer=customer).values_list('organization', flat=True).distinct())
-        customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
-        if organizations:
-            customer.organization = ';'.join([str(organization) for organization in organizations])
-        else:
-            customer.organization = ''
-        if customer_introducer:
-            customer.customer_introducer = customer_introducer
-        else:
-            customer.customer_introducer = ''
     return render(request, 'customer/view_customer.html', locals())
 
 @login_required
 @permission_required('customer.add_title', raise_exception=True)
+@csrf_protect
 def add_title(request):
+    FormClass = GetCreateForm(Title)
+    form = FormClass(instance=Title(), auto_id='%s')
     if request.method == 'POST':
-        title, created = Title.objects.get_or_create(name=request.POST['name'])
-        if not created:
-            messages.error(request, '此職稱已存在')
-        else:
-            messages.info(request, '已成功新增職稱')
+        form = FormClass(request.POST, auto_id='%s')
+        if form.is_valid():
+            title = form.save()
             log_addition(request.user, 'customer', 'title', title.id, '1', object_to_dict(title), {})
+            messages.info(request, '已成功新增職稱')
+            return redirect(reverse('customer:add_title'))
+        else:
+            messages.error(request, '此職稱已存在')
     return render(request, 'customer/add_title.html', locals())
 
 @login_required
@@ -413,32 +216,40 @@ def view_title(request):
 
 @login_required
 @permission_required('customer.change_title', raise_exception=True)
-def change_title(request, id):
-    title = Title.objects.get(id=id)
+@csrf_protect
+def change_title(request, pk):
+    FormClass = GetCreateForm(Title)
+    title = Title.objects.get(id=pk)
+    form = FormClass(instance=title, auto_id='%s')
     if request.method == 'POST':
-        # (name) should be unique
-        exist_title = Title.objects.filter(name=request.POST['name'])
-        if exist_title and exist_title[0].id != id:
-            messages.error(request, '此職稱已存在')
+        form = FormClass(request.POST, instance=title, auto_id='%s')
+        if form.is_valid():
+            pre_dict = object_to_dict(title)
+            title = form.save(commit=False)
+            title.id = pk
+            title.save()
+            log_addition(request.user, 'customer', 'title', title.id, '2', object_to_dict(title), pre_dict)
+            messages.info(request, '已成功更新職稱')
             return redirect(reverse('customer:view_title'))
-        pre_dict = object_to_dict(title)
-        title.name = request.POST['name']
-        title.is_other = request.POST['is_other']
-        title.save()
-        log_addition(request.user, 'customer', 'title', title.id, '2', object_to_dict(title), pre_dict)
-        return redirect(reverse('customer:view_title'))
+        else:
+            messages.error(request, '此職稱已存在')
     return render(request, 'customer/change_title.html', locals())
 
 @login_required
 @permission_required('customer.add_job', raise_exception=True)
+@csrf_protect
 def add_job(request):
+    FormClass = GetCreateForm(Job)
+    form = FormClass(instance=Job(), auto_id='%s')
     if request.method == 'POST':
-        job, created = Job.objects.get_or_create(name=request.POST['name'])
-        if not created:
-            messages.error(request, '此職業已存在')
-        else:
-            messages.info(request, '已成功新增職業')
+        form = FormClass(request.POST, auto_id='%s')
+        if form.is_valid():
+            job = form.save()
             log_addition(request.user, 'customer', 'job', job.id, '1', object_to_dict(job), {})
+            messages.info(request, '已成功新增職業')
+            return redirect(reverse('customer:add_job'))
+        else:
+            messages.error(request, '此職業已存在')
     return render(request, 'customer/add_job.html', locals())
 
 @login_required
@@ -449,37 +260,30 @@ def view_job(request):
 
 @login_required
 @permission_required('customer.change_job', raise_exception=True)
-def change_job(request, id):
-    job = Job.objects.get(id=id)
+@csrf_protect
+def change_job(request, pk):
+    FormClass = GetCreateForm(Job)
+    job = Job.objects.get(id=pk)
+    form = FormClass(instance=job, auto_id='%s')
     if request.method == 'POST':
-        # (name) should be unique
-        exist_job = Job.objects.filter(name=request.POST['name'])
-        if exist_job and exist_job[0].id != id:
-            messages.error(request, '此職業已存在')
+        form = FormClass(request.POST, instance=job, auto_id='%s')
+        if form.is_valid():
+            pre_dict = object_to_dict(job)
+            job = form.save(commit=False)
+            job.id = pk
+            job.save()
+            log_addition(request.user, 'customer', 'job', job.id, '2', object_to_dict(job), pre_dict)
+            messages.info(request, '已成功更新職業')
             return redirect(reverse('customer:view_job'))
-        pre_dict = object_to_dict(job)
-        job.name = request.POST['name']
-        job.is_other = request.POST['is_other']
-        job.save()
-        log_addition(request.user, 'customer', 'job', job.id, '2', object_to_dict(job), pre_dict)
-        return redirect(reverse('customer:view_job'))
+        else:
+            messages.error(request, '此職業已存在')
     return render(request, 'customer/change_job.html', locals())
 
 @login_required
 @permission_required('customer.view_customer', raise_exception=True)
-def view_specific_customer(request, id):
+def view_specific_customer(request, pk):
     form = CustomerCreateForm(auto_id='%s')
-    customer = Customer.objects.get(id=id)
-    organizations = Organization.objects.filter(id__in=Customer_Organization.objects.filter(customer=customer).values_list('organization', flat=True).distinct())
-    customer_introducer = Customer_Introducer.objects.filter(customer=customer).first()
-    if organizations:
-        customer.organization = ';'.join([str(organization) for organization in organizations])
-    else:
-        customer.organization = ''
-    if customer_introducer:
-        customer.customer_introducer = customer_introducer
-    else:
-        customer.customer_introducer = ''
+    customer = Customer.objects.get(id=pk)
     field_names = list(form.fields.keys())
     field_tags = utils.getlabels('customer', 'customer')
     boxes = Box.objects.filter(pk__in=list(Examiner.objects.filter(customer=customer).values_list('id', flat=True))).order_by('-pk')
@@ -493,3 +297,8 @@ def update_options(reuqest, model):
     except LookupError:
         objects = []
     return JsonResponse({'objects': objects})
+
+@login_required
+def get_customer_organization(request, pk):
+    customer = Customer.objects.get(id=pk)
+    return JsonResponse({'organization_id': customer.organization.id if customer.organization else ''})
