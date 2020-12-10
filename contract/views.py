@@ -16,9 +16,16 @@ from django.contrib.contenttypes.models import ContentType
 from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, BoxUpdateForm, SpecifyFailedCreateForm,
                     SpecifyDestroyedCreateForm, ExaminerCreateForm, SpecifyExaminerCreateForm, OrderUpdateForm, OrderCreateForm,
                     ContractCreateForm, ContractUpdateForm, ReceiptUpdateForm, SpecifyReceiptCreateForm, SpecifyOrderCreateForm,
-                    SpecifyBoxCreateForm, ReceiptCreateForm, MultipleBoxCreateForm, MultipleSerialNumberCreateForm)
+                    SpecifyBoxCreateForm, ReceiptCreateForm, MultipleBoxCreateForm, MultipleSerialNumberCreateForm, BoxMultiCreateForm)
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from lib import utils
+from lib.multi_add import AddMultiData
+from lib.Validator import ValidateOrganization
+from django.core.exceptions import ValidationError
+import datetime
+from decimal import Decimal
+import json
 
 # customize class
 # 繼承CreateView並自定義form_valid
@@ -293,7 +300,6 @@ class ReceiptUpdateView(PermissionRequiredMixin, UpdateView_add_log):
 
     def post(self, request, *args, **kwargs):
         receipt_upload_image(request, self.kwargs['pk'])
-        print(1)
         return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -545,7 +551,7 @@ def BoxUpdateView(request, pk):
     if request.method == 'POST':
         form = BoxUpdateForm(request.POST)
         if form.is_valid():
-            pre_dict = object_to_dict(box) # history            
+            pre_dict = object_to_dict(box) # history
             box.plan = form.cleaned_data['plan']
             box.order = form.cleaned_data['order']
             box.tracing_number = form.cleaned_data['tracing_number']
@@ -897,7 +903,6 @@ def receipt_upload_image(request, pk):
     if request.FILES.get('sheet'):
         content_type = ContentType.objects.get(app_label='contract', model='receipt')
         img = request.FILES.get('sheet')
-        print(2)
         if Upload_Image.objects.filter(content_type=content_type, object_id=pk):
             upload_image = Upload_Image.objects.get(content_type=content_type, object_id=pk)
             upload_image.image = img
@@ -955,3 +960,53 @@ def update_element(reuqest, model, pk):
         except LookupError:
             objects = []
     return JsonResponse({'objects': objects})
+
+def add_multi_box(request):
+    form = BoxMultiCreateForm(auto_id='%s')
+    AddMultiple = utils.AddMultiple(request=request, form=form)
+    AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆採樣盒宅配單號', view_url=reverse('contract:box-list'), add_multiple_url=reverse('contract:add_multi_box'))
+    if request.method == 'POST':
+        response = {'response': False, 'messages': list()}
+        if request.POST.get('table_content'):
+            label_dict = utils.getlabels('contract', 'box')
+            contents = json.loads(request.POST.get('table_content'), parse_float=Decimal)
+            # Plan = apps.get_model('product', 'plan')
+            data_list = list()
+            errors = list()
+            for idx, content in enumerate(contents):
+                if all(x is None or str(x).strip() == '' for x in content):
+                    # check if all elements of the content is None
+                    continue
+                else:
+                    content_dict = dict(zip(AddMultiple.field_names, content))
+                    try:
+                        box = Box.objects.get(serial_number = content_dict['serial_number'])
+                        exist_box = Box.objects.get(serial_number = box.serial_number)
+                        box.serial_number = content_dict['serial_number']
+                        box.tracing_number = content_dict['tracing_number']                        
+                        try:
+                            box.full_clean()
+                        except ValidationError as err:
+                            for key in err.message_dict:
+                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                        data_list.append(box)
+                    except Box.DoesNotExist:
+                        errors.append('%s: 此欄位 (第%d行) 編號不存在' % (label_dict['serial_number'], idx+1))
+                    except StopIteration:
+                        if not content_dict['serial_number']:
+                            errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['serial_number'], idx+1))
+                        if not content_dict['tracing_number']:
+                            errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['serial_number'], idx+1))
+            if not errors:
+                # 全對才存
+                for box in data_list:
+                    action_flag = '2'
+                    pre_dict = object_to_dict(exist_box)
+                    box.save()
+                    log_addition(request.user, 'contract', 'box', box.id, action_flag, object_to_dict(box), pre_dict)
+                    response['response'] = True
+                    response['messages'].append('已成功新增/更新資料')
+            else:
+                response['messages'].extend(errors)
+        return JsonResponse(response)
+    return AddMultipleView

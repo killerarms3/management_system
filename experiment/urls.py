@@ -12,6 +12,3 @@ urlpatterns=[
     path('view_experiment/<int:order_id>/', experiment_views.view_experiment_list, name='view_experiment_list'),
     path('change_experiment/<int:id>/', experiment_views.change_experiment, name='change_experiment'),
     ]
-
-
-

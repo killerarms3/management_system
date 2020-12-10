@@ -33,6 +33,7 @@ urlpatterns += [
 urlpatterns += [
     path('box/<int:pk>', views.BoxDetailView.as_view(), name = 'box-detail'),
     path('box/add', views.BoxCreateView.as_view(), name = 'box_create'),
+    path('box/add/sheet', views.add_multi_box, name = 'add_multi_box'),
     path('box/box_list', views.BoxListView.as_view(), name = 'box-list'),
     path('box/box_list/<int:pk>', views.BoxbyOrderListView.as_view(), name = 'partial-box-list'),
     path('box/<int:pk>/edit', views.BoxUpdateView, name = 'box_edit'),

@@ -134,7 +134,6 @@ def view_specific_data(request, model, serial_number):
         data = data_list[0]
     return render(request, 'project/view_specific_data.html', locals())
 
-
 @login_required
 def add_multiple(request, model):
     if not request.user.has_perm('project.add_' + model):
