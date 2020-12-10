@@ -22,8 +22,6 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'management_system.settings')
 
 # Activate virtual env
-activate_env=os.path.expanduser("/home/genorx/project/management_system/env/bin/activate_this.py")
+activate_env=os.path.expanduser("/home/jackyhsu/management_system_env/bin/activate_this.py")
 exec(compile(open(activate_env, "rb").read(), activate_env, 'exec'), dict(__file__=activate_env))
 application = get_wsgi_application()
-
-

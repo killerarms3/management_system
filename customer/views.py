@@ -466,8 +466,6 @@ def change_job(request, id):
     return render(request, 'customer/change_job.html', locals())
 
 @login_required
-<<<<<<< HEAD
-=======
 @permission_required('customer.view_customer', raise_exception=True)
 def view_specific_customer(request, id):
     form = CustomerCreateForm(auto_id='%s')
@@ -488,15 +486,10 @@ def view_specific_customer(request, id):
     return render(request, 'customer/view_specific_customer.html', locals())
 
 @login_required
->>>>>>> 42090deb5a93fb78ceeffb45268ad03a99b5ccd0
 def update_options(reuqest, model):
     try:
         Model = apps.get_model('customer', model)
         objects = [[obj.id, str(obj)] for obj in Model.objects.all()]
     except LookupError:
         objects = []
-<<<<<<< HEAD
     return JsonResponse({'objects': objects})
-=======
-    return JsonResponse({'objects': objects})
->>>>>>> 42090deb5a93fb78ceeffb45268ad03a99b5ccd0
