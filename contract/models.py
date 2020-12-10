@@ -89,24 +89,22 @@ class Box(models.Model):
 
     def clean(self):
         errors = dict()
-        serial_number_numeral_length = 6        
+        serial_number_numeral_length = 6
         try:
             self.clean_fields()
         except ValidationError as err:
             errors.update(err.message_dict)
-        prefix_check = self.serial_number[:3]
-        print(prefix_check)
-        number_format_check = self.serial_number[3:]
-        print(number_format_check)
-        prefix_list = Product.objects.all().values_list('prefix')        
+        prefix_check = self.serial_number[:3]        
+        number_format_check = self.serial_number[3:]        
+        prefix_list = Product.objects.all().values_list('prefix', flat=True)        
         if prefix_check not in prefix_list:
-            if 'prefix' not in errors:
-                errors['prefix'] = list()
+            if 'prefix' not in errors:                
+                errors['prefix'] = list()            
             errors['prefix'].append('該產品不存在或前綴詞有誤。')
         if len(number_format_check) != serial_number_numeral_length:
             if 'numeral_length' not in errors:
                 errors['numeral_length'] = list()
-            errors['numeral_length'].append('流水編號長度有誤。')                         
+            errors['numeral_length'].append('流水編號長度有誤。')
         raise ValidationError(errors)
 
     def __str__(self):

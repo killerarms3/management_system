@@ -961,10 +961,10 @@ def update_element(reuqest, model, pk):
             objects = []
     return JsonResponse({'objects': objects})
 
-def add_multi_box(request):
+def add_multi_tracing_number(request):
     form = BoxMultiCreateForm(auto_id='%s')
     AddMultiple = utils.AddMultiple(request=request, form=form)
-    AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆採樣盒宅配單號', view_url=reverse('contract:box-list'), add_multiple_url=reverse('contract:add_multi_box'))
+    AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆採樣盒宅配單號', view_url=reverse('contract:box-list'), add_multiple_url=reverse('contract:add_multiple_number'))
     if request.method == 'POST':
         response = {'response': False, 'messages': list()}
         if request.POST.get('table_content'):
