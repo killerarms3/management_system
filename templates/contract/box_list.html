@@ -10,6 +10,7 @@
                 <h3>採樣盒清單
                     {% if perms.contract.add_box %}
                         (<a href="{{ url('contract:box_create') }}">新增</a>)
+                        (<a href="{{ url('contract:add_multiple_number') }}">新增多筆採樣盒宅配單號</a>)
                     {% endif %}
                 </h3>
                 {% if messages %}
