@@ -38,6 +38,7 @@ urlpatterns += [
     path('box/edit/<int:pk>', views.BoxUpdateView, name = 'box_edit'),
     path('box/delete/<int:pk>', views.BoxDeleteView.as_view(), name = 'box_delete'),
     path('order/<int:pk>/box/add', views.AddSpecifyOrdertoBox, name = 'add_specify_box'),
+    path('box/add/sheet', views.add_multi_tracing_number, name='add_multiple_number'),
 ]
 
 urlpatterns += [
