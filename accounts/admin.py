@@ -4,7 +4,7 @@ from django.conf import settings
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'department', 'is_active')
+    list_display = ('name', 'department', 'contact_person', 'is_active')
     
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):

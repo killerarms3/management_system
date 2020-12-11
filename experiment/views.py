@@ -252,7 +252,6 @@ def view_experiment_list(request, order_id):
         experiment_records[experiment.box.serial_number].append(record)
     return render(request, 'experiment/view_experiment.html', locals())
 
-
 @login_required
 @permission_required('experiment.change_experiment', raise_exception=True)
 @csrf_protect

@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 from customer.models import Customer, Organization
-from product.models import Plan
+from product.models import Plan, Product
 from django.urls import reverse
 from django.db.models import Count
 from django.contrib.contenttypes.models import ContentType
+from lib.Validator import ValidateDate, ValidateAfterDate
+from django.core.exceptions import ValidationError
+from django.apps import apps
 
 # Create your models here.
 class Contract(models.Model):
@@ -83,6 +86,26 @@ class Box(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='* 訂單')
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, verbose_name='* 方案')
     tracing_number = models.CharField(max_length=64, blank=True, null=True, verbose_name='宅配單號')
+
+    def clean(self):
+        errors = dict()
+        serial_number_numeral_length = 6
+        try:
+            self.clean_fields()
+        except ValidationError as err:
+            errors.update(err.message_dict)
+        prefix_check = self.serial_number[:3]        
+        number_format_check = self.serial_number[3:]        
+        prefix_list = Product.objects.all().values_list('prefix', flat=True)        
+        if prefix_check not in prefix_list:
+            if 'prefix' not in errors:                
+                errors['prefix'] = list()            
+            errors['prefix'].append('該產品不存在或前綴詞有誤。')
+        if len(number_format_check) != serial_number_numeral_length:
+            if 'numeral_length' not in errors:
+                errors['numeral_length'] = list()
+            errors['numeral_length'].append('流水編號長度有誤。')
+        raise ValidationError(errors)
 
     def __str__(self):
         return self.serial_number

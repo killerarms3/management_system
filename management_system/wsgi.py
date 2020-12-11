@@ -12,10 +12,10 @@ import sys
 import site
 
 # Add the site-packages of the chosen virtualenv to work with
-site.addsitedir('/home/genorx/project/management_system/env/lib/python3.6/site-packages')
+site.addsitedir('/home/jackyhsu/management_system_env/lib/python3.6/site-packages')
 
 # Add the app's directory to the PYTHONAPTH
-sys.path.append('/home/genorx/project/management_system')
+sys.path.append('/home/jackyhsu/management_system')
 
 from django.core.wsgi import get_wsgi_application
 

@@ -75,4 +75,3 @@ class AddMultiple():
         field_names, colHeaders, columns = GetHandsontableColumns(self.form)
         self.field_names = field_names
         return render(self.request, 'add_multiple.html', locals())
-
