@@ -4,6 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 from django import forms
 from language.models import Code
+from experiment.models import Experiment
+from contract.models import Box
 import datetime
 from django.shortcuts import render
 
@@ -76,3 +78,38 @@ class AddMultiple():
         self.field_names = field_names
         return render(self.request, 'add_multiple.html', locals())
 
+def get_status(box_id):
+    lab_list = ['國立台灣大學生物科技學研究所']
+    sequencing_list = ['中央研究院', '卡尤迪生物科技', '基龍米克斯生物科技股份有限公司', '豐技生物科技股份有限公司']
+    # 預設status
+    status = '採樣盒製作中'
+    box = Box.objects.get(id=box_id)
+    experiments = Experiment.objects.filter(box=box)
+    if box.tracing_number:
+        status = '採樣盒製作完成'
+    # 實驗室收到紀錄(抓第一筆)
+    experiment = experiments.filter(organization__name__in=lab_list).first()
+    if experiment:
+        if experiment.receiving_date:
+            if experiment.box.plan.product.name in {'精準化益生菌1.0', '精準化益生菌2.0'}:
+                status = '配對中'
+                if experiment.complete_date:
+                    status = '配對完成'
+            else:
+                status = 'DNA萃取中'
+                if experiment.complete_date:
+                    status = 'DNA萃取完成'
+    experiment = experiments.filter(transfer_organization__name__in=sequencing_list).first()
+    if experiment:
+        if experiment.data_transfer_date:
+            status = '定序中'
+            experiment = experiments.filter(organization__name__in=sequencing_list).first()
+            if experiment and experiment.complete_date:
+                status = '定序完成'
+    experiment = experiments.filter(organization__department='研究發展部').first()
+    if experiment:
+        if experiment.receiving_date:
+            status = '分析中'
+            if experiment.complete_date:
+                status = '分析完成'
+    return status

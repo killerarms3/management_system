@@ -36,7 +36,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for contract in object_list %}
+                        {% for contract in object_list|reverse %}
                         <tr>
                             {% if perms.contract.change_contract %}
                                 <td><a href="{{ url('contract:contract_edit', args=[contract.id]) }}"><i class="fas fa-edit"></i></a></td>

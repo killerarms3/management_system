@@ -46,6 +46,7 @@
         this.value = $.trim(this.value);
     });
     $('form').submit(function(){
+        $('select[name="product"]').removeAttr('disabled');
         $('#submit_form').val('處理中 ...')
         .attr('disabled','disabled');
     });

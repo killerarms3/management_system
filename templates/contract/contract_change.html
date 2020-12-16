@@ -52,6 +52,9 @@
                                 {% endif %}
                                 </td>
                             </tr>
+                            {% elif '客戶' in fields.label %}
+                            <th>{{ fields.label }}</th>
+                            <td>{{ fields }}</td>
                             {% else %}
                             <tr>
                                 <th>{{ fields.label }}</th>

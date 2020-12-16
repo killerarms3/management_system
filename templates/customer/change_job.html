@@ -22,22 +22,12 @@
                 {% endif %}
                 <table class="table table-hover">
                     <tbody>
+                        {% for field in form %}
                         <tr>
-                            <th scope="col">* 職業</th>
-                                <td>
-                                    <input class="form-control" type="text" name="name" maxlength="32" value="{{ job.name }}" required>
-                                </td>
+                            <th>{% if field.field.required %}* {% endif %}{{ field.label }}</th>
+                            <td>{{ field }}</td>
                         </tr>
-                        <tr>
-                            <th scope="col">is_other</th>
-                            <td>
-                                <select class="multiple-select" id="is_other" name="is_other">
-                                    <option value="1" {% if job.is_other %} selected {% endif %}>Yes</option>
-                                    <option value="0" {% if not job.is_other %} selected {% endif %}>No</option>
-                                </select>
-                            </td>
-
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <input id="submit_form" style="background-color: #19bdf2; border-color: #19bdf2;" class="btn btn-primary btn-lg btn-block" type="submit" value="送出">

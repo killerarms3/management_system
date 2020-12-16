@@ -31,6 +31,9 @@
                                 {% endif %}
                                 </th>
                                 <td>{{ fields }}</td>
+                            {% elif '客戶' in fields.label %}
+                                <th>{{ fields.label }}</th>
+                                <td>{{ fields }}</td>
                             {% else %}
                                 <th>{{ fields.label }}</th>
                                 <td>{{ fields }}</td>
@@ -82,7 +85,7 @@
         var selectRef = document.getElementById('id_' + ObjID);
         $.ajax({
             type: 'GET',
-            url: '/customer/update_options/' + ObjID,
+            url: '/customer/get/' + ObjID,
             success: function(data) {
                 $('#id_'+ObjID+' option').remove();
                 if (!selectRef.multiple) {
@@ -97,5 +100,20 @@
             }
         });
     }
+    $('#id_customer').on('change', function(){
+        var organization = document.getElementById('id_organization');
+        $('#id_organization').multipleSelect('uncheckAll');
+        if (this.value) {
+            $.ajax({
+                type: 'GET',
+                url: '/customer/get/' + this.value + '/organization',
+                success: function(data) {
+                    if (data.organization_id) {
+                        $('#id_organization').multipleSelect('check', data.organization_id);
+                    }
+                }
+            });
+        }
+    });
 </script>
 {% endblock js %}
