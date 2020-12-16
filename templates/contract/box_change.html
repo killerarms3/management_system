@@ -63,7 +63,7 @@
                         {% if proj %}
                         <tr>
                             <th>大表</th>
-                            <td>{% if project %}<a href="{{ url('project:change_data', args=[proj.content_type.model, project.id]) }}" target="popup" onclick="window.open('{{ url('project:change_data', args=[proj.content_type.model, project.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a>{% else %}<a href="{{ url('project:view_specific_data', args=[proj.content_type.model, box.serial_number]) }}" target="popup" onclick="window.open('{{ url('project:view_specific_data', args=[proj.content_type.model, box.serial_number]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a>{% endif %}</td>
+                            <td>{% if project %}<a href="{{ url('project:change_data', args=[proj.content_type.model, project.id]) }}" target="popup" onclick="window.open('{{ url('project:change_data', args=[proj.content_type.model, project.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-edit"></i></a>{% else %}<a href="{{ url('project:view_specific_data', args=[proj.content_type.model, box.id]) }}" target="popup" onclick="window.open('{{ url('project:view_specific_data', args=[proj.content_type.model, box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a>{% endif %}</td>
                         </tr>
                         {% endif %}
                     </table>

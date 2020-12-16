@@ -21,7 +21,6 @@
                     <tr>
                         <th></th>
                         <th>職業</th>
-                        <th>is_other</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,7 +28,6 @@
                     <tr>
                         <td>{% if perms.customer.change_job %}<a href="{{ url('customer:change_job', args=[job.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
                         <td>{{ job.name }}</td>
-                        <td>{% if job.is_other %}Yes{% else %}No{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

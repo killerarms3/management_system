@@ -21,19 +21,13 @@
                     <tr>
                         <th></th>
                         <th>姓名</th>
-                        <th>生日</th>
                         <th>機構</th>
                         <th>職業</th>
                         <th>職稱</th>
-                        <th>LINE ID</th>
                         <th>E-mail</th>
                         <th>手機電話</th>
                         <th>市內電話</th>
                         <th>通訊地址</th>
-                        <!-- <th>客戶類別</th>
-                        <th>備註</th>
-                        <th>推薦人</th>
-                        <th>關係</th> -->
                     </tr>
                 </thead>
                 <tbody>
@@ -41,19 +35,13 @@
                     <tr>
                         <td>{% if perms.customer.change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
                         <td><a href="{{ customer.get_absolute_url() }}" target="popup" onclick="window.open('{{ customer.get_absolute_url() }}', 'popup', 'width=700', height='800'); return false">{{ customer }}</a></td>
-                        <td>{{ customer.birth_date }}</td>
                         <td>{{ customer.organization }}</td>
                         <td>{{ customer.job }}</td>
                         <td>{{ customer.title }}</td>
-                        <td>{{ customer.line_id }}</td>
                         <td>{{ customer.email }}</td>
                         <td>{{ customer.mobile }}</td>
                         <td>{{ customer.tel }}</td>
                         <td>{{ customer.address }}</td>
-                        <!-- <td>{{ customer.customer_type }}</td>
-                        <td>{{ customer.memo }}</td>
-                        <td>{% if customer.customer_introducer %}{{ customer.customer_introducer.introducer }}{% endif %}</td>
-                        <td>{% if customer.customer_introducer %}{{ customer.customer_introducer.relationship }}{% endif %}</td> -->
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -107,7 +95,7 @@
 			orderCellsTop: true,
 			exportOptions: {
 				rows: 'visible'
-			},
+            },
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);

@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">職稱表{% if perms.customer.add_title %}(<a href="{{ url('customer:add_title') }}">新增職業</a>){% endif %}</h3>
+            <h3 class="custom_text">職稱表{% if perms.customer.add_title %}(<a href="{{ url('customer:add_title') }}">新增職稱</a>){% endif %}</h3>
             {% if messages %}
             <ul class="fa-ul" style="margin-left: 0;">
                 {% for message in messages %}
@@ -21,7 +21,6 @@
                     <tr>
                         <th></th>
                         <th>職稱</th>
-                        <th>is_other</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,7 +28,6 @@
                     <tr>
                         <td>{% if perms.customer.change_title %}<a href="{{ url('customer:change_title', args=[title.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
                         <td>{{ title.name }}</td>
-                        <td>{% if title.is_other %}Yes{% else %}No{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -8,21 +8,35 @@ from django.urls import reverse
 # Create your models here.
 
 class Title(models.Model):
-    name = models.CharField(max_length=32)
-    is_other = models.BooleanField(default=True)
+    name = models.CharField(max_length=32, unique=True)
 
     def __str__(self):
         return self.name
 
 class Job(models.Model):
-    name = models.CharField(max_length=32)
-    is_other = models.BooleanField(default=True)
+    name = models.CharField(max_length=32, unique=True)
 
     def __str__(self):
         return self.name
 
 class Customer_Type(models.Model):
+    name = models.CharField(max_length=32, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Organization(models.Model):
     name = models.CharField(max_length=32)
+    department = models.CharField(max_length=32, blank=True)
+
+    class Meta:
+        unique_together = ('name', 'department',)
+
+    def __str__(self):
+        return self.name + '-' + self.department if self.department else self.name
+
+class Relationship(models.Model):
+    name = models.CharField(max_length=32, unique=True)
 
     def __str__(self):
         return self.name
@@ -31,24 +45,31 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=32)
     first_name = models.CharField(max_length=32)
     birth_date = models.DateField(blank=True, null=True, validators=[ValidateDate])
+    organization = models.ForeignKey(Organization, on_delete='CASCADE', blank=True, null=True)
     title = models.ForeignKey(Title, on_delete='CASCADE', blank=True, null=True)
-    job = models.ForeignKey(Job, on_delete='CASCADE', blank=True, null=True)
-    line_id = models.CharField(max_length=32, blank=True, null=True)
+    job = models.ForeignKey(Job, on_delete='CASCADE')
+    line_id = models. CharField(max_length=32, blank=True, null=True)
     email = models.CharField(max_length=320, blank=True, null=True, validators=[validate_email])
     tel = models.CharField(max_length=32, blank=True, null=True, validators=[ValidateTelNumber])
     mobile = models.CharField(max_length=32, blank=True, null=True, validators=[ValidateMobileNumber])
     address = models.CharField(max_length=320)
     memo = models.TextField(blank=True, null=True)
     customer_type = models.ForeignKey(Customer_Type, on_delete='CASCADE')
+    introducer = models.ForeignKey('self', on_delete='CASCADE', blank=True, null=True)
+    relationship = models.ForeignKey(Relationship, on_delete='CASCADE', blank=True, null=True)
+
+    class Meta:
+        unique_together = ('last_name', 'first_name', 'job',)
 
     def __str__(self):
         return self.last_name + self.first_name
 
     def clean(self):
         errors = list()
-        # 若重複，則更新舊資料!?
         if not self.tel and not self.mobile:
             errors.extend([{'tel': ['手機電話或市內電話只少要填一個']}, {'mobile': ['手機電話或市內電話只少要填一個']}])
+        if (self.introducer and not self.relationship) or (not self.introducer and self.relationship):
+            errors.extend([{'introducer': ['推薦人與關係必須兩個都填或都不填']}, {'relationship': ['推薦人與關係必須兩個都填或都不填']}])
         if not self.birth_date:
             self.birth_date = None
         try:
@@ -67,22 +88,8 @@ class Customer(models.Model):
     def get_absolute_url(self):
         return reverse('customer:view_specific_customer', args=[str(self.id)])
 
-    def get_name_and_job(self):
+    def get_name_and_org(self):
         return self.last_name + self.first_name + ' ('+ self.job.name +')'
-
-class Relationship(models.Model):
-    name = models.CharField(max_length=32)
-
-    def __str__(self):
-        return self.name
-
-class Customer_Introducer(models.Model):
-    customer = models.ForeignKey(Customer, on_delete='CASCADE', related_name='customer')
-    introducer = models.ForeignKey(Customer, on_delete='CASCADE', related_name='introducer')
-    relationship = models.ForeignKey(Relationship, on_delete='CASCADE')
-
-    def __str__(self):
-        return self.introducer.last_name + self.introducer.first_name
 
 class Feedback(models.Model):
     customer = models.ForeignKey(Customer, on_delete='CASCADE')
@@ -90,13 +97,4 @@ class Feedback(models.Model):
     feedback = models.TextField()
     feedback_date = models.DateField()
 
-class Organization(models.Model):
-    name = models.CharField(max_length=256)
-    department = models.CharField(max_length=256)
-    is_other = models.BooleanField(default=True)
-    def __str__(self):
-        return self.name + '-' + self.department
 
-class Customer_Organization(models.Model):
-    customer = models.ForeignKey(Customer, on_delete='CASCADE')
-    organization = models.ForeignKey(Organization, on_delete='CASCADE')

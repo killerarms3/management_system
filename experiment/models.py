@@ -15,6 +15,9 @@ class Experiment(models.Model):
     data_transfer_date = models.DateField(blank=True, null=True, validators=[ValidateDate])
     transfer_organization = models.ForeignKey(Organization, on_delete='CASCADE', related_name='transfer_organization')
 
+    class Meta:
+        unique_together = ('box', 'organization', 'receiving_date',)
+
     def clean(self):
         errors = dict()
         try:
@@ -38,6 +41,9 @@ class Experiment(models.Model):
                 errors['data_transfer_date'] = list()
             errors['data_transfer_date'].append('移交日不可在完成日之前')
         raise ValidationError(errors)
+
     def get_absolute_url(self):
-        return reverse("experiment:view_specific_experiment", args=[self.box.serial_number])
+        return reverse("experiment:view_specific_experiment", args=[self.box.id])
+
+
 

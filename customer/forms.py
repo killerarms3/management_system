@@ -22,12 +22,9 @@ class CustomerCreateForm(forms.ModelForm):
                 'min': '1820-01-01',
                 'max': datetime.datetime.now().strftime('%Y-%m-%d')
             }), required=False)
-    organization = forms.ModelMultipleChoiceField(label='機構', queryset=Organization.objects.all(), required=False)
     email = forms.EmailField(label=customer_labels['email'], required=False)
     tel = forms.CharField(label=customer_labels['tel'], validators=[ValidateTelNumber], required=False)
     mobile = forms.CharField(label=customer_labels['mobile'], validators=[ValidateMobileNumber], required=False)
-    introducer = forms.ModelChoiceField(label='推薦人', queryset=Customer.objects.all(), required=False)
-    relationship = forms.ModelChoiceField(label='關係', queryset=Relationship.objects.all(), required=False)
     field_order = ['last_name', 'first_name', 'birth_date', 'organization', 'title', 'job', 'line_id', 'email', 'tel', 'mobile', 'address', 'customer_type', 'memo']
     def __init__(self, *args, **kwargs):
         super(CustomerCreateForm, self).__init__(*args, **kwargs)
@@ -43,3 +40,21 @@ class CustomerCreateForm(forms.ModelForm):
         fields = '__all__'
         labels = utils.getlabels('customer', 'customer')
         widgets = utils.GetCustomWidgets(Customer)
+
+
+def GetCreateForm(Model):
+    class CreateForm(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            super(CreateForm, self).__init__(*args, **kwargs)
+            for visible in self.visible_fields():
+                if visible.field.widget.__class__.__name__ == 'Select':
+                    visible.field.widget.attrs['class'] = 'multiple-select'
+                else:
+                    visible.field.widget.attrs['class'] = 'form-control'
+
+        class Meta:
+            model = Model
+            fields = '__all__'
+            labels = utils.getlabels('customer', Model.__name__)
+            widgets = utils.GetCustomWidgets(Model)
+    return CreateForm
