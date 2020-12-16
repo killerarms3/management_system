@@ -98,4 +98,3 @@ class Feedback(models.Model):
     feedback_date = models.DateField()
 
 
-

@@ -6,10 +6,12 @@ from product.models import Plan
 from customer.models import Customer, Organization
 from django.contrib.auth.models import User
 from django.apps import apps
+from lib import utils
+import datetime
 
 class CustomModelChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        return obj.get_name_and_org()
+        return obj.get_name_and_job()
 
 class CustomUserModelChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
@@ -34,7 +36,11 @@ class ContractCreateForm(forms.ModelForm):
         required=True
         )
     organization = forms.ModelMultipleChoiceField(label='* 機構/單位', queryset=Organization.objects.all(), required=False)
-    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
+    customer = CustomModelChoiceField(
+        label='* 客戶',
+        queryset=Customer.objects.all(),
+        required=True
+    )
     class Meta:
         model = Contract
         fields = '__all__'
@@ -54,7 +60,11 @@ class ContractUpdateForm(forms.ModelForm):
             }),
         required=True
     )
-    customer = CustomModelChoiceField(label='* 客戶', queryset=Customer.objects.all(), required=True)
+    customer = CustomModelChoiceField(
+        label = '* 客戶',
+        queryset=Customer.objects.all(),
+        required=True
+        )
     organization = forms.ModelMultipleChoiceField(label='* 機構/單位', queryset=Organization.objects.all(), required=False)
     memo = forms.CharField(
         label='備註',
@@ -331,3 +341,21 @@ class MultipleSerialNumberCreateForm(forms.Form):
             }),
         required=True
         )
+
+class BoxMultiCreateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(BoxMultiCreateForm, self).__init__(*args, **kwargs)
+        # if not self.instance.id:
+        #     pass
+
+        for visible in self.visible_fields():
+            if visible.field.widget.__class__.__name__ == 'Select' or visible.field.widget.__class__.__name__ == 'SelectMultiple':
+                visible.field.widget.attrs['class'] = 'multiple-select'
+            else:
+                visible.field.widget.attrs['class'] = 'form-control'
+
+    class Meta:
+        model = Box
+        fields = ('serial_number', 'tracing_number',)
+        labels = utils.getlabels('contract', 'box')
+        widgets = utils.GetCustomWidgets(Box)

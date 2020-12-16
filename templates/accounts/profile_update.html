@@ -7,10 +7,10 @@
     <div class="container">
         <div class="card mb-3">
             <div class="card-body">
-                <h3>Account Info</h3>
+                <h3>使用者資料</h3>
                     <table class="table table-hover">
                         <tr>
-                            <td>Username: </td><td>{{ user.username }}</td>
+                            <td>使用者名稱: </td><td>{{ user.username }}</td>
                         </tr>
                         <tr>
                             <td>E-mail: </td><td>{{ user.email }}</td>                            
@@ -45,6 +45,13 @@
       filter: true,
       selectAll: false,
       showClear: true
+    });
+</script>
+<script>
+    $('form').submit(function () {
+        $('#submit_form').val('處理中 ...')
+            .attr('disabled','disabled');
+            return;
     });
 </script>
 {% endblock %}
