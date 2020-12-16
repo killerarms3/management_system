@@ -82,24 +82,24 @@
                                 {% endfor %}
                             </td>
                             {% if failed.objects.filter(box=box) %}
-                                <td>Failed</td>
+                                <td>失敗</td>
                                 <td>
                                 <a href="{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}" target="popup" onclick="window.open('{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
                                 {{ failed.objects.get(box=box).failed_reason }}
                                 </td>
                             {% else %}
-                                <td>No</td>
+                                <td>-</td>
                                 <td></td>
-                            {% endif %}                            
+                            {% endif %}
                             <td>
                             {% if destroyed.objects.filter(box=box) %}
                                 {% if perms.contract.view_destroyed %}
                                     <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
                                 {% endif %}
                                 {% if destroyed.objects.get(box=box).is_sample_destroyed %}
-                                    Destroyed
+                                    已被銷毀
                                 {% else %}
-                                    Waiting to be destroyed
+                                    等待銷毀
                                 {% endif %}
                                 {% if perms.contract.view_destroyed %}
                                     </a>
