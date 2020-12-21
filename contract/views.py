@@ -142,7 +142,7 @@ class OrderDetailView(PermissionRequiredMixin, generic.DetailView):
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         order_quantity = all_order_quantity.objects.filter(order=order)
         box = all_box.objects.filter(order=order)
-        experiment = Experiment.objects.filter(box_id__in=list(box.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
+        experiment = box.filter(id__in=list(Experiment.objects.all().values_list('box__id', flat=True)))
         context = super().get_context_data(**kwargs)
         context['order_quantity'] = order_quantity
         context['box'] = box
@@ -173,11 +173,13 @@ class OrderUpdateView(PermissionRequiredMixin, UpdateView_add_log):
         Box = apps.get_model('contract', 'Box')
         order = Order.objects.get(pk=self.kwargs.get('pk'))
         box_list = Box.objects.filter(order=order).order_by('serial_number')
-        experiment_list = Experiment.objects.filter(box_id__in=list(box_list.values_list(flat=True))).values_list('box__serial_number', flat=True).distinct()
+        experiment_list = box_list.filter(id__in=list(Experiment.objects.all().values_list('box__id', flat=True)))
+        status = [utils.get_status(b.id) for b in box_list]
         context = super().get_context_data(**kwargs)
         # box_list 用以顯示Order中的Box
         context['box_list'] = box_list
         context['experiment_list'] = experiment_list
+        context['status'] = status
         return context
 
 class OrderCreateView(PermissionRequiredMixin, CreateView):
@@ -241,7 +243,7 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
             # --------- history --------
             log_addition(self.request.user, 'contract', 'order', order.id, '1', object_to_dict(order), {})
             # --------- history --------
-            return HttpResponseRedirect('/contract/order/order_list')
+            return HttpResponseRedirect('/contract/order')
         return render(request, self.template_name, {'form':form})
 
 class OrderDeleteView(PermissionRequiredMixin, DeleteView_add_log):
@@ -342,6 +344,7 @@ class BoxDetailView(PermissionRequiredMixin, generic.DetailView):
             context['experiment'] = experiments[0]
         else:
             context['experiment'] = False
+        context['status'] = utils.get_status(box.id)
         # project
         for Obj in apps.get_app_config('project').get_models():
             if Obj.objects.filter(box=box):
@@ -364,6 +367,7 @@ class BoxListView(PermissionRequiredMixin, generic.ListView):
             obj = apps.get_model('contract', Name)
             context[name] = obj
         context['experiment'] = Experiment
+        context['get_status'] = utils.get_status
         context['project'] = list()
         for Obj in apps.get_app_config('project').get_models():
             context['project'].append(Obj)

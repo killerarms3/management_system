@@ -57,6 +57,11 @@ def ValidateTelNumber(value):
             digits[idx] = ''.join([d for d in digit if d.isdigit()])
         if value[0] == '0':
             # 假設此為國內電話 e.g. 0212345678
+            if len(digits) == 1:
+                # 強制國內電話區號與電話號碼間以"-"隔開
+                raise forms.ValidationError('國內市內電話只接受[國內電話區號]-[開放電話號碼]格式')
+            elif len(digits[0]) < 2 or len(digits[0]) > 4:
+                raise forms.ValidationError('國內電話區號位數錯誤，%d位' % (len(digits[0])))
             digit = ''.join(digits)
             TaiwanTelNumber(digit)
         else:
@@ -65,10 +70,10 @@ def ValidateTelNumber(value):
             digit = ''.join(digits[1:])
             if country_code == '886':
                 raise forms.ValidationError('國內電話請用[國內電話區號]開頭')
-            elif digit:
+            elif len(digit) > 2:
                 InternationalPhoneNumber(country_code, digit)
             else:
-                raise forms.ValidationError('國際電話只接受[國際電話區號]-[國內電話區號][開放電話號碼]格式')
+                raise forms.ValidationError('國際電話只接受[國際電話區號]-[國內電話區號]-[開放電話號碼]格式')
 
 def ValidateMobileNumber(value):
     # 手機電話目前只接受國內

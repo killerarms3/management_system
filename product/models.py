@@ -4,7 +4,7 @@ from django.urls import reverse
 
 # Create your models here.
 class Product(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, unique=True)
     prefix = models.CharField(max_length=16)
     status = models.BooleanField(default=1)
 
@@ -21,6 +21,9 @@ class Plan(models.Model):
     status = models.BooleanField(default=1)
     description = models.TextField(blank=True, null=True)
 
+    class Meta:
+        unique_together = ('product', 'name',)
+
     def __str__(self):
         return self.product.name + '-' + self.name
 
@@ -28,5 +31,8 @@ class Plan(models.Model):
         return reverse('product:view_specific_plan', args=[str(self.id)])
 
 class Project(models.Model):
-    product = models.ForeignKey(Product, on_delete='CASCADE')
+    product = models.OneToOneField(Product, on_delete='CASCADE')
     content_type = models.ForeignKey(ContentType, on_delete='CASCADE')
+
+    def __str__(self):
+        return self.content_type.model

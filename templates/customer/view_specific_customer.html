@@ -8,7 +8,7 @@
 <div class="container">
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="custom_text">{{ customer }}&nbsp;<a href="{{ url('customer:change_customer', args=[id]) }}"><i class="fas fa-edit"></i></a></h3>
+            <h3 class="custom_text">{{ customer }}&nbsp;<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a></h3>
             {% if messages %}
             <ul class="fa-ul" style="margin-left: 0;">
                 {% for message in messages %}

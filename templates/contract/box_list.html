@@ -39,7 +39,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for box in object_list %}
+                        {% for box in object_list|reverse %}
                         <tr>
                             {% if perms.contract.change_box %}
                                 <td><a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a></td>
@@ -65,16 +65,12 @@
                                 <td></td>
                             {% endif %}
                             <td>
-                            {% if experiment.objects.filter(box=box) %}
-                                {% if perms.experiment.view_experiment %}
+                            {% if experiment.objects.filter(box=box) and perms.experiment.view_experiment %}
                                 <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                    {% if experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().data_transfer_date %}
-                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().transfer_organization }}
-                                    {% else %}
-                                    {{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().organization }}
-                                    {% endif %}
+                                {{ get_status(box.id) }}
                                 </a>
-                                {% endif %}
+                            {% else %}
+                            {{ get_status(box.id) }}
                             {% endif %}
                             </td>
                             <td>{{ box.tracing_number }}</td>
@@ -86,31 +82,31 @@
                                 {% endfor %}
                             </td>
                             {% if failed.objects.filter(box=box) %}
-                                <td>Failed</td>
+                                <td>失敗</td>
                                 <td>
                                 <a href="{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}" target="popup" onclick="window.open('{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
                                 {{ failed.objects.get(box=box).failed_reason }}
                                 </td>
                             {% else %}
-                                <td>No</td>
+                                <td>-</td>
                                 <td></td>
-                            {% endif %}                            
+                            {% endif %}
                             <td>
                             {% if destroyed.objects.filter(box=box) %}
                                 {% if perms.contract.view_destroyed %}
                                     <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
                                 {% endif %}
                                 {% if destroyed.objects.get(box=box).is_sample_destroyed %}
-                                    Destroyed
+                                    已被銷毀
                                 {% else %}
-                                    Waiting to be destroyed
+                                    等待銷毀
                                 {% endif %}
                                 {% if perms.contract.view_destroyed %}
                                     </a>
                                 {% endif %}
                             {% endif %}
                             </td>
-                        </tr>
+                            <tr>
                         {% endfor %}
                     </tbody>
                 </table>

@@ -8,6 +8,7 @@ urlpatterns = [
     path('contract/add', views.ContractCreate.as_view(), name = 'contract_create'),
     path('contract/edit/<int:pk>', views.ContractUpdateView.as_view(), name = 'contract_edit'),
     path('contract/delete/<int:pk>', views.ContractDeleteView.as_view(), name = 'contract_delete'),
+    path('contract/add/sheet', views.add_multi_tracing_number, name='add_multiple_number')
 ]
 
 urlpatterns += [

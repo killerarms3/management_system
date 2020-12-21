@@ -54,92 +54,78 @@ def view_project_table(request, model):
 @login_required
 @csrf_protect
 def add_data(request, model):
-    # check if model is available
-    try:
-        contenttype = ContentType.objects.get(app_label='project', model=model)
-    except ContentType.DoesNotExist:
-        return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.add_' + model):
-        return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
+    if not request.user.has_perm('project.add_' + ProjectModel._meta.model_name):
+        return redirect(reverse('accounts:index'))
     FormClass = GetDataCreateForm(ProjectModel)
     form = FormClass(instance=ProjectModel())
     if request.method == 'POST':
         form = FormClass(request.POST)
         if form.is_valid():
-            exist_data = ProjectModel.objects.filter(box=form.cleaned_data['box'])
-            if exist_data:
-                messages.error(request, '資料已存在')
-            else:
-                data = ProjectModel()
-                data.__dict__.update(**form.cleaned_data)
-                data.box = form.cleaned_data['box']
-                data.save()
-                log_addition(request.user, 'project', model, data.id, '1', object_to_dict(data), {})
-                messages.info(request, '已成功新增資料')
-                return redirect(reverse('project:add_data', kwargs={'model': model}))
+            data = form.save()
+            log_addition(request.user, 'project', model, data.id, '1', object_to_dict(data), {})
+            messages.info(request, '已成功新增資料')
+            return redirect(reverse('project:add_data', kwargs={'model': model}))
         else:
+            field_tags = utils.getlabels('project', model)
             for key in form.errors:
                 for error in form.errors[key]:
-                    messages.error(request, '%s: %s' % (key, error))
+                    try:
+                        messages.error(request, '%s: %s' % (field_tags[key], error))
+                    except KeyError:
+                        messages.error(request, '此資料已存在')
     return render(request, 'project/add_data.html', locals())
 
 @login_required
 @csrf_protect
-def change_data(request, model, id):
-    if not request.user.has_perm('project.add_' + model):
-        return HttpResponseRedirect('/project/view_project')
+def change_data(request, model, pk):
     ProjectModel = apps.get_model('project', model)
+    if not request.user.has_perm('project.change_' + ProjectModel._meta.model_name):
+        return redirect(reverse('accounts:index'))
     FormClass = GetDataCreateForm(ProjectModel, False)
-    data = ProjectModel.objects.get(id=id)
+    data = ProjectModel.objects.get(id=pk)
     form = FormClass(instance=data, auto_id='%s')
     if request.method == 'POST':
-        form = FormClass(request.POST, auto_id='%s')
+        form = FormClass(request.POST, instance=data, auto_id='%s')
         if form.is_valid():
             pre_dict = object_to_dict(data)
-            data.__dict__.update(**form.cleaned_data)
-            data.box = form.cleaned_data['box']
+            data = form.save(commit=False)
+            data.id = pk
             data.save()
             log_addition(request.user, 'project', model, data.id, '2', object_to_dict(data), pre_dict)
             messages.info(request, '已成功更新資料')
             return redirect(reverse('project:view_project_table', kwargs={'model': model}))
         else:
+            field_tags = utils.getlabels('project', model)
             for key in form.errors:
                 for error in form.errors[key]:
-                    messages.error(request, '%s: %s' % (key, error))
+                    try:
+                        messages.error(request, '%s: %s' % (field_tags[key], error))
+                    except KeyError:
+                        messages.error(request, '此資料已存在')
     form.fields['box'].widget.attrs['disabled'] = True
     return render(request, 'project/change_data.html', locals())
 
 @login_required
-def view_specific_data(request, model, serial_number):
-    try:
-        contenttype = ContentType.objects.get(app_label='project', model=model)
-    except ContentType.DoesNotExist:
-        return HttpResponseRedirect('/project/view_project')
-    if not request.user.has_perm('project.view_' + model):
-        return HttpResponseRedirect('/project/view_project')
-    Project_table = apps.get_model('project', model)
-    available_boxes = ProjectBox(model).values_list('serial_number', flat=True)
-    if serial_number not in available_boxes:
-        return redirect(reverse('project:view_project_table', kwargs={'model': model}))
-    # 不顯示ID
-    field_names = [field.name for field in Project_table._meta.fields if field.name != 'id']
-    codes = Code.objects.filter(content_type=contenttype)
-    data_list = Project_table.objects.filter(box__serial_number=serial_number)
-    if not data_list:
-        FormClass = GetDataCreateForm(Project_table)
-        form = FormClass(instance=Project_table(), initial={'box': Box.objects.get(serial_number=serial_number)})
+def view_specific_data(request, model, pk):
+    ProjectModel = apps.get_model('project', model)
+    if not request.user.has_perm('project.view_' + ProjectModel._meta.model_name):
+        return redirect(reverse('accounts:index'))
+    field_tags = utils.getlabels('project', model)
+    field_names = [field.name for field in ProjectModel._meta.fields if field.name != 'id']
+    data = ProjectModel.objects.filter(box_id=pk).first()
+    if not data:
+        FormClass = GetDataCreateForm(ProjectModel)
+        form = FormClass(instance=ProjectModel(), initial={'box': Box.objects.get(id=pk)})
         return render(request, 'project/add_data.html', locals())
-    else:
-        data = data_list[0]
     return render(request, 'project/view_specific_data.html', locals())
 
 @login_required
 def add_multiple(request, model):
-    if not request.user.has_perm('project.add_' + model):
-        return HttpResponseRedirect('/project/view_project')
     ProjectModel = apps.get_model('project', model)
-    FormClass = GetDataCreateForm(ProjectModel, False)
+    if not request.user.has_perm('project.add_' + ProjectModel._meta.model_name):
+        return redirect(reverse('accounts:index'))
+    FormClass = GetDataCreateForm(ProjectModel)
     form = FormClass(auto_id='%s', instance=ProjectModel())
     # update box options (exclude false)
     AddMultiple = utils.AddMultiple(request=request, form=form)
@@ -166,25 +152,20 @@ def add_multiple(request, model):
                             data.full_clean()
                         except ValidationError as err:
                             for key in err.message_dict:
-                                errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                try:
+                                    errors.append('%s: %s (第%d行)' % (label_dict[key], ';'.join(err.message_dict[key]), idx+1))
+                                except KeyError:
+                                    errors.append('此資料已存在 (第%d行)' % (idx+1))
                         data_list.append(data)
                     except Box.DoesNotExist:
                         errors.append('%s: 此欄位必填 (第%d行)' % (label_dict['box'], idx+1))
             if not errors:
                 # 全部對才存
                 for data in data_list:
-                    exist_data = ProjectModel.objects.filter(box=data.box).first()
-                    if not exist_data:
-                        action_flag = '1'
-                        pre_dict = {}
-                    else:
-                        action_flag = '2'
-                        pre_dict = object_to_dict(exist_data)
-                        data.id = exist_data.id
                     data.save()
-                    log_addition(request.user, 'project', model, data.id, action_flag, object_to_dict(data), pre_dict)
+                    log_addition(request.user, 'project', model, data.id, '1', object_to_dict(data), {})
                 response['response'] = True
-                response['messages'].append('已成功新增/更新資料')
+                response['messages'].append('已成功新增資料')
             else:
                 response['messages'].extend(errors)
         return JsonResponse(response)

@@ -40,8 +40,8 @@
                                 <tr>
                                     <th width="15%">紀錄&nbsp;<button type="button" class="btn btn-link" onclick="RefreshTD('experiment', {{ order.id }})"><i class="fas fa-redo"></i></button></th>
                                     <td id="td_experiment" style="word-wrap:break-word;">
-                                        {% for serial_number in experiment_list %}
-                                        <a href="{{ url('experiment:view_specific_experiment', args=[serial_number]) }}">{{ serial_number }}</a>{% if not loop.last %};{% endif %}
+                                        {% for box in experiment_list %}
+                                        <a href="{{ url('experiment:view_specific_experiment', args=[box.id]) }}">{{ box.serial_number }}</a>{% if not loop.last %};{% endif %}
                                         {% endfor %}
                                     </td>
                                     <td width="15%">
@@ -110,7 +110,7 @@
     function RefreshTD(Obj, id){               
         $.ajax({
             type: 'GET',
-            url: '/contract/update_element/' + Obj+'/'+id,
+            url: '/contract/get/' + Obj+'/'+id,
             success: function(data) {                             
                 var str = '';
                 var list = new Array()
