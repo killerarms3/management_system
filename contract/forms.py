@@ -210,6 +210,7 @@ class SpecifyExaminerCreateForm(forms.ModelForm):
         fields = ('customer',) # 因指定了box所以不顯示
 
 class BoxUpdateForm(forms.Form):
+    user = CustomUserModelChoiceField(label='負責人', queryset=User.objects.exclude(username='admin'), required=False)
     order = forms.ModelChoiceField(label='訂單', queryset=Order.objects.all(), required=True)
     plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
     failed_reason = forms.ModelChoiceField(label='失敗原因', queryset=Failed_reason.objects.all(), required=False)
@@ -245,9 +246,10 @@ class BoxUpdateForm(forms.Form):
             attrs={
                 'class':'form-control',
             }),
-        required = True
+        required=False
     )
     fields = (
+        'user',
         'order',
         'plan',
         'failed_reason',
@@ -310,24 +312,35 @@ class SpecifyReceiptCreateForm(ReceiptUpdateForm):
         fields = ('receipt_date', 'receipt_number', 'receipt_amount', 'payment_date', 'payment_method', 'memo',) # 因指定了contract所以不顯示
 
 class MultipleBoxCreateForm(forms.ModelForm):
+    user = CustomUserModelChoiceField(label='負責人', queryset=User.objects.exclude(username='admin'), required=False)
+    order = forms.ModelChoiceField(label='訂單', queryset=Order.objects.all(), required=True)
+    plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
     quantity = forms.IntegerField(
         label='* 採樣盒數量',
         widget=forms.NumberInput(
             attrs={
                 'class': 'form-control',
                 'min': '1',
-                'max': '100',
+                'max': '500',
             }),
         required=True
         )
+    tracing_number = forms.CharField(
+        label='宅配單號',
+        widget=forms.TextInput(
+            attrs={
+                'class':'form-control',
+            }),
+        required=False
+    )
     class Meta:
-        model= Box
-        fields = ('quantity', 'order', 'plan', 'tracing_number',)
+        model = Box
+        fields = ('user', 'quantity', 'order', 'plan', 'tracing_number')
 
 class SpecifyBoxCreateForm(MultipleBoxCreateForm):
     class Meta:
         model = Box
-        fields = ('quantity', 'plan', 'tracing_number',) # 因指定了order所以不顯示
+        fields = ('user', 'quantity', 'plan', 'tracing_number') # 因指定了order所以不顯示
 
 class MultipleSerialNumberCreateForm(forms.Form):
     sub_plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required=True)
@@ -342,9 +355,9 @@ class MultipleSerialNumberCreateForm(forms.Form):
         required=True
         )
 
-class BoxMultiCreateForm(forms.ModelForm):
+class TracingNumberMultiUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        super(BoxMultiCreateForm, self).__init__(*args, **kwargs)
+        super(TracingNumberMultiUpdateForm, self).__init__(*args, **kwargs)
         # if not self.instance.id:
         #     pass
 
