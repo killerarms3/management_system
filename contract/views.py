@@ -16,7 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from .forms import (DestroyedCreateForm, DestroyedUpdateForm, FailedCreateForm, BoxUpdateForm, SpecifyFailedCreateForm,
                     SpecifyDestroyedCreateForm, ExaminerCreateForm, SpecifyExaminerCreateForm, OrderUpdateForm, OrderCreateForm,
                     ContractCreateForm, ContractUpdateForm, ReceiptUpdateForm, SpecifyReceiptCreateForm, SpecifyOrderCreateForm,
-                    SpecifyBoxCreateForm, ReceiptCreateForm, MultipleBoxCreateForm, MultipleSerialNumberCreateForm, BoxMultiCreateForm)
+                    SpecifyBoxCreateForm, ReceiptCreateForm, MultipleBoxCreateForm, MultipleSerialNumberCreateForm, TracingNumberMultiUpdateForm)
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from lib import utils
@@ -966,7 +966,7 @@ def update_element(reuqest, model, pk):
     return JsonResponse({'objects': objects})
 
 def add_multi_tracing_number(request):
-    form = BoxMultiCreateForm(auto_id='%s')
+    form = TracingNumberMultiUpdateForm(auto_id='%s')
     AddMultiple = utils.AddMultiple(request=request, form=form)
     AddMultipleView = AddMultiple.AddMultipleView(header='新增多筆採樣盒宅配單號', view_url=reverse('contract:box-list'), add_multiple_url=reverse('contract:add_multiple_number'))
     if request.method == 'POST':
