@@ -75,6 +75,37 @@ class ContractListView(PermissionRequiredMixin, generic.ListView):
         context['dict'] = dict
         return context
 
+@login_required
+@permission_required('contract.view_contract', raise_exception=True)
+def view_contract(request):
+    if request.GET:
+        upload_file_dict = {}
+        Upload_File = apps.get_model('contract', 'Upload_File')
+        upload_file = Upload_File.objects.filter(content_type=ContentType.objects.get(app_label='contract', model='contract'))
+        for file in upload_file:
+            upload_file_dict[file.object_id] = file.file_upload
+        columns = ['id', 'id', 'id', 'contract_name', 'customer', 'user', 'contract_date', 'organization.all()', 'id', 'id', 'memo']
+        contracts = Contract.objects.all().order_by('-pk')
+        Data = dict()
+        for idx, contract in enumerate(contracts):
+            Data[contract.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:contract_edit', args=[contract.id])) if request.user.has_perm('contract.change_contract') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (reverse('contract:contract_delete', args=[contract.id]), reverse('contract:contract_delete', args=[contract.id]), '<i class="fas fa-trash"></i>') if request.user.has_perm('contract.delete_contract') else '',
+                '<a href="%s"><i class="fas fa-file-pdf"></i></a>' % (upload_file_dict[contract.id].url) if contract.id in upload_file_dict else '<a href="%s"><i class="fas fa-upload"></i></a>' % (reverse('contract:upload_file', args=[contract.id])),
+                str(contract.contract_name),
+                str(contract.customer),
+                str(contract.user),
+                str(contract.contract_date),
+                ';'.join([str(organization) for organization in contract.organization.all()]) if contract.organization.all() else 'None',
+                '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-order-list', args=[contract.id])) if contract.order_set.all() else 'None',
+                '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-receipt-list', args=[contract.id])) if contract.receipt_set.all() else 'None',
+                str(contract.memo)
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, contracts, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/contract_list.html', locals())
+
 class ContractCreate(PermissionRequiredMixin, CreateView_add_log):
     permission_required = 'contract.add_contract'
     model = Contract
@@ -162,6 +193,31 @@ class OrderListView(PermissionRequiredMixin, generic.ListView):
         context['order_quantity'] = order_quantity
         context['box'] = box
         return context
+
+@login_required
+@permission_required('contract.view_order', raise_exception=True)
+def view_order(request):
+    ajax_url = reverse('contract:order-list')
+    if request.GET:
+        columns = ['id', 'id', '__str__', 'contract', 'contract.customer', 'order_date', 'plan.all()', 'id', 'memo']
+        orders = Order.objects.all().order_by('-pk')
+        Data = dict()
+        for idx, order in enumerate(orders):
+            Data[order.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:order_edit', args=[order.id])) if request.user.has_perm('contract.change_order') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (reverse('contract:order_delete', args=[order.id]), reverse('contract:order_delete', args=[order.id]), '<i class="fas fa-trash"></i>') if request.user.has_perm('contract.delete_order') else '',
+                '<a href="%s">%s</a>' % (order.get_absolute_url(), order),
+                str(order.contract),
+                str(order.contract.customer),
+                str(order.order_date),
+                ';'.join(['<a href="">%s</a>(%s)' % (plan, Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in order.plan.all()]) if order.plan.all() else 'None',
+                '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-box-list', args=[order.id])) if Box.objects.filter(order=order) else 'None',
+                str(order.memo)
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, orders, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/order_list.html', locals())
 
 class OrderUpdateView(PermissionRequiredMixin, UpdateView_add_log):
     permission_required = 'contract.change_order'
@@ -261,9 +317,63 @@ class OrderbyContractListView(OrderListView):
         order = Order.objects.filter(contract=contract)
         return order
 
+@login_required
+@permission_required('contract.view_order', raise_exception=True)
+def orderbycontractlistview(request, pk):
+    ajax_url = reverse('contract:partial-order-list', args=[pk])
+    if request.GET:
+        columns = ['id', 'id', '__str__', 'contract', 'contract.customer', 'order_date', 'plan.all()', 'id', 'memo']
+        contract = Contract.objects.get(pk=pk)
+        orders = Order.objects.filter(contract=contract).order_by('-pk')
+        Data = dict()
+        for idx, order in enumerate(orders):
+            Data[order.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:order_edit', args=[order.id])) if request.user.has_perm('contract.change_order') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (reverse('contract:order_delete', args=[order.id]), reverse('contract:order_delete', args=[order.id]), '<i class="fas fa-trash"></i>') if request.user.has_perm('contract.delete_order') else '',
+                '<a href="%s">%s</a>' % (order.get_absolute_url(), order),
+                str(order.contract),
+                str(order.contract.customer),
+                str(order.order_date),
+                ';'.join(['<a href="">%s</a>(%s)' % (plan, Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in order.plan.all()]) if order.plan.all() else 'None',
+                '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-box-list', args=[order.id])) if Box.objects.filter(order=order) else 'None',
+                str(order.memo)
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, orders, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/order_list.html', locals())
+
 class ReceiptListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.view_receipt'
     model = Receipt
+
+@login_required
+@permission_required('contract.view_receipt', raise_exception=True)
+def view_receipt(request):
+    ajax_url = reverse('contract:receipt-list')
+    if request.GET:
+        columns = ['id', 'id', '__str__', 'contract', 'receipt_date', 'receipt_amount', 'payment_date', 'receipt_org', 'payment_method', 'receipt_content', 'memo']
+        receipts = Receipt.objects.all().order_by('-pk')
+        Data = dict()
+        for idx, receipt in enumerate(receipts):
+            Data[receipt.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:receipt_edit', args=[receipt.id])) if request.user.has_perm('contract.change_receipt') else '',
+                '<a href="%s"><i class="fas fa-trash"></i></a>' % (reverse('contract:receipt_delete', args=[receipt.id])) if request.user.has_perm('contract.delete_receipt') else '',
+                '<a href="%s">%s</a>' % (receipt.get_absolute_url(), receipt),
+                str(receipt.contract),
+                str(receipt.receipt_date),
+                str(receipt.receipt_amount),
+                str(receipt.payment_date),
+                str(receipt.receipt_org),
+                str(receipt.payment_method),
+                str(receipt.receipt_content),
+                str(receipt.memo)
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, receipts, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/receipt_list.html', locals())
+
 
 class ReceiptbyContract(ReceiptListView):
     def get_queryset(self):
@@ -271,6 +381,34 @@ class ReceiptbyContract(ReceiptListView):
         contract = contracts.objects.get(pk=self.kwargs.get('pk'))
         receipt = Receipt.objects.filter(contract=contract)
         return receipt
+
+@login_required
+@permission_required('contract.view_receipt', raise_exception=True)
+def receiptbycontract(request, pk):
+    ajax_url = reverse('contract:partial-receipt-list', args=[pk])
+    if request.GET:
+        columns = ['id', 'id', '__str__', 'contract', 'receipt_date', 'receipt_amount', 'payment_date', 'receipt_org', 'payment_method', 'receipt_content', 'memo']
+        contract = Contract.objects.get(pk=pk)
+        receipts = Receipt.objects.filter(contract=contract).order_by('-pk')
+        Data = dict()
+        for idx, receipt in enumerate(receipts):
+            Data[receipt.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:receipt_edit', args=[receipt.id])) if request.user.has_perm('contract.change_receipt') else '',
+                '<a href="%s"><i class="fas fa-trash"></i></a>' % (reverse('contract:receipt_delete', args=[receipt.id])) if request.user.has_perm('contract.delete_receipt') else '',
+                '<a href="%s">%s</a>' % (receipt.get_absolute_url(), receipt),
+                str(receipt.contract),
+                str(receipt.receipt_date),
+                str(receipt.receipt_amount),
+                str(receipt.payment_date),
+                str(receipt.receipt_org),
+                str(receipt.payment_method),
+                str(receipt.receipt_content),
+                str(receipt.memo)
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, receipts, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/receipt_list.html', locals())
 
 class ReceiptDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'contract.view_receipt'
@@ -373,6 +511,36 @@ class BoxListView(PermissionRequiredMixin, generic.ListView):
             context['project'].append(Obj)
         return context
 
+@login_required
+@permission_required('contract.view_box', raise_exception=True)
+def view_box(request):
+    ajax_url = reverse('contract:box-list')
+    if request.GET:
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        boxes = Box.objects.all().order_by('-pk')
+        Data = dict()
+        for idx, box in enumerate(boxes):
+            Data[box.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:box_edit', args=[box.id])) if request.user.has_perm('contract.change_box') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-trash"></i></a>' % (reverse('contract:box_delete', args=[box.id]), reverse('contract:box_delete', args=[box.id])) if request.user.has_perm('contract.delete_box') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse("contract:box-detail", args=[box.id]), reverse("contract:box-detail", args=[box.id]), box.serial_number),
+                str(box.order),
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('product:view_product_plan', args=[box.plan.id]), reverse('product:view_product_plan', args=[box.plan.id]), box.plan) if request.user.has_perm('product.view_plan') else '',
+                str(box.order.contract.user.userprofile.nick_name),
+                '<a href="%s">%s</a>' % (Examiner.objects.get(box=box).customer.get_absolute_url(), Examiner.objects.get(box=box).customer) if request.user.has_perm('customer.view_customer') and Examiner.objects.filter(box=box) else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), utils.get_status(box.id)) if request.user.has_perm('experiment.view_experiment') and Experiment.objects.filter(box=box) else utils.get_status(box.id),
+                str(box.tracing_number),
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-list-alt"></i></a>' % (box.get_project().get_absolute_url(), box.get_project().get_absolute_url()) if box.get_project() else '',
+                '失敗' if Failed.objects.filter(box=box) else '-',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Failed.objects.get(box=box).failed_reason.get_absolute_url(), Failed.objects.get(box=box).failed_reason.get_absolute_url(), Failed.objects.get(box=box).failed_reason) if Failed.objects.filter(box=box) else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Destroyed.objects.get(box=box).get_absolute_url(), Destroyed.objects.get(box=box).get_absolute_url(), box.get_destroyed()) if request.user.has_perm('contract.view_destroyed') and Destroyed.objects.filter(box=box) else ''
+            ]
+
+        DataTablesServer = utils.DataTablesServer(request, columns, boxes, data=Data)
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/box_list.html', locals())
+
 class BoxDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = 'contract.delete_box'
     model = Box
@@ -444,6 +612,36 @@ class BoxbyOrderListView(BoxListView):
         order = orders.objects.get(pk=self.kwargs.get('pk'))
         box = Box.objects.filter(order=order)
         return box
+
+@login_required
+@permission_required('contract.view_box', raise_exception=True)
+def boxbyorderlistview(request, pk):
+    ajax_url = reverse('contract:partial-box-list', args=[pk])
+    if request.GET:
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        order = Order.objects.get(pk=pk)
+        boxes = Box.objects.filter(order=order).order_by('-pk')
+        Data = dict()
+        for idx, box in enumerate(boxes):
+            Data[box.id] = [
+                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:box_edit', args=[box.id])) if request.user.has_perm('contract.change_box') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-trash"></i></a>' % (reverse('contract:box_delete', args=[box.id]), reverse('contract:box_delete', args=[box.id])) if request.user.has_perm('contract.delete_box') else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (box.get_absolute_url(), box.get_absolute_url(), box.serial_number),
+                str(box.order),
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (box.plan.get_absolute_url(), box.plan.get_absolute_url(), box.plan) if request.user.has_perm('product.view_plan') else '',
+                str(box.order.contract.user.userprofile.nick_name),
+                '<a href="%s">%s</a>' % (box.get_examiner().get_absolute_url(), box.get_examiner()) if request.user.has_perm('customer.view_customer') and box.get_examiner() else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), utils.get_status(box.id)) if request.user.has_perm('experiment.view_experiment') and Experiment.objects.filter(box=box) else utils.get_status(box.id),
+                str(box.tracing_number),
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-list-alt"></i></a>' % (box.get_project().get_absolute_url(), box.get_project().get_absolute_url()) if box.get_project() else '',
+                str(box.get_failed()),
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Failed.objects.get(box=box).failed_reason.get_absolute_url(), Failed.objects.get(box=box).failed_reason.get_absolute_url(), Failed.objects.get(box=box).failed_reason) if Failed.objects.filter(box=box) else '',
+                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Destroyed.objects.get(box=box).get_absolute_url(), Destroyed.objects.get(box=box).get_absolute_url(), box.get_destroyed()) if request.user.has_perm('contract.view_destroyed') and Destroyed.objects.filter(box=box) else ''
+            ]
+        DataTablesServer = utils.DataTablesServer(request, columns, Box.objects.filter(order=order).order_by('-pk'))
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/box_list.html', locals())
 
 class FailedListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'contract.view_failed'
