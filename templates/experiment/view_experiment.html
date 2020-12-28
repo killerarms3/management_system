@@ -31,22 +31,7 @@
                         <th>失敗註記</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for serial_number in experiment_records %}
-                    <tr>
-                        <td class="details-control"></td>
-                        <td><a href="{{ experiment_records[serial_number]['record'][0]['change_experiment'] }}"><i class="fas fa-edit"></i></a></td>
-                        <td>{{ serial_number }}</td>
-                        <td>{{ experiment_records[serial_number]['record'][0]['organization'] }}</td>
-                        <td>{{ experiment_records[serial_number]['record'][0]['receiving_date'] }}</td>
-                        <td>{{ experiment_records[serial_number]['record'][0]['complete_date'] }}</td>
-                        <td>{{ experiment_records[serial_number]['record'][0]['data_transfer_date'] }}</td>
-                        <td>{{ experiment_records[serial_number]['record'][0]['transfer_organization'] }}</td>
-                        <td>{{ experiment_records[serial_number]['status'] }}</td>
-                        <td>{% if experiment_records[serial_number]['record'][0]['failed_id'] %}<a href="{{ url('contract:failed_edit', args=[experiment_records[serial_number]['record'][0]['failed_id']]) }}" target="popup" onclick="window.open('{{ url('contract:failed_edit', args=[experiment_records[serial_number]['record'][0]['failed_id']]) }}', 'popup', 'width=800', height='600'); return false">Failed</a>{% else %}<a href="{{ url('contract:add_specify_failed', args=[experiment_records[serial_number]['record'][0]['box_id']]) }}" target="popup" onclick="window.open('{{ url('contract:add_specify_failed', args=[experiment_records[serial_number]['record'][0]['box_id']]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-plus"></i></a>{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+
             </table>
             <h4 class="custom_text">多筆編號查詢</h4>
             <textarea class="form-control" row="3" id="query"></textarea>
@@ -95,6 +80,14 @@
             exportOptions: {
                 rows: 'visible'
             },
+            'columnDefs': [
+                { className: "details-control", "targets": [0] }
+            ],
+            processing: true,
+            serverSide: true,
+            ajax: {
+                'url': '{{ ajax_url }}',
+            }
 		});
         $('#query').on('keyup change', function () {
             var querys = this.value.split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);

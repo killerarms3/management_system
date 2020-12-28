@@ -38,77 +38,6 @@
                             <th>銷毀註記</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for box in object_list|reverse %}
-                        <tr>
-                            {% if perms.contract.change_box %}
-                                <td><a href="{{ url('contract:box_edit', args=[box.id]) }}"><i class="fas fa-edit"></i></a></td>
-                            {% endif %}
-                            {% if perms.contract.delete_box %}
-                                <td><a href="{{ url('contract:box_delete', args=[box.id]) }}" target="popup" onclick="window.open('{{ url('contract:box_delete', args=[box.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                            {% else %}
-                                <td></td>
-                            {% endif %}
-                            {% if perms.contract.view_box %}
-                                <td><a href="{{ box.get_absolute_url() }}" target="popup" onclick="window.open('{{ box.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ box.serial_number }}</a></td>
-                            {% endif %}
-                                <td>{{ box.order }}</td>
-                            {% if perms.product.view_plan %}
-                                <td><a href="">{{ box.plan }}</a></td>
-                            {% else %}
-                                <td>{{ box.plan }}</td>
-                            {% endif %}
-                            <td>{{ box.order.contract.user.userprofile.nick_name }}</td>
-                            {% if examiner.objects.filter(box=box) %}
-                                <td><a href="">{{ examiner.objects.get(box=box).customer }}</a></td>
-                            {% else %}
-                                <td></td>
-                            {% endif %}
-                            <td>
-                            {% if experiment.objects.filter(box=box) and perms.experiment.view_experiment %}
-                                <a href="{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}" target="popup" onclick="window.open('{{ experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                {{ get_status(box.id) }}
-                                </a>
-                            {% else %}
-                            {{ get_status(box.id) }}
-                            {% endif %}
-                            </td>
-                            <td>{{ box.tracing_number }}</td>
-                            <td>
-                                {% for obj in project %}
-                                {% if obj.objects.filter(box=box) %}
-                                <a href="{{ obj.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ obj.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">{{ obj.__name__ }}</a>
-                                {% endif %}
-                                {% endfor %}
-                            </td>
-                            {% if failed.objects.filter(box=box) %}
-                                <td>失敗</td>
-                                <td>
-                                <a href="{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}" target="popup" onclick="window.open('{{ failed.objects.get(box=box).failed_reason.get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                {{ failed.objects.get(box=box).failed_reason }}
-                                </td>
-                            {% else %}
-                                <td>-</td>
-                                <td></td>
-                            {% endif %}
-                            <td>
-                            {% if destroyed.objects.filter(box=box) %}
-                                {% if perms.contract.view_destroyed %}
-                                    <a href="{{ destroyed.objects.get(box=box).get_absolute_url() }}" target="popup" onclick="window.open('{{ destroyed.objects.get(box=box).get_absolute_url() }}', 'popup', 'width=800', height='600'); return false">
-                                {% endif %}
-                                {% if destroyed.objects.get(box=box).is_sample_destroyed %}
-                                    已被銷毀
-                                {% else %}
-                                    等待銷毀
-                                {% endif %}
-                                {% if perms.contract.view_destroyed %}
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                            </td>
-                            <tr>
-                        {% endfor %}
-                    </tbody>
                 </table>
                 <h4 class="custom_text">多筆查詢</h4>
                 <select id="multiquery"></select>
@@ -157,6 +86,11 @@
             exportOptions: {
 				rows: 'visible'
 			},
+            processing: true,
+            serverSide: true,
+            ajax: {
+                'url': '{{ ajax_url }}',
+            }
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);

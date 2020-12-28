@@ -12,7 +12,7 @@ from django.apps import apps
 # Create your models here.
 class Contract(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='* 負責人')
-    contract_name = models.CharField(max_length=12, unique=True, default='', verbose_name='* 合約名稱/代號')
+    contract_name = models.CharField(max_length=24, unique=True, default='', verbose_name='* 合約名稱/代號')
     contract_date = models.DateField(verbose_name='* 簽約日期')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='* 客戶/聯絡人')
     organization = models.ManyToManyField(Organization, verbose_name='* 機構/單位')
@@ -94,12 +94,12 @@ class Box(models.Model):
             self.clean_fields()
         except ValidationError as err:
             errors.update(err.message_dict)
-        prefix_check = self.serial_number[:3]        
-        number_format_check = self.serial_number[3:]        
-        prefix_list = Product.objects.all().values_list('prefix', flat=True)        
+        prefix_check = self.serial_number[:3]
+        number_format_check = self.serial_number[3:]
+        prefix_list = Product.objects.all().values_list('prefix', flat=True)
         if prefix_check not in prefix_list:
-            if 'prefix' not in errors:                
-                errors['prefix'] = list()            
+            if 'prefix' not in errors:
+                errors['prefix'] = list()
             errors['prefix'].append('該產品不存在或前綴詞有誤。')
         if len(number_format_check) != serial_number_numeral_length:
             if 'numeral_length' not in errors:
@@ -112,6 +112,28 @@ class Box(models.Model):
 
     def get_absolute_url(self):
         return reverse("contract:box-detail", args=[str(self.pk)])
+
+    def get_examiner(self):
+        return Examiner.objects.get(box__id=self.pk).customer if Examiner.objects.filter(box__id=self.pk) else ''
+
+    def get_failed(self):
+        return '失敗' if Failed.objects.filter(box__id=self.pk) else '-'
+
+    def get_failed_reason(self):
+        return Failed.objects.get(box__id=self.pk).failed_reason if Failed.objects.filter(box__id=self.pk) else ''
+
+    def get_destroyed(self):
+        if Destroyed.objects.filter(box__id=self.pk):
+            return '已被銷毀' if Destroyed.objects.get(box__id=self.pk).is_sample_destroyed else '等待銷毀'
+        else:
+            return ''
+
+    def get_project(self):
+        project = ''
+        for Obj in apps.get_app_config('project').get_models():
+            if Obj.objects.filter(box__id=self.pk):
+                project = Obj.objects.get(box__id=self.pk)
+        return project
 
 class Failed(models.Model):
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='* 採樣盒')

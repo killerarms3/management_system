@@ -30,7 +30,7 @@
                         <th>通訊地址</th>
                     </tr>
                 </thead>
-                <tbody>
+                <!-- <tbody>
                     {% for customer in customers %}
                     <tr>
                         <td>{% if perms.customer.change_customer %}<a href="{{ url('customer:change_customer', args=[customer.id]) }}"><i class="fas fa-edit"></i></a>{% endif %}</td>
@@ -44,7 +44,7 @@
                         <td>{{ customer.address }}</td>
                     </tr>
                     {% endfor %}
-                </tbody>
+                </tbody> -->
             </table>
             <h4 class="custom_text">多筆查詢</h4>
             <select id="multiquery"></select>
@@ -96,6 +96,11 @@
 			exportOptions: {
 				rows: 'visible'
             },
+            processing: true,
+            serverSide: true,
+            ajax: {
+                'url': '/customer/customer',
+            }
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);
