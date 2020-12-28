@@ -404,18 +404,27 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
         new_serial_number_list = []
         plan = form.cleaned_data['plan']
         prefix = plan.product.prefix
+        num = len(prefix)
+        max_number = 0
         quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
         box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+        # 上述為找出含有目標prefix的serial number，並由大至小排列，但是今若有MRT、MRTF，兩種prefix
+        # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
         if box_serial_number_list:
-            max_serial_number = box_serial_number_list[0][0]
-        else:
-            max_serial_number = prefix+'000000'
-        num = len(prefix)
-        max_number = int(max_serial_number[num:])
+            for box_serial_number in box_serial_number_list:
+                total_length = len(box_serial_number)
+                if (total_length - num) == 6:
+                    temp_number = int(box_serial_number[num:])
+                    if temp_number > max_number:
+                        max_number = temp_number
+        else:            
+            max_number = 0
+
         for i in range(quantity):
             new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 創造新增的box的serial number，數字會補齊六位
         for list in new_serial_number_list:
             Box.objects.create(
+                user = form.cleaned_data['user'],
                 serial_number = list,
                 plan = form.cleaned_data['plan'],
                 order = form.cleaned_data['order'],
@@ -425,7 +434,7 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
             box_new =  Box.objects.all().order_by('-id').first()
             log_addition(self.request.user, 'contract', 'box', box_new.id, '1', object_to_dict(box_new), {})
             # --------- history --------
-        return HttpResponseRedirect('/contract/box/box_list')
+        return HttpResponseRedirect('/contract/box')
 
 class BoxbyOrderListView(BoxListView):
     model = Box
@@ -807,14 +816,22 @@ def AddSpecifyOrdertoBox(request, pk):
             new_serial_number_list = []
             plan = form.cleaned_data['plan']
             prefix = plan.product.prefix
+            num = len(prefix)
+            max_number = 0
             quantity = form.cleaned_data['quantity'] # 判斷需要新增幾個box
             box_serial_number_list = Box.objects.filter(serial_number__icontains=prefix).values_list('serial_number').order_by('-serial_number') # 根據serial number大到小排列
+            # 上述為找出含有目標prefix的serial number，並由大至小排列，但是今若有MRT、MRTF，兩種prefix
+            # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
             if box_serial_number_list:
-                max_serial_number = box_serial_number_list[0][0]
-            else:
-                max_serial_number = prefix+'000000'
-            num = len(prefix)
-            max_number = int(max_serial_number[num:])
+                for box_serial_number in box_serial_number_list:
+                    total_length = len(box_serial_number)
+                    if (total_length - num) == 6:
+                        temp_number = int(box_serial_number[num:])
+                        if temp_number > max_number:
+                            max_number = temp_number
+            else:            
+                max_number = 0
+            
             for i in range(quantity):
                 new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6))
             for list in new_serial_number_list:

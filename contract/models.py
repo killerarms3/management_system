@@ -82,30 +82,37 @@ class Failed_reason(models.Model):
         return reverse("contract:failed_reason-detail", args=[str(self.pk)])
 
 class Box(models.Model):
-    serial_number = models.CharField(max_length=250, unique=True, verbose_name='* 流水號') # serial number可重複因為有可能失敗後重新寄送
+    serial_number = models.CharField(max_length=250, blank=True, unique=True, verbose_name='* 流水號') # serial number可重複因為有可能失敗後重新寄送
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='* 訂單')
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, verbose_name='* 方案')
     tracing_number = models.CharField(max_length=64, blank=True, null=True, verbose_name='宅配單號')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, verbose_name='負責人')
 
     def clean(self):
+        num = -6 # 流水號數字部分長度加上負號
         errors = dict()
-        serial_number_numeral_length = 6
+        serial_number_numeral_length = 6 # 流水號數字部分長度
         try:
             self.clean_fields()
         except ValidationError as err:
             errors.update(err.message_dict)
-        prefix_check = self.serial_number[:3]        
-        number_format_check = self.serial_number[3:]        
-        prefix_list = Product.objects.all().values_list('prefix', flat=True)        
-        if prefix_check not in prefix_list:
-            if 'prefix' not in errors:                
-                errors['prefix'] = list()            
-            errors['prefix'].append('該產品不存在或前綴詞有誤。')
-        if len(number_format_check) != serial_number_numeral_length:
-            if 'numeral_length' not in errors:
-                errors['numeral_length'] = list()
-            errors['numeral_length'].append('流水編號長度有誤。')
-        raise ValidationError(errors)
+        if not self.serial_number: 
+            # clean的檢查會導致一般新增時因serial_number尚未update至self中，self.serial_number為空值所以會報錯
+            # 所以這個區塊為繞過這種情況而設，但有可能導致serial_number為空值的情況真正發生時無法檢出
+            raise ValidationError(errors)
+        else:
+            prefix_check = self.serial_number[:num] # prefix確認
+            number_format_check = self.serial_number[num:]
+            prefix_list = Product.objects.all().values_list('prefix', flat=True)
+            if prefix_check not in prefix_list:
+                if 'prefix' not in errors:
+                    errors['prefix'] = list()
+                errors['prefix'].append('該產品不存在或前綴詞有誤。')
+            if len(number_format_check) != serial_number_numeral_length:
+                if 'numeral_length' not in errors:
+                    errors['numeral_length'] = list()
+                errors['numeral_length'].append('流水編號長度有誤。')
+            raise ValidationError(errors)
 
     def __str__(self):
         return self.serial_number

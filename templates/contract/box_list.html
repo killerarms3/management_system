@@ -58,7 +58,7 @@
                             {% else %}
                                 <td>{{ box.plan }}</td>
                             {% endif %}
-                            <td>{{ box.order.contract.user.userprofile.nick_name }}</td>
+                            <td>{{ box.user }}</td>
                             {% if examiner.objects.filter(box=box) %}
                                 <td><a href="">{{ examiner.objects.get(box=box).customer }}</a></td>
                             {% else %}
@@ -106,7 +106,7 @@
                                 {% endif %}
                             {% endif %}
                             </td>
-                            <tr>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
