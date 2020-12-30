@@ -18,6 +18,7 @@ from experiment.forms import ExperimentCreateForm
 from lib import utils
 import json
 from decimal import Decimal
+from django.db.models import Count
 
 # Create your views here.
 @login_required
@@ -99,6 +100,24 @@ def add_multiple(request):
         return JsonResponse(response)
     return AddMultipleView
 
+def getExperimentData(request, queryset):
+    Data = dict()
+    for experiment in queryset:
+        Data[experiment.id] = [
+            '',
+            '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('experiment:change_experiment', args=[experiment.id])) if request.user.has_perm('experiment.change_experiment') else '',
+            str(experiment.box.serial_number),
+            '%s %s' % (experiment.organization.name, experiment.organization.department),
+            str(experiment.receiving_date) if experiment.receiving_date else '',
+            str(experiment.complete_date) if experiment.complete_date else '',
+            str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
+            '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
+            utils.get_status(experiment.box.id),
+            '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]),reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]), experiment.box.get_failed()) if Failed.objects.filter(box=experiment.box) else '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-plus"></i></a>' % (reverse('contract:add_specify_failed', args=[experiment.box.id]),reverse('contract:add_specify_failed', args=[experiment.box.id]))
+        ]
+    return Data
+
+
 @login_required
 @permission_required('experiment.view_experiment', raise_exception=True)
 @csrf_protect
@@ -106,16 +125,11 @@ def view_experiment(request):
     ajax_url = reverse('experiment:view_experiment')
     experiment_ids = list()
     experiment_records = dict()
-    for idx, experiment in enumerate(Experiment.objects.all().order_by('-box__id', '-receiving_date','-pk')):
+    for experiment in Experiment.objects.all().order_by('-box__id', '-receiving_date','-pk'):
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = {
-                'status': utils.get_status(experiment.box.id),
-                'record': list()
-            }
-            experiment_ids.append(experiment.box.id)
+            experiment_records[experiment.box.serial_number] = []
+            experiment_ids.append(experiment.id)
         record = {
-            'id': str(experiment.id),
-            'box_id': str(experiment.box.id),
             'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
@@ -123,30 +137,14 @@ def view_experiment(request):
             'complete_date': str(experiment.complete_date) if experiment.complete_date else '',
             'data_transfer_date': str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
             'transfer_organization': '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-            'failed_id': str(),
         }
-        faileds = Failed.objects.filter(box=experiment.box)
-        if faileds:
-            record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number]['record'].append(record)
+        experiment_records[experiment.box.serial_number].append(record)
     if request.GET:
         columns = ['id', 'id', 'box.serial_number', 'organization', 'receiving_date', 'complete_date', 'data_transfer_date', 'transfer_organization', 'id', 'box.get_failed()']
         experiments = Experiment.objects.filter(pk__in=experiment_ids).order_by('-box__id', '-receiving_date','-pk')
-        Data = dict()
-        for idx, experiment in enumerate(experiments):
-            Data[experiment.id] = [
-                '',
-                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('experiment:change_experiment', args=[experiment.id])) if request.user.has_perm('experiment.change_experiment') else '',
-                str(experiment.box.serial_number),
-                '%s %s' % (experiment.organization.name, experiment.organization.department),
-                str(experiment.receiving_date) if experiment.receiving_date else '',
-                str(experiment.complete_date) if experiment.complete_date else '',
-                str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
-                '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-                utils.get_status(experiment.box.id),
-                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]),reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]), experiment.box.get_failed()) if Failed.objects.filter(box=experiment.box) else '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-plus"></i></a>' % (reverse('contract:add_specify_failed', args=[experiment.box.id]),reverse('contract:add_specify_failed', args=[experiment.box.id]))
-            ]
-        DataTablesServer = utils.DataTablesServer(request, columns, experiments, data=Data)
+        DataTablesServer = utils.DataTablesServer(request, columns, experiments)
+        DataTablesServer.getData = getExperimentData
+        DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
         return JsonResponse(outputResult)
     return render(request, 'experiment/view_experiment.html', locals())
@@ -163,14 +161,9 @@ def view_specific_experiment(request, pk):
     experiment_records = dict()
     for experiment in Experiment.objects.filter(box=box).order_by('-box__id', '-receiving_date','-pk'):
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = {
-                'status': utils.get_status(experiment.box.id),
-                'record': list()
-            }
-            experiment_ids.append(experiment.box.id)
+            experiment_records[experiment.box.serial_number] = []
+            experiment_ids.append(experiment.id)
         record = {
-            'id': str(experiment.id),
-            'box_id': str(experiment.box.id),
             'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
@@ -178,30 +171,14 @@ def view_specific_experiment(request, pk):
             'complete_date': str(experiment.complete_date) if experiment.complete_date else '',
             'data_transfer_date': str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
             'transfer_organization': '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-            'failed_id': str()
         }
-        faileds = Failed.objects.filter(box=experiment.box)
-        if faileds:
-            record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number]['record'].append(record)
+        experiment_records[experiment.box.serial_number].append(record)
     if request.GET:
         columns = ['id', 'id', 'box.serial_number', 'organization', 'receiving_date', 'complete_date', 'data_transfer_date', 'transfer_organization', 'id', 'box.get_failed()']
         experiments = Experiment.objects.filter(pk__in=experiment_ids).order_by('-box__id', '-receiving_date','-pk')
-        Data = dict()
-        for idx, experiment in enumerate(experiments):
-            Data[experiment.id] = [
-                '',
-                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('experiment:change_experiment', args=[experiment.id])) if request.user.has_perm('experiment.change_experiment') else '',
-                str(experiment.box.serial_number),
-                '%s %s' % (experiment.organization.name, experiment.organization.department),
-                str(experiment.receiving_date) if experiment.receiving_date else '',
-                str(experiment.complete_date) if experiment.complete_date else '',
-                str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
-                '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-                utils.get_status(experiment.box.id),
-                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]),reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]), experiment.box.get_failed()) if Failed.objects.filter(box=experiment.box) else '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-plus"></i></a>' % (reverse('contract:add_specify_failed', args=[experiment.box.id]),reverse('contract:add_specify_failed', args=[experiment.box.id]))
-            ]
-        DataTablesServer = utils.DataTablesServer(request, columns, experiments, data=Data)
+        DataTablesServer = utils.DataTablesServer(request, columns, experiments)
+        DataTablesServer.getData = getExperimentData
+        DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
         return JsonResponse(outputResult)
     return render(request, 'experiment/view_experiment.html', locals())
@@ -219,13 +196,9 @@ def view_experiment_list(request, pk):
     boxes = Box.objects.filter(order=order)
     for experiment in Experiment.objects.filter(box_id__in=list(boxes.values_list(flat=True))).order_by('-box__id', '-receiving_date','-pk'):
         if experiment.box.serial_number not in experiment_records:
-            experiment_records[experiment.box.serial_number] = {
-                'status': utils.get_status(experiment.box.id),
-                'record': list()
-            }
+            experiment_records[experiment.box.serial_number] = []
+            experiment_ids.append(experiment.id)
         record = {
-            'id': str(experiment.id),
-            'box_id': str(experiment.box.id),
             'change_experiment':reverse('experiment:change_experiment', args=[experiment.id]),
             'serial_number': experiment.box.serial_number,
             'organization': '%s %s' % (experiment.organization.name, experiment.organization.department),
@@ -233,30 +206,14 @@ def view_experiment_list(request, pk):
             'complete_date': str(experiment.complete_date) if experiment.complete_date else '',
             'data_transfer_date': str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
             'transfer_organization': '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-            'failed_id': str()
         }
-        faileds = Failed.objects.filter(box=experiment.box)
-        if faileds:
-            record['failed_id'] = str(faileds[0].id)
-        experiment_records[experiment.box.serial_number]['record'].append(record)
+        experiment_records[experiment.box.serial_number].append(record)
     if request.GET:
         columns = ['id', 'id', 'box.serial_number', 'organization', 'receiving_date', 'complete_date', 'data_transfer_date', 'transfer_organization', 'id', 'box.get_failed()']
         experiments = Experiment.objects.filter(pk__in=experiment_ids).order_by('-box__id', '-receiving_date','-pk')
-        Data = dict()
-        for idx, experiment in enumerate(experiments):
-            Data[experiment.id] = [
-                '',
-                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('experiment:change_experiment', args=[experiment.id])) if request.user.has_perm('experiment.change_experiment') else '',
-                str(experiment.box.serial_number),
-                '%s %s' % (experiment.organization.name, experiment.organization.department),
-                str(experiment.receiving_date) if experiment.receiving_date else '',
-                str(experiment.complete_date) if experiment.complete_date else '',
-                str(experiment.data_transfer_date) if experiment.data_transfer_date else '',
-                '%s %s' % (experiment.transfer_organization.name, experiment.transfer_organization.department),
-                utils.get_status(experiment.box.id),
-                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]),reverse('contract:failed_edit', args=[experiment_records[experiment.box.serial_number]['record'][0]['failed_id']]), experiment.box.get_failed()) if Failed.objects.filter(box=experiment.box) else '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false"><i class="fas fa-plus"></i></a>' % (reverse('contract:add_specify_failed', args=[experiment.box.id]),reverse('contract:add_specify_failed', args=[experiment.box.id]))
-            ]
-        DataTablesServer = utils.DataTablesServer(request, columns, experiments, data=Data)
+        DataTablesServer = utils.DataTablesServer(request, columns, experiments)
+        DataTablesServer.getData = getExperimentData
+        DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
         return JsonResponse(outputResult)
     return render(request, 'experiment/view_experiment.html', locals())
