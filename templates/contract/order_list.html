@@ -22,7 +22,7 @@
                 <table id="order_table" class="display" style="width:100%">
                     <thead>
                         <tr>
-                            <th></th>                            
+                            <th></th>
                             <th></th>
                             <th>訂單編號</th>
                             <th>合約</th>
@@ -33,44 +33,6 @@
                             <th>備註</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for order in object_list|reverse %}
-                        <tr>
-                            {% if perms.contract.change_order %}
-                                <td><a href="{{ url('contract:order_edit', args=[order.id]) }}"><i class="fas fa-edit"></i></a></td>
-                            {% else %}
-                                <td></td>
-                            {% endif %}
-                            {% if perms.contract.delete_order %}
-                                <td><a href="{{ url('contract:order_delete', args=[order.id]) }}" target="popup" onclick="window.open('{{ url('contract:order_delete', args=[order.id]) }}', 'popup', 'width=800', height='600'); return false"><i class="fas fa-trash"></i></a></td>
-                            {% else %}
-                                <td></td>
-                            {% endif %}
-                            <td><a href="{{ order.get_absolute_url() }}">{{ order }}</a></td>
-                            <td>{{ order.contract }}</td>
-                            <td>{{ order.contract.customer }}</td>
-                            <td>{{ order.order_date }}</td>
-                            <td>
-                            {% for plan in order.plan.all() %}
-                                <a href="">{{ plan }}</a>({{ box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count() }})
-                                {% if not loop.last %};{% endif %}
-                            {% endfor %}
-                            </td>
-                            {% if box.objects.filter(order=order) %}
-                                <td>
-                                <!-- {% for box in box.objects.filter(order=order).all().order_by('serial_number') %}
-                                    <a href="{{ box.get_absolute_url() }}">{{ box }}</a>
-                                    {% if not loop.last %};{% endif %}
-                                {% endfor %} -->
-                                &nbsp;&nbsp;<a href="{{ url('contract:partial-box-list', args=[order.id]) }}"><i class="fas fa-list"></i></a>
-                                </td>
-                            {% else %}
-                                <td>None</td>
-                            {% endif %}
-                            <td>{{ order.memo }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
                 </table>
                 <h4 class="custom_text">多筆查詢</h4>
                 <select id="multiquery"></select>
@@ -120,6 +82,11 @@
             exportOptions: {
 				rows: 'visible'
 			},
+            processing: true,
+            serverSide: true,
+            ajax: {
+                'url': '{{ ajax_url }}',
+            }
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);

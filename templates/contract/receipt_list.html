@@ -35,31 +35,6 @@
                             <th>備註</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for receipt in object_list|reverse %}
-                        <tr>
-                            <td>
-                            {% if perms.contract.change_receipt %}
-                                <a href="{{ url('contract:receipt_edit', args=[receipt.id]) }}"><i class="fas fa-edit"></i></a>
-                            {% endif %}
-                            </td>
-                            <td>
-                            {% if perms.contract.delete_receipt %}
-                                <a href="{{ url('contract:receipt_delete', args=[receipt.id]) }}"><i class="fas fa-trash"></i></a>
-                            {% endif %}
-                            </td>
-                            <td><a href="{{ receipt.get_absolute_url() }}">{{ receipt}}</a></td>
-                            <td>{{ receipt.contract }}</td>
-                            <td>{{ receipt.receipt_date }}</td>
-                            <td>{{ receipt.receipt_amount }}</td>
-                            <td>{{ receipt.payment_date }}</td>
-                            <td>{{ receipt.receipt_org }}</td>
-                            <td>{{ receipt.payment_method }}</td>
-                            <td>{{ receipt.receipt_content }}</td>
-                            <td>{{ receipt.memo }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
                 </table>
                 <h4 class="custom_text">多筆查詢</h4>
                 <select id="multiquery"></select>
@@ -109,6 +84,11 @@
             exportOptions: {
 				rows: 'visible'
 			},
+            processing: true,
+            serverSide: true,
+            ajax: {
+                'url': '{{ ajax_url }}',
+            }
 		});
         $('#query, #multiquery').on('keyup change', function () {
             var querys = $('#query').val().split(/\t|,|\r\n|\n| |\|/).filter(v => !!v);

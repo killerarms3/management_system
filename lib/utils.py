@@ -3,11 +3,14 @@ from django.db import ProgrammingError
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 from django import forms
+from django.db.models import Q
 from language.models import Code
 from experiment.models import Experiment
 from contract.models import Box
 import datetime
 from django.shortcuts import render
+from collections import namedtuple, OrderedDict
+from functools import reduce
 
 def getlabels(AppName, ModelName):
     field_tags = dict()
@@ -113,3 +116,99 @@ def get_status(box_id):
             if experiment.complete_date:
                 status = '分析完成'
     return status
+
+class DataTablesServer():
+    def __init__(self, request, columns, queryset, datadict=None):
+        self.columns = columns
+        self.request = request
+        self.request_values = request.GET
+        self.queryset = queryset
+        self.datadict = datadict
+        self.resultdata = None
+        self.resultset = self.queryset
+        self.cadinalityFiltered = 0
+        self.cadinality = 0
+        # self.runQueries()
+        # self.outputResult()
+
+    def getData(self, request, queryset):
+        # 跟queryset同順序
+        Data = dict()
+        for q_set in queryset:
+            data = []
+            for column in self.columns:
+                if column == '__str__':
+                    data.append(str(q_set))
+                elif '()' in column:
+                    # 只接受最後一個是()
+                    data.append(str(reduce(getattr, column[:-2].split('.'), q_set)()))
+                else:
+                    data.append(str(reduce(getattr, column.split('.'), q_set)))
+            Data[q_set.id] = data
+        return Data
+
+    def outputResult(self):
+        output = OrderedDict()
+        output['draw'] = str(int(self.request_values['draw']))
+        output['recordsTotal'] = str(self.cardinality)
+        output['recordsFiltered'] = str(self.cadinalityFiltered)
+        output['data'] = list()
+        for row in self.resultdata:
+            output['data'].append(row)
+        return output
+
+    def runQueries(self):
+        if self.filtering() or self.ordering():
+            self.datadict = self.getData(request=self.request, queryset=self.queryset)
+            self.resultdata = self.datadict.values()
+        if self.filtering():
+            for query in self.filtering():
+                filterData_id = []
+                for q_set in self.resultset:
+                    if query[0]:
+                        # or
+                        if any(query[2] in data for data in self.datadict[q_set.id]):
+                            filterData_id.append(q_set.id)
+                    elif (not query[0]) and (query[2] in self.datadict[q_set.id][query[1]]):
+                        # and
+                        filterData_id.append(q_set.id)
+                self.resultset = self.resultset.filter(id__in=filterData_id)
+            filterData_id = self.resultset.values_list('id', flat=True)
+            self.resultdata = [self.datadict[q_id] for q_id in self.datadict if q_id in filterData_id]
+
+        if self.ordering() is not None:
+            self.resultdata = sorted(self.resultdata, key=lambda data: data[self.ordering()[1]], reverse=self.ordering()[0])[self.paging().start: self.paging().start+self.paging().length]
+        elif self.resultdata is not None:
+            self.resultdata = self.resultdata[self.paging().start: self.paging().start+self.paging().length]
+        else:
+            self.resultdata = self.getData(request=self.request, queryset=self.queryset[self.paging().start: self.paging().start+self.paging().length]).values()
+        # Total records, before filtering
+        self.cardinality = len(self.queryset)
+        # Total records, after filtering
+        self.cadinalityFiltered = len(self.resultset)
+
+    def filtering(self):
+        search = []
+        # (is_or, column_id, target_value)
+        if ( 'search[value]' in self.request_values ) and (self.request_values['search[value]'] != '' ):
+            search.append((True, None, self.request_values['search[value]']))
+        for i in range(len(self.columns)):
+            key = 'columns['+str(i)+'][search][value]'
+            if (key in self.request_values) and (self.request_values[key] != ''):
+                search.append((False, i, self.request_values[key]))
+        return search
+
+    def ordering(self):
+        # (is_reverse, idx)
+        if (self.request_values['order[0][column]'] != '') and (int(self.request_values['order[0][column]']) > 0):
+            if self.request_values['order[0][dir]'] == 'asc':
+                return (False, int(self.request_values['order[0][column]']))
+            else:
+                return (True, int(self.request_values['order[0][column]']))
+
+    def paging(self):
+        pages = namedtuple('pages', ['start', 'length'])
+        if (self.request_values['start'] != "" ) and (self.request_values['length'] != -1 ):
+            pages.start = int(self.request_values['start'])
+            pages.length = int(self.request_values['length'])
+        return pages

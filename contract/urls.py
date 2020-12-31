@@ -4,7 +4,7 @@ from . import views
 
 app_name = 'contract'
 urlpatterns = [
-    path('contract', views.ContractListView.as_view(), name = 'view_contract'),
+    path('contract', views.view_contract, name = 'view_contract'),
     path('contract/add', views.ContractCreate.as_view(), name = 'contract_create'),
     path('contract/edit/<int:pk>', views.ContractUpdateView.as_view(), name = 'contract_edit'),
     path('contract/delete/<int:pk>', views.ContractDeleteView.as_view(), name = 'contract_delete'),
@@ -14,16 +14,16 @@ urlpatterns = [
 urlpatterns += [
     path('order/<int:pk>', views.OrderDetailView.as_view(), name = 'order-detail'),
     path('order/add', views.OrderCreateView.as_view(), name = 'order_create'),
-    path('order', views.OrderListView.as_view(), name = 'order-list'),
-    path('<int:pk>/order', views.OrderbyContractListView.as_view(), name = 'partial-order-list'),
+    path('order', views.view_order, name = 'order-list'),
+    path('<int:pk>/order', views.orderbycontractlistview, name = 'partial-order-list'),
     path('order/edit/<int:pk>', views.OrderUpdateView.as_view(), name = 'order_edit'),
     path('order/delete/<int:pk>', views.OrderDeleteView.as_view(), name = 'order_delete'),
     path('<int:pk>/order/add', views.AddSpecifyContracttoOrder, name = 'add_specify_order'),
 ]
 
 urlpatterns += [
-    path('receipt', views.ReceiptListView.as_view(), name = 'receipt-list'),
-    path('<int:pk>/receipt', views.ReceiptbyContract.as_view(), name = 'partial-receipt-list'),
+    path('receipt', views.view_receipt, name = 'receipt-list'),
+    path('<int:pk>/receipt', views.receiptbycontract, name = 'partial-receipt-list'),
     path('receipt/add', views.ReceiptCreateView.as_view(), name = 'receipt_create'),
     path('receipt/<int:pk>', views.ReceiptDetailView.as_view(), name = 'receipt-detail'),
     path('receipt/edit/<int:pk>', views.ReceiptUpdateView.as_view(), name = 'receipt_edit'),
@@ -34,8 +34,8 @@ urlpatterns += [
 urlpatterns += [
     path('box/<int:pk>', views.BoxDetailView.as_view(), name = 'box-detail'),
     path('box/add', views.BoxCreateView.as_view(), name = 'box_create'),
-    path('box', views.BoxListView.as_view(), name = 'box-list'),
-    path('order/<int:pk>/box', views.BoxbyOrderListView.as_view(), name = 'partial-box-list'),
+    path('box', views.view_box, name = 'box-list'),
+    path('order/<int:pk>/box', views.boxbyorderlistview, name = 'partial-box-list'),
     path('box/edit/<int:pk>', views.BoxUpdateView, name = 'box_edit'),
     path('box/delete/<int:pk>', views.BoxDeleteView.as_view(), name = 'box_delete'),
     path('order/<int:pk>/box/add', views.AddSpecifyOrdertoBox, name = 'add_specify_box'),

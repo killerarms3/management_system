@@ -184,11 +184,33 @@ def change_customer(request, pk):
                         messages.error(request, '此客戶已存在')
     return render(request, 'customer/change_customer.html', locals())
 
+def getCustomerData(request, queryset):
+    Data = dict()
+    for customer in queryset:
+        Data[customer.id] = [
+            '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('customer:change_customer', args=[customer.id])) if request.user.has_perm('customer.change_customer') else '',
+            '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (customer.get_absolute_url(), customer.get_absolute_url(), customer),
+            str(customer.organization),
+            str(customer.job),
+            str(customer.title),
+            str(customer.email),
+            str(customer.mobile),
+            str(customer.tel),
+            str(customer.address)
+        ]
+    return Data
+
 @login_required
 @permission_required('customer.view_customer', raise_exception=True)
 def view_customer(request):
-    # get models
-    customers = Customer.objects.all().order_by('-pk')
+    if request.GET:
+        columns = ['id', '__str__', 'organization', 'job', 'title', 'email', 'mobile', 'tel', 'address']
+        customers = Customer.objects.all().order_by('-pk')
+        DataTablesServer = utils.DataTablesServer(request, columns, customers)
+        DataTablesServer.getData = getCustomerData
+        DataTablesServer.runQueries()
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
     return render(request, 'customer/view_customer.html', locals())
 
 @login_required
