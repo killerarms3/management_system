@@ -789,7 +789,7 @@ def BoxUpdateView(request, pk):
                 dict = object_to_dict(examiner) # history
                 log_addition(request.user, 'contract', 'examiner', examiner.id, '2', dict, pre_dict) # history
 
-            return HttpResponseRedirect('/contract/box/box_list')
+            return HttpResponseRedirect('/contract/box')
     else:
         default_data={
             'serial_number':box.serial_number,
