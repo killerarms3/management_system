@@ -35,6 +35,14 @@
                             {% endif %}
                         </tr>
                         {% endfor %}
+                        <tr>
+                            <th>附加檔案</th>
+                            <td>
+                            {% for data in customer_data %}
+                            <p><a href="{{ customers_data[data].url }}">{{data}}</a></p>
+                            {% endfor %}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
                 {% if perms.contract.view_box %}

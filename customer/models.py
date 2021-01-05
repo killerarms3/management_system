@@ -97,4 +97,12 @@ class Feedback(models.Model):
     feedback = models.TextField()
     feedback_date = models.DateField()
 
+class Customer_Data(models.Model):
+    customer = models.ForeignKey(Customer, on_delete='CASCADE')
+    # content_type = models.ForeignKey(ContentType, blank=False, on_delete=models.CASCADE)
+    # object_id = models.PositiveIntegerField(blank=False)
+    file = models.FileField(upload_to='customer_file/', blank=False, null=False)
 
+    def __str__(self):
+        name = str(self.file).replace('customer_file/', '')
+        return name
