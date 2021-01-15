@@ -10,7 +10,7 @@ import datetime
 from lib.multi_add import AddMultiData
 from lib.Validator import ValidateOrganization
 from django.core.exceptions import ValidationError
-from customer.models import Organization, Customer, Title, Job, Customer_Type, Relationship
+from customer.models import Organization, Customer, Title, Job, Customer_Type, Relationship, Customer_Data
 from contract.models import Box, Examiner
 from django.template.defaulttags import register
 from history.models import History
@@ -168,6 +168,7 @@ def change_customer(request, pk):
     if request.method == 'POST':
         form = CustomerCreateForm(request.POST, instance=customer, auto_id='%s')
         if form.is_valid():
+            upload_customer_file(request, pk)
             pre_dict = object_to_dict(customer)
             customer = form.save(commit=False)
             customer.id = pk
@@ -184,27 +185,31 @@ def change_customer(request, pk):
                         messages.error(request, '此客戶已存在')
     return render(request, 'customer/change_customer.html', locals())
 
+def getCustomerData(request, queryset):
+    Data = dict()
+    for customer in queryset:
+        Data[customer.id] = [
+            '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('customer:change_customer', args=[customer.id])) if request.user.has_perm('customer.change_customer') else '',
+            '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (customer.get_absolute_url(), customer.get_absolute_url(), customer),
+            str(customer.organization),
+            str(customer.job),
+            str(customer.title),
+            str(customer.email),
+            str(customer.mobile),
+            str(customer.tel),
+            str(customer.address)
+        ]
+    return Data
+
 @login_required
 @permission_required('customer.view_customer', raise_exception=True)
 def view_customer(request):
-    # get models
     if request.GET:
         columns = ['id', '__str__', 'organization', 'job', 'title', 'email', 'mobile', 'tel', 'address']
         customers = Customer.objects.all().order_by('-pk')
-        Data = dict()
-        for idx, customer in enumerate(customers):
-            Data[customer.id] = [
-                '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('customer:change_customer', args=[customer.id])) if request.user.has_perm('customer.change_customer') else '',
-                '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=700\', height=\'800\'); return false">%s</a>' % (customer.get_absolute_url(), customer.get_absolute_url(), customer),
-                str(customer.organization),
-                str(customer.job),
-                str(customer.title),
-                str(customer.email),
-                str(customer.mobile),
-                str(customer.tel),
-                str(customer.address)
-            ]
-        DataTablesServer = utils.DataTablesServer(request, columns, customers, data=Data)
+        DataTablesServer = utils.DataTablesServer(request, columns, customers)
+        DataTablesServer.getData = getCustomerData
+        DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
         return JsonResponse(outputResult)
     return render(request, 'customer/view_customer.html', locals())
@@ -302,6 +307,10 @@ def change_job(request, pk):
 def view_specific_customer(request, pk):
     form = CustomerCreateForm(auto_id='%s')
     customer = Customer.objects.get(id=pk)
+    customer_data = Customer_Data.objects.filter(customer = customer)
+    customers_data = {}
+    for data in customer_data:
+        customers_data[data] = data.file
     field_names = list(form.fields.keys())
     field_tags = utils.getlabels('customer', 'customer')
     boxes = Box.objects.filter(pk__in=list(Examiner.objects.filter(customer=customer).values_list('id', flat=True))).order_by('-pk')
@@ -320,3 +329,13 @@ def update_options(reuqest, model):
 def get_customer_organization(request, pk):
     customer = Customer.objects.get(id=pk)
     return JsonResponse({'organization_id': customer.organization.id if customer.organization else ''})
+
+@login_required
+def upload_customer_file(request, pk):
+    if request.FILES.get('sheet'):
+        customer = Customer.objects.get(id=pk)
+        file = request.FILES.get('sheet')
+        Customer_Data.objects.create(
+            customer = customer,
+            file = file,
+        )

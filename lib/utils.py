@@ -119,22 +119,23 @@ def get_status(box_id):
     return status
 
 class DataTablesServer():
-    def __init__(self, request, columns, queryset, data=None):
+    def __init__(self, request, columns, queryset, datadict=None):
         self.columns = columns
+        self.request = request
         self.request_values = request.GET
         self.queryset = queryset
-        self.Data = data
-        self.resultData = None
-        self.resultset = None
+        self.datadict = datadict
+        self.resultdata = None
+        self.resultset = self.queryset
         self.cadinalityFiltered = 0
         self.cadinality = 0
-        self.runQueries()
+        # self.runQueries()
         # self.outputResult()
 
-    def getData(self):
+    def getData(self, request, queryset):
         # 跟queryset同順序
-        self.Data = dict()
-        for q_set in self.queryset:
+        Data = dict()
+        for q_set in queryset:
             data = []
             for column in self.columns:
                 if column == '__str__':
@@ -144,7 +145,8 @@ class DataTablesServer():
                     data.append(str(reduce(getattr, column[:-2].split('.'), q_set)()))
                 else:
                     data.append(str(reduce(getattr, column.split('.'), q_set)))
-            self.Data[q_set.id] = data
+            Data[q_set.id] = data
+        return Data
 
     def outputResult(self):        
         output = OrderedDict()
@@ -152,36 +154,39 @@ class DataTablesServer():
         output['recordsTotal'] = str(self.cardinality)
         output['recordsFiltered'] = str(self.cadinalityFiltered)
         output['data'] = list()
-        for row in self.resultData:
-            output['data'].append(row)        
+        for row in self.resultdata:
+            output['data'].append(row)
         return output
 
     def runQueries(self):
-        if self.Data is None:
-            self.getData()
-        self.resultset = self.queryset
-        for query in self.filtering():
-            filterData_id = []
-            for q_set in self.resultset:
-                if query[0]:
-                    # or
-                    if any(query[2] in data for data in self.Data[q_set.id]):
+        if self.filtering() or self.ordering():
+            self.datadict = self.getData(request=self.request, queryset=self.queryset)
+            self.resultdata = self.datadict.values()
+        if self.filtering():
+            for query in self.filtering():
+                filterData_id = []
+                for q_set in self.resultset:
+                    if query[0]:
+                        # or
+                        if any(query[2] in data for data in self.datadict[q_set.id]):
+                            filterData_id.append(q_set.id)
+                    elif (not query[0]) and (query[2] in self.datadict[q_set.id][query[1]]):
+                        # and
                         filterData_id.append(q_set.id)
-                elif (not query[0]) and (query[2] in self.Data[q_set.id][query[1]]):
-                    # and
-                    filterData_id.append(q_set.id)
-            self.resultset = self.resultset.filter(id__in=filterData_id)
-        filterData_id = self.resultset.values_list('id', flat=True)
-        self.resultData = [self.Data[q_id] for q_id in self.Data if q_id in filterData_id]
+                self.resultset = self.resultset.filter(id__in=filterData_id)
+            filterData_id = self.resultset.values_list('id', flat=True)
+            self.resultdata = [self.datadict[q_id] for q_id in self.datadict if q_id in filterData_id]
+
+        if self.ordering() is not None:
+            self.resultdata = sorted(self.resultdata, key=lambda data: data[self.ordering()[1]], reverse=self.ordering()[0])[self.paging().start: self.paging().start+self.paging().length]
+        elif self.resultdata is not None:
+            self.resultdata = self.resultdata[self.paging().start: self.paging().start+self.paging().length]
+        else:
+            self.resultdata = self.getData(request=self.request, queryset=self.queryset[self.paging().start: self.paging().start+self.paging().length]).values()
         # Total records, before filtering
         self.cardinality = len(self.queryset)
         # Total records, after filtering
         self.cadinalityFiltered = len(self.resultset)
-
-        if self.ordering() is not None:
-            self.resultData = sorted(self.resultData, key=lambda data: data[self.ordering()[1]], reverse=self.ordering()[0])[self.paging().start: self.paging().start+self.paging().length]
-        else:
-            self.resultData = self.resultData[self.paging().start: self.paging().start+self.paging().length]
 
     def filtering(self):
         search = []

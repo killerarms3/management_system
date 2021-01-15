@@ -126,7 +126,7 @@
             '</tr>'+
         '</thead>';
     var experiment_records = {{ experiment_records|safe }};
-    for (experiment of experiment_records[d[2]]['record']) {
+    for (experiment of experiment_records[d[2]]) {
         subtable += '<tr>'+
         '<td><a href="'+experiment['change_experiment']+'"><i class="fas fa-edit"></i></a></td>'+
         '<td>'+experiment['serial_number']+'</td>'+
