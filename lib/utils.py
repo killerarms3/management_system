@@ -11,6 +11,7 @@ import datetime
 from django.shortcuts import render
 from collections import namedtuple, OrderedDict
 from functools import reduce
+import time
 
 def getlabels(AppName, ModelName):
     field_tags = dict()
@@ -145,14 +146,14 @@ class DataTablesServer():
                     data.append(str(reduce(getattr, column.split('.'), q_set)))
             self.Data[q_set.id] = data
 
-    def outputResult(self):
+    def outputResult(self):        
         output = OrderedDict()
         output['draw'] = str(int(self.request_values['draw']))
         output['recordsTotal'] = str(self.cardinality)
         output['recordsFiltered'] = str(self.cadinalityFiltered)
         output['data'] = list()
         for row in self.resultData:
-            output['data'].append(row)
+            output['data'].append(row)        
         return output
 
     def runQueries(self):

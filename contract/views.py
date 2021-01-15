@@ -26,6 +26,7 @@ from django.core.exceptions import ValidationError
 import datetime
 from decimal import Decimal
 import json
+import time
 
 # customize class
 # 繼承CreateView並自定義form_valid
@@ -519,6 +520,7 @@ def view_box(request):
         columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         boxes = Box.objects.all().order_by('-pk')
         Data = dict()
+
         for idx, box in enumerate(boxes):
             Data[box.id] = [
                 '<a href="%s"><i class="fas fa-edit"></i></a>' % (reverse('contract:box_edit', args=[box.id])) if request.user.has_perm('contract.change_box') else '',
@@ -580,12 +582,17 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
         # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
         if box_serial_number_list:
             for box_serial_number in box_serial_number_list:
-                total_length = len(box_serial_number)
+                total_length = len(box_serial_number[0])
                 if (total_length - num) == 6:
-                    temp_number = int(box_serial_number[num:])
+                    temp_number = int(box_serial_number[0][num:])
                     if temp_number > max_number:
                         max_number = temp_number
-        else:            
+                    else:
+                        max_number = max_number
+                else:
+                    pass
+                    # 編號格式有誤
+        else:
             max_number = 0
 
         for i in range(quantity):
@@ -796,7 +803,7 @@ def BoxUpdateView(request, pk):
                 dict = object_to_dict(examiner) # history
                 log_addition(request.user, 'contract', 'examiner', examiner.id, '2', dict, pre_dict) # history
 
-            return HttpResponseRedirect('/contract/box/box_list')
+            return HttpResponseRedirect('/contract/box')
     else:
         default_data={
             'serial_number':box.serial_number,
@@ -1022,14 +1029,19 @@ def AddSpecifyOrdertoBox(request, pk):
             # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
             if box_serial_number_list:
                 for box_serial_number in box_serial_number_list:
-                    total_length = len(box_serial_number)
+                    total_length = len(box_serial_number[0])
                     if (total_length - num) == 6:
-                        temp_number = int(box_serial_number[num:])
+                        temp_number = int(box_serial_number[0][num:])
                         if temp_number > max_number:
                             max_number = temp_number
-            else:            
+                        else:
+                            max_number = max_number
+                    else:
+                        pass
+                        # 編號格式有誤
+            else:
                 max_number = 0
-            
+
             for i in range(quantity):
                 new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6))
             for list in new_serial_number_list:
@@ -1202,7 +1214,7 @@ def add_multi_tracing_number(request):
                         box = Box.objects.get(serial_number = content_dict['serial_number'])
                         exist_box = Box.objects.get(serial_number = box.serial_number)
                         box.serial_number = content_dict['serial_number']
-                        box.tracing_number = content_dict['tracing_number']                        
+                        box.tracing_number = content_dict['tracing_number']
                         try:
                             box.full_clean()
                         except ValidationError as err:
