@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% block content %}
+{% endblock content %}
+<br>
+<div class="container">
+    <div class="card mb-3">
+        <div class="card-body">
+        <h3>說明</h3>
+            <div id="tab-demo">
+                <!-- 分頁頁籤 -->
+                <ul class="tab-title">
+                    <li><a href="#tab00"></a></li>
+                    <li><a href="#tab01"></a></li>
+                    <li><a href="#tab02"></a></li>
+                    <li><a href="#tab03"></a></li>
+                    <li><a href="#tab04"></a></li>
+                </ul>
+                <div id="tab00" class="tab-inner">
+                    <table id="history_table00" class="display" style="width:100%">
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% block js %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script>
+	$(document).ready(function () {
+		$('#history_table01 thead tr').clone(true).appendTo('#history_table01 thead');
+		$('#history_table01 thead tr:eq(1) th').each(function (i) {
+            if (i != 4){
+			    var title = $(this).text();
+			    $(this).html('<input size="5" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table01.column(i).search() !== this.value) {
+					    history_table01
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+            else {
+                var title = $(this).text();
+			    $(this).html('<input size="35" type="text" placeholder="Search ' + title + '" />');
+			    $('input', this).on('keyup change', function () {
+				    if (history_table01.column(i).search() !== this.value) {
+					    history_table01
+						    .column(i)
+						    .search(this.value)
+						    .draw();
+				    }
+                });
+            }
+		});
+		var history_table01 = $('#history_table01').DataTable({
+			dom: 'frtip',
+			scrollX: true,
+			orderCellsTop: true,
+		});
+	});
+</script>
+{% endblock js %}

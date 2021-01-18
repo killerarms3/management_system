@@ -36,6 +36,7 @@ urlpatterns += [
     path('box/add', views.BoxCreateView.as_view(), name = 'box_create'),
     path('box', views.view_box, name = 'box-list'),
     path('order/<int:pk>/box', views.boxbyorderlistview, name = 'partial-box-list'),
+    path('contract/<int:pk>/box', views.boxbycontractlistview, name = 'contract-box-list'),
     path('box/edit/<int:pk>', views.BoxUpdateView, name = 'box_edit'),
     path('box/delete/<int:pk>', views.BoxDeleteView.as_view(), name = 'box_delete'),
     path('order/<int:pk>/box/add', views.AddSpecifyOrdertoBox, name = 'add_specify_box'),

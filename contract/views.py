@@ -94,6 +94,7 @@ def getContractData(request, queryset):
             str(contract.contract_date),
             ';'.join([str(organization) for organization in contract.organization.all()]) if contract.organization.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-order-list', args=[contract.id])) if contract.order_set.all() else 'None',
+            '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:contract-box-list', args=[contract.id])) if contract.order_set.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-receipt-list', args=[contract.id])) if contract.receipt_set.all() else 'None',
             str(contract.memo)
         ]
@@ -103,7 +104,7 @@ def getContractData(request, queryset):
 @permission_required('contract.view_contract', raise_exception=True)
 def view_contract(request):
     if request.GET:
-        columns = ['id', 'id', 'id', 'contract_name', 'customer', 'user', 'contract_date', 'organization.all()', 'id', 'id', 'memo']
+        columns = ['id', 'id', 'id', 'contract_name', 'customer', 'user', 'contract_date', 'organization.all()', 'id', 'id', 'id', 'memo']
         contracts = Contract.objects.all().order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, contracts)
         DataTablesServer.getData = getContractData
@@ -636,6 +637,32 @@ def boxbyorderlistview(request, pk):
         order = Order.objects.get(pk=pk)
         boxes = Box.objects.filter(order=order).order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, Box.objects.filter(order=order).order_by('-pk'))
+        DataTablesServer.getData = getBoxData
+        DataTablesServer.runQueries()
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/box_list.html', locals())
+
+@login_required
+@permission_required('contract.view_box', raise_exception=True)
+def boxbycontractlistview(request, pk):
+    ajax_url = reverse('contract:contract-box-list', args=[pk])
+    if request.GET:
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        contract = Contract.objects.get(pk=pk)
+        orders = Order.objects.filter(contract=contract)
+        print(contract)
+        count = True
+        for order in orders:
+            if count:
+                boxes = Box.objects.filter(order=order).order_by('-pk')
+                count = False
+                print(boxes)
+            else:
+                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')
+                print(boxes)
+        
+        DataTablesServer = utils.DataTablesServer(request, columns, boxes)
         DataTablesServer.getData = getBoxData
         DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
