@@ -651,17 +651,13 @@ def boxbycontractlistview(request, pk):
         columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         contract = Contract.objects.get(pk=pk)
         orders = Order.objects.filter(contract=contract)
-        print(contract)
         count = True
         for order in orders:
             if count:
                 boxes = Box.objects.filter(order=order).order_by('-pk')
-                count = False
-                print(boxes)
+                count = False                
             else:
-                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')
-                print(boxes)
-        
+                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')        
         DataTablesServer = utils.DataTablesServer(request, columns, boxes)
         DataTablesServer.getData = getBoxData
         DataTablesServer.runQueries()
