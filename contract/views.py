@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity, Upload_Image, Upload_File
 from experiment.models import Experiment
-from product.models import Project
+from product.models import Project, Plan
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -26,6 +26,7 @@ from django.core.exceptions import ValidationError
 import datetime
 from decimal import Decimal
 import json
+import time
 
 # customize class
 # 繼承CreateView並自定義form_valid
@@ -93,6 +94,7 @@ def getContractData(request, queryset):
             str(contract.contract_date),
             ';'.join([str(organization) for organization in contract.organization.all()]) if contract.organization.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-order-list', args=[contract.id])) if contract.order_set.all() else 'None',
+            '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:contract-box-list', args=[contract.id])) if contract.order_set.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-receipt-list', args=[contract.id])) if contract.receipt_set.all() else 'None',
             str(contract.memo)
         ]
@@ -102,7 +104,7 @@ def getContractData(request, queryset):
 @permission_required('contract.view_contract', raise_exception=True)
 def view_contract(request):
     if request.GET:
-        columns = ['id', 'id', 'id', 'contract_name', 'customer', 'user', 'contract_date', 'organization.all()', 'id', 'id', 'memo']
+        columns = ['id', 'id', 'id', 'contract_name', 'customer', 'user', 'contract_date', 'organization.all()', 'id', 'id', 'id', 'memo']
         contracts = Contract.objects.all().order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, contracts)
         DataTablesServer.getData = getContractData
@@ -209,7 +211,7 @@ def getOrderData(request, queryset):
             str(order.contract),
             str(order.contract.customer),
             str(order.order_date),
-            ';'.join(['<a href="">%s</a>(%s)' % (plan, Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in order.plan.all()]) if order.plan.all() else 'None',
+            ';'.join(['<a href="">%s</a>(%s)' % (Plan.objects.get(pk=plan), Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in Box.objects.filter(order=order).values_list('plan', flat=True).distinct()]) if order.plan.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-box-list', args=[order.id])) if Box.objects.filter(order=order) else 'None',
             str(order.memo)
         ]
@@ -588,12 +590,17 @@ class BoxCreateView(PermissionRequiredMixin, CreateView):
         # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
         if box_serial_number_list:
             for box_serial_number in box_serial_number_list:
-                total_length = len(box_serial_number)
+                total_length = len(box_serial_number[0])
                 if (total_length - num) == 6:
-                    temp_number = int(box_serial_number[num:])
+                    temp_number = int(box_serial_number[0][num:])
                     if temp_number > max_number:
                         max_number = temp_number
-        else:            
+                    else:
+                        max_number = max_number
+                else:
+                    pass
+                    # 編號格式有誤
+        else:
             max_number = 0
 
         for i in range(quantity):
@@ -630,6 +637,32 @@ def boxbyorderlistview(request, pk):
         order = Order.objects.get(pk=pk)
         boxes = Box.objects.filter(order=order).order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, Box.objects.filter(order=order).order_by('-pk'))
+        DataTablesServer.getData = getBoxData
+        DataTablesServer.runQueries()
+        outputResult = DataTablesServer.outputResult()
+        return JsonResponse(outputResult)
+    return render(request, 'contract/box_list.html', locals())
+
+@login_required
+@permission_required('contract.view_box', raise_exception=True)
+def boxbycontractlistview(request, pk):
+    ajax_url = reverse('contract:contract-box-list', args=[pk])
+    if request.GET:
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        contract = Contract.objects.get(pk=pk)
+        orders = Order.objects.filter(contract=contract)
+        print(contract)
+        count = True
+        for order in orders:
+            if count:
+                boxes = Box.objects.filter(order=order).order_by('-pk')
+                count = False
+                print(boxes)
+            else:
+                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')
+                print(boxes)
+        
+        DataTablesServer = utils.DataTablesServer(request, columns, boxes)
         DataTablesServer.getData = getBoxData
         DataTablesServer.runQueries()
         outputResult = DataTablesServer.outputResult()
@@ -1015,14 +1048,19 @@ def AddSpecifyOrdertoBox(request, pk):
             # 在搜尋含有MRT的serial number時也會將含有MRTF的serial number一並納入
             if box_serial_number_list:
                 for box_serial_number in box_serial_number_list:
-                    total_length = len(box_serial_number)
+                    total_length = len(box_serial_number[0])
                     if (total_length - num) == 6:
-                        temp_number = int(box_serial_number[num:])
+                        temp_number = int(box_serial_number[0][num:])
                         if temp_number > max_number:
                             max_number = temp_number
-            else:            
+                        else:
+                            max_number = max_number
+                    else:
+                        pass
+                        # 編號格式有誤
+            else:
                 max_number = 0
-            
+
             for i in range(quantity):
                 new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6))
             for list in new_serial_number_list:
@@ -1195,7 +1233,7 @@ def add_multi_tracing_number(request):
                         box = Box.objects.get(serial_number = content_dict['serial_number'])
                         exist_box = Box.objects.get(serial_number = box.serial_number)
                         box.serial_number = content_dict['serial_number']
-                        box.tracing_number = content_dict['tracing_number']                        
+                        box.tracing_number = content_dict['tracing_number']
                         try:
                             box.full_clean()
                         except ValidationError as err:
