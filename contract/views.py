@@ -1036,6 +1036,7 @@ def AddSpecifyOrdertoBox(request, pk):
     specify_order = True
     if request.method == 'POST':
         form = SpecifyBoxCreateForm(request.POST)
+        print('1')
         if form.is_valid():
             new_serial_number_list = []
             plan = form.cleaned_data['plan']
@@ -1075,11 +1076,12 @@ def AddSpecifyOrdertoBox(request, pk):
                 dict = object_to_dict(box)
                 log_addition(request.user, 'contract', 'box', box.id, '1', dict, {}) # history
                 # --------- history --------
-            # 回到本頁面以進行連續新增
+            # 回到本頁面以進行連續新增            
             return redirect(reverse('contract:add_specify_box', args=[order.id]))
     else:
+        print('2')
         form = SpecifyBoxCreateForm()
-
+    
     context = {'order':order,'form':form, 'specify_order':specify_order}
     return render(request, 'contract/box_form.html', context)
 
