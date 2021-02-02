@@ -526,7 +526,7 @@ def getBoxData(request, queryset):
             '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse("contract:box-detail", args=[box.id]), reverse("contract:box-detail", args=[box.id]), box.serial_number),
             str(box.order),
             '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (reverse('product:view_product_plan', args=[box.plan.id]), reverse('product:view_product_plan', args=[box.plan.id]), box.plan) if request.user.has_perm('product.view_plan') else '',
-            str(box.order.contract.user.userprofile.nick_name),
+            str(box.user.userprofile.nick_name) if box.user else '',
             '<a href="%s">%s</a>' % (Examiner.objects.get(box=box).customer.get_absolute_url(), Examiner.objects.get(box=box).customer) if request.user.has_perm('customer.view_customer') and Examiner.objects.filter(box=box) else '',
             '<a href="%s" target="popup" onclick="window.open(\'%s\', \'popup\', \'width=800\', height=\'600\'); return false">%s</a>' % (Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), Experiment.objects.filter(box=box).order_by('box__id', '-receiving_date','-pk').first().get_absolute_url(), utils.get_status(box.id)) if request.user.has_perm('experiment.view_experiment') and Experiment.objects.filter(box=box) else utils.get_status(box.id),
             str(box.tracing_number),
@@ -542,7 +542,7 @@ def getBoxData(request, queryset):
 def view_box(request):
     ajax_url = reverse('contract:box-list')
     if request.GET:
-        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         boxes = Box.objects.all().order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, boxes)
         DataTablesServer.getData = getBoxData
@@ -633,7 +633,7 @@ class BoxbyOrderListView(BoxListView):
 def boxbyorderlistview(request, pk):
     ajax_url = reverse('contract:partial-box-list', args=[pk])
     if request.GET:
-        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         order = Order.objects.get(pk=pk)
         boxes = Box.objects.filter(order=order).order_by('-pk')
         DataTablesServer = utils.DataTablesServer(request, columns, Box.objects.filter(order=order).order_by('-pk'))
@@ -648,7 +648,7 @@ def boxbyorderlistview(request, pk):
 def boxbycontractlistview(request, pk):
     ajax_url = reverse('contract:contract-box-list', args=[pk])
     if request.GET:
-        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
+        columns = ['id', 'id', 'serial_number', 'order', 'plan', 'user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         contract = Contract.objects.get(pk=pk)
         orders = Order.objects.filter(contract=contract)
         count = True
