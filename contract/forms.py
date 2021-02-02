@@ -337,10 +337,28 @@ class MultipleBoxCreateForm(forms.ModelForm):
         model = Box
         fields = ('user', 'quantity', 'order', 'plan', 'tracing_number')
 
-class SpecifyBoxCreateForm(MultipleBoxCreateForm):
-    class Meta:
-        model = Box
-        fields = ('user', 'quantity', 'plan', 'tracing_number') # 因指定了order所以不顯示
+class SpecifyBoxCreateForm(forms.Form):
+    user = CustomUserModelChoiceField(label='負責人', queryset=User.objects.exclude(username='admin'), required=False)
+    plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required = True)
+    quantity = forms.IntegerField(
+        label='* 採樣盒數量',
+        widget=forms.NumberInput(
+            attrs={
+                'class': 'form-control',
+                'min': '1',
+                'max': '500',
+            }),
+        required=True
+        )
+    tracing_number = forms.CharField(
+        label='宅配單號',
+        widget=forms.TextInput(
+            attrs={
+                'class':'form-control',
+            }),
+        required=False
+    )
+    fields = ('user', 'quantity', 'plan', 'tracing_number') # 因指定了order所以不顯示
 
 class MultipleSerialNumberCreateForm(forms.Form):
     sub_plan = forms.ModelChoiceField(label='方案', queryset=Plan.objects.all(), required=True)

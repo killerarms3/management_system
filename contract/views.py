@@ -1071,11 +1071,11 @@ def AddSpecifyOrdertoBox(request, pk):
                 dict = object_to_dict(box)
                 log_addition(request.user, 'contract', 'box', box.id, '1', dict, {}) # history
                 # --------- history --------
-            # 回到本頁面以進行連續新增
+            # 回到本頁面以進行連續新增            
             return redirect(reverse('contract:add_specify_box', args=[order.id]))
     else:
         form = SpecifyBoxCreateForm()
-
+    
     context = {'order':order,'form':form, 'specify_order':specify_order}
     return render(request, 'contract/box_form.html', context)
 
