@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Contract, Payment_method, Order, Receipt, Failed_reason, Box, Failed, Destroyed, Examiner, Order_quantity, Upload_Image, Upload_File
 from experiment.models import Experiment
-from product.models import Project
+from product.models import Project, Plan
 from history.models import History
 from history.function import log_addition, object_to_dict, Update_log_dict, Create_log_dict
 from django.views import generic
@@ -211,7 +211,7 @@ def getOrderData(request, queryset):
             str(order.contract),
             str(order.contract.customer),
             str(order.order_date),
-            ';'.join(['<a href="">%s</a>(%s)' % (plan, Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in order.plan.all()]) if order.plan.all() else 'None',
+            ';'.join(['<a href="">%s</a>(%s)' % (Plan.objects.get(pk=plan), Box.objects.filter(plan=plan, order=order).values_list('serial_number').distinct().count()) for plan in Box.objects.filter(order=order).values_list('plan', flat=True).distinct()]) if order.plan.all() else 'None',
             '&nbsp;&nbsp;<a href="%s"><i class="fas fa-list"></i></a>' % (reverse('contract:partial-box-list', args=[order.id])) if Box.objects.filter(order=order) else 'None',
             str(order.memo)
         ]
@@ -651,17 +651,13 @@ def boxbycontractlistview(request, pk):
         columns = ['id', 'id', 'serial_number', 'order', 'plan', 'order.contract.user.userprofile.nick_name', 'get_examiner()', 'id', 'tracing_number', 'id', 'get_failed()', 'get_failed_reason()', 'get_destroyed()']
         contract = Contract.objects.get(pk=pk)
         orders = Order.objects.filter(contract=contract)
-        print(contract)
         count = True
         for order in orders:
             if count:
                 boxes = Box.objects.filter(order=order).order_by('-pk')
-                count = False
-                print(boxes)
+                count = False                
             else:
-                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')
-                print(boxes)
-        
+                boxes = boxes | Box.objects.filter(order=order).order_by('-pk')        
         DataTablesServer = utils.DataTablesServer(request, columns, boxes)
         DataTablesServer.getData = getBoxData
         DataTablesServer.runQueries()

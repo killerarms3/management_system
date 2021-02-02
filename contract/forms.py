@@ -321,7 +321,7 @@ class MultipleBoxCreateForm(forms.ModelForm):
             attrs={
                 'class': 'form-control',
                 'min': '1',
-                'max': '500',
+                'max': '4000',
             }),
         required=True
         )
