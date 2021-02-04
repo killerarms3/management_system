@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
     'accounts',
     'product',
     'project',
@@ -143,8 +144,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 CRONJOBS = [
-#     ('* * */1 * *', 'main.cron.remove_report')
-#     ('*/1 * * * *', 'main.cron.remove_report', '>> '+join(BASE_DIR, 'cronjob.log'))
+    ('* * */1 * *', 'management_system.cron.backup')
 ]
 
 LOGIN_REDIRECT_URL = '/'
