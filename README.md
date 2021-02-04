@@ -42,5 +42,5 @@ $ sudo a2ensite management_system_apache2
 ```
 - reload apache2
 ```
-$ sudo service reload apache2
+$ sudo service apache2 reload
 ```
