@@ -27,6 +27,7 @@ import datetime
 from decimal import Decimal
 import json
 import time
+import re
 
 # customize class
 # 繼承CreateView並自定義form_valid
@@ -294,7 +295,10 @@ class OrderCreateView(PermissionRequiredMixin, CreateView):
                 else:
                     max_serial_number = prefix+'000000'
                 len_prefix = len(prefix)
-                max_number = int(max_serial_number[len_prefix:]) #將前綴詞之外的轉成正整數數值
+                pattern = re.compile(r"\d+") # 用正則表達式找數字部分
+                temp = pattern.findall(max_serial_number)[0] # 數字部分
+
+                max_number = int(temp) #將前綴詞之外的轉成正整數數值
                 for i in range(int(quantity)): # 先前取得的quantity即為本次新增的box數量
                     new_serial_number_list.append(prefix + str(max_number+i+1).zfill(6)) # 從現存在於database中serial number的最大值之後產生新的serial number，並將數字部分補齊六個(ex: 36補成000036)
                 # 新增
